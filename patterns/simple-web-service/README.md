@@ -4,6 +4,8 @@ This project provides a solid foundation for implementing Serverless Microservic
 
 There are many Serverless Microservice Patterns which may be implemented with AWS Lambda functions. This project illustrates the "Simple Web Service" pattern, which is one of the most frequently used.
 
+![Design diagram](../../docs/img/diagram-simple-web-service.png 'Simple Web Service')
+
 ## Getting started
 
 ### Prerequisites
