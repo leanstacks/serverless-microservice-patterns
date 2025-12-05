@@ -88,7 +88,7 @@ describe('update-task-dto', () => {
       expect(result.success).toBe(false);
       if (!result.success) {
         expect(result.error.issues).toHaveLength(1);
-        expect(result.error.issues[0].path).toEqual(['title']);
+        expect(result.error.issues[0]?.path).toEqual(['title']);
       }
     });
 
@@ -105,7 +105,7 @@ describe('update-task-dto', () => {
       // Assert
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(result.error.issues[0].message).toContain('Title is required');
+        expect(result.error.issues[0]?.message).toContain('Title is required');
       }
     });
 
@@ -122,7 +122,7 @@ describe('update-task-dto', () => {
       // Assert
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(result.error.issues[0].message).toContain('Title must not exceed 100 characters');
+        expect(result.error.issues[0]?.message).toContain('Title must not exceed 100 characters');
       }
     });
 
@@ -140,7 +140,7 @@ describe('update-task-dto', () => {
       // Assert
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(result.error.issues[0].message).toContain('Detail must not exceed 1000 characters');
+        expect(result.error.issues[0]?.message).toContain('Detail must not exceed 1000 characters');
       }
     });
 
@@ -158,7 +158,7 @@ describe('update-task-dto', () => {
       // Assert
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(result.error.issues[0].message).toContain('Due date must be a valid ISO8601 timestamp');
+        expect(result.error.issues[0]?.message).toContain('Due date must be a valid ISO8601 timestamp');
       }
     });
 
@@ -176,7 +176,7 @@ describe('update-task-dto', () => {
       expect(result.success).toBe(false);
       if (!result.success) {
         expect(result.error.issues).toHaveLength(1);
-        expect(result.error.issues[0].path).toEqual(['isComplete']);
+        expect(result.error.issues[0]?.path).toEqual(['isComplete']);
       }
     });
 
@@ -193,7 +193,7 @@ describe('update-task-dto', () => {
       // Assert
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(result.error.issues[0].path).toEqual(['isComplete']);
+        expect(result.error.issues[0]?.path).toEqual(['isComplete']);
       }
     });
 

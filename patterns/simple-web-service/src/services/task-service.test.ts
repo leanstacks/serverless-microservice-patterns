@@ -108,8 +108,8 @@ describe('task-service', () => {
       // Tasks should not include pk field
       expect(result[0]).not.toHaveProperty('pk');
       expect(result[1]).not.toHaveProperty('pk');
-      expect(result[0].id).toBe('123e4567-e89b-12d3-a456-426614174000');
-      expect(result[1].id).toBe('123e4567-e89b-12d3-a456-426614174001');
+      expect(result[0]?.id).toBe('123e4567-e89b-12d3-a456-426614174000');
+      expect(result[1]?.id).toBe('123e4567-e89b-12d3-a456-426614174001');
       expect(mockSend).toHaveBeenCalledTimes(1);
     });
 

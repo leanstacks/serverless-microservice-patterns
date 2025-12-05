@@ -44,7 +44,7 @@
     "eslint-config-prettier": "10.1.8",
     "globals": "16.5.0",
     "jest": "30.2.0",
-    "prettier": "3.7.3",
+    "prettier": "3.7.4",
     "rimraf": "6.1.2",
     "ts-jest": "29.4.6",
     "ts-node": "10.9.2",
@@ -52,8 +52,8 @@
     "typescript-eslint": "8.48.1"
   },
   "dependencies": {
-    "@aws-sdk/client-dynamodb": "3.940.0",
-    "@aws-sdk/lib-dynamodb": "3.940.0",
+    "@aws-sdk/client-dynamodb": "3.943.0",
+    "@aws-sdk/lib-dynamodb": "3.943.0",
     "pino": "10.1.0",
     "pino-lambda": "4.4.1",
     "zod": "4.1.13"
