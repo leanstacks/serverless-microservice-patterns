@@ -10,6 +10,17 @@ The following patterns are currently included in this repository:
 
 More patterns, such as Gatekeeper, Internal Web Service, Aggregator, and others, will be added over time.
 
+## Lambda Starter Project
+
+The pattern projects in this repository provide a great reference for various serverless implementation techniques. However, they focus on the implementation of specific requirements in the code and do not illustrate all aspects of a complete software project. For example these pattern samples do not have examples of:
+
+- CI/CD pipelines
+- Full suite of documentation
+- Pre-commit verifications
+- AI coding assistant instructions
+
+The [**Lambda Starter Project**](https://github.com/leanstacks/lambda-starter) provides an example of a complete serverless microservice project. Reference this project when starting your next serverless microservice application component.
+
 ## License
 
 This project is licensed under the terms of the [MIT License](LICENSE).
