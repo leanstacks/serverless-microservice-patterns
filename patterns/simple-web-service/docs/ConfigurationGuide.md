@@ -1,6 +1,6 @@
 # Configuration Guide
 
-This guide provides comprehensive information about configuring the Lambda Starter application and its infrastructure.
+This guide provides comprehensive information about configuring the application and its infrastructure.
 
 ## Application Configuration
 
