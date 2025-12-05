@@ -153,10 +153,6 @@ The project supports multiple environments:
 
 Each environment has its own AWS account and configuration.
 
-## License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
 ## Further Reading
 
 - [Project Documentation](./docs/README.md)
