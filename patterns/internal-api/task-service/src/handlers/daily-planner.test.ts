@@ -37,7 +37,7 @@ jest.mock('../utils/logger', () => ({
  * Test suite for Daily Planner handler
  */
 describe('daily-planner handler', () => {
-  let handler: typeof import('./daily-planner').handler;
+  let handler: typeof import('./daily-planner.js').handler;
 
   beforeEach(() => {
     jest.clearAllMocks();

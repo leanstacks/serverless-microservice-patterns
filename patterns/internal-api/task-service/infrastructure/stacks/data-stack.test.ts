@@ -9,7 +9,7 @@ describe('DataStack', () => {
     beforeAll(() => {
       const app = new cdk.App();
       const stack = new DataStack(app, 'TestDataStack', {
-        appName: 'smp-simple-web-service',
+        appName: 'smp-internal-api',
         envName: 'dev',
       });
       template = Template.fromStack(stack);
@@ -17,7 +17,7 @@ describe('DataStack', () => {
 
     it('should create a Task table', () => {
       template.hasResourceProperties('AWS::DynamoDB::Table', {
-        TableName: 'smp-simple-web-service-task-dev',
+        TableName: 'smp-internal-api-task-dev',
         BillingMode: 'PAY_PER_REQUEST',
         KeySchema: [
           {
@@ -59,7 +59,7 @@ describe('DataStack', () => {
     it('should export table name', () => {
       template.hasOutput('TaskTableName', {
         Export: {
-          Name: 'smp-simple-web-service-task-table-name-dev',
+          Name: 'smp-internal-api-task-table-name-dev',
         },
       });
     });
@@ -67,7 +67,7 @@ describe('DataStack', () => {
     it('should export table ARN', () => {
       template.hasOutput('TaskTableArn', {
         Export: {
-          Name: 'smp-simple-web-service-task-table-arn-dev',
+          Name: 'smp-internal-api-task-table-arn-dev',
         },
       });
     });
@@ -79,7 +79,7 @@ describe('DataStack', () => {
     beforeAll(() => {
       const app = new cdk.App();
       const stack = new DataStack(app, 'TestDataStack', {
-        appName: 'smp-simple-web-service',
+        appName: 'smp-internal-api',
         envName: 'prd',
       });
       template = Template.fromStack(stack);
@@ -87,7 +87,7 @@ describe('DataStack', () => {
 
     it('should create a Task table with prd naming', () => {
       template.hasResourceProperties('AWS::DynamoDB::Table', {
-        TableName: 'smp-simple-web-service-task-prd',
+        TableName: 'smp-internal-api-task-prd',
       });
     });
 

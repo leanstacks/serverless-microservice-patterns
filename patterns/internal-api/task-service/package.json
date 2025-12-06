@@ -1,5 +1,5 @@
 {
-  "name": "simple-web-service",
+  "name": "internal-api-task-service",
   "version": "0.1.0",
   "description": "A serverless microservice built with AWS Lambda and API Gateway using TypeScript.",
   "keywords": [

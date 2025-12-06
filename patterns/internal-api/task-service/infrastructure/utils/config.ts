@@ -5,7 +5,7 @@ import { z } from 'zod';
  * Zod schema for CDK configuration validation.
  */
 const configSchema = z.object({
-  CDK_APP_NAME: z.string().default('smp-simple-web-service'),
+  CDK_APP_NAME: z.string().default('smp-internal-api'),
   CDK_ENV: z.enum(['dev', 'qat', 'prd'], 'CDK_ENV must be one of: dev, qat, prd'),
   CDK_ACCOUNT: z.string().optional(),
   CDK_REGION: z.string().optional(),

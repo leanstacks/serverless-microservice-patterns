@@ -67,12 +67,12 @@ The infrastructure is organized into two main AWS CDK stacks:
 
 All resources are tagged for cost allocation and management:
 
-| Tag     | Source         | Example Value            |
-| ------- | -------------- | ------------------------ |
-| `App`   | `CDK_APP_NAME` | `smp-simple-web-service` |
-| `Env`   | `CDK_ENV`      | `dev`, `qat`, `prd`      |
-| `OU`    | `CDK_OU`       | `leanstacks`             |
-| `Owner` | `CDK_OWNER`    | `platform-team`          |
+| Tag     | Source         | Example Value       |
+| ------- | -------------- | ------------------- |
+| `App`   | `CDK_APP_NAME` | `smp-internal-api`  |
+| `Env`   | `CDK_ENV`      | `dev`, `qat`, `prd` |
+| `OU`    | `CDK_OU`       | `leanstacks`        |
+| `Owner` | `CDK_OWNER`    | `platform-team`     |
 
 ---
 
