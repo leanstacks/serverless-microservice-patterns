@@ -29,14 +29,21 @@ describe('config', () => {
 
   describe('config validation', () => {
     it('should validate and return config with environment variables', () => {
+      // Arrange
+      process.env.LIST_TASKS_FUNCTION_NAME = 'test-list-tasks-function';
+
       // Act
       config = require('./config').config;
 
       // Assert
       expect(config).toBeDefined();
+      expect(config.LIST_TASKS_FUNCTION_NAME).toBe('test-list-tasks-function');
     });
 
     it('should apply default values for optional environment variables', () => {
+      // Arrange
+      process.env.LIST_TASKS_FUNCTION_NAME = 'test-list-tasks-function';
+
       // Act
       config = require('./config').config;
 
@@ -50,6 +57,7 @@ describe('config', () => {
 
     it('should use provided values instead of defaults', () => {
       // Arrange
+      process.env.LIST_TASKS_FUNCTION_NAME = 'test-list-tasks-function';
       process.env.AWS_REGION = 'us-west-2';
       process.env.LOGGING_ENABLED = 'false';
       process.env.LOGGING_LEVEL = 'error';
@@ -67,8 +75,39 @@ describe('config', () => {
       expect(config.CORS_ALLOW_ORIGIN).toBe('https://example.com');
     });
 
+    it('should throw error when required LIST_TASKS_FUNCTION_NAME is missing', () => {
+      // Arrange
+      delete process.env.LIST_TASKS_FUNCTION_NAME;
+
+      // Act & Assert
+      expect(() => {
+        const { config: testConfig } = require('./config');
+        return testConfig;
+      }).toThrow('Configuration validation failed');
+      expect(() => {
+        const { config: testConfig } = require('./config');
+        return testConfig;
+      }).toThrow('LIST_TASKS_FUNCTION_NAME');
+    });
+
+    it('should throw error when LIST_TASKS_FUNCTION_NAME is empty string', () => {
+      // Arrange
+      process.env.LIST_TASKS_FUNCTION_NAME = '';
+
+      // Act & Assert
+      expect(() => {
+        const { config: testConfig } = require('./config');
+        return testConfig;
+      }).toThrow('Configuration validation failed');
+      expect(() => {
+        const { config: testConfig } = require('./config');
+        return testConfig;
+      }).toThrow('LIST_TASKS_FUNCTION_NAME');
+    });
+
     it('should transform LOGGING_ENABLED string to boolean true', () => {
       // Arrange
+      process.env.LIST_TASKS_FUNCTION_NAME = 'test-list-tasks-function';
       process.env.LOGGING_ENABLED = 'true';
 
       // Act
@@ -81,6 +120,7 @@ describe('config', () => {
 
     it('should transform LOGGING_ENABLED string to boolean false', () => {
       // Arrange
+      process.env.LIST_TASKS_FUNCTION_NAME = 'test-list-tasks-function';
       process.env.LOGGING_ENABLED = 'false';
 
       // Act
@@ -96,6 +136,7 @@ describe('config', () => {
       const validLogLevels = ['debug', 'info', 'warn', 'error'];
       validLogLevels.forEach((level) => {
         jest.resetModules();
+        process.env.LIST_TASKS_FUNCTION_NAME = 'test-list-tasks-function';
         process.env.LOGGING_LEVEL = level;
         config = require('./config').config;
         expect(config.LOGGING_LEVEL).toBe(level);
@@ -104,6 +145,7 @@ describe('config', () => {
 
     it('should throw error for invalid LOGGING_LEVEL', () => {
       // Arrange
+      process.env.LIST_TASKS_FUNCTION_NAME = 'test-list-tasks-function';
       process.env.LOGGING_LEVEL = 'invalid';
 
       // Act & Assert
@@ -115,6 +157,7 @@ describe('config', () => {
 
     it('should throw error for invalid LOGGING_ENABLED value', () => {
       // Arrange
+      process.env.LIST_TASKS_FUNCTION_NAME = 'test-list-tasks-function';
       process.env.LOGGING_ENABLED = 'yes';
 
       // Act & Assert
@@ -129,6 +172,7 @@ describe('config', () => {
       const validLogFormats = ['text', 'json'];
       validLogFormats.forEach((format) => {
         jest.resetModules();
+        process.env.LIST_TASKS_FUNCTION_NAME = 'test-list-tasks-function';
         process.env.LOGGING_FORMAT = format;
         config = require('./config').config;
         expect(config.LOGGING_FORMAT).toBe(format);
@@ -137,6 +181,7 @@ describe('config', () => {
 
     it('should throw error for invalid LOGGING_FORMAT', () => {
       // Arrange
+      process.env.LIST_TASKS_FUNCTION_NAME = 'test-list-tasks-function';
       process.env.LOGGING_FORMAT = 'xml';
 
       // Act & Assert
@@ -150,6 +195,7 @@ describe('config', () => {
   describe('refreshConfig', () => {
     it('should refresh config when environment variables change', () => {
       // Arrange
+      process.env.LIST_TASKS_FUNCTION_NAME = 'test-list-tasks-function';
       process.env.AWS_REGION = 'us-east-1';
       refreshConfig = require('./config').refreshConfig;
       config = require('./config').config;
@@ -166,6 +212,7 @@ describe('config', () => {
 
     it('should update cached config after refresh', () => {
       // Arrange
+      process.env.LIST_TASKS_FUNCTION_NAME = 'test-list-tasks-function';
       process.env.AWS_REGION = 'us-east-1';
       refreshConfig = require('./config').refreshConfig;
       const configModule = require('./config');
@@ -185,14 +232,15 @@ describe('config', () => {
 
     it('should throw error on refresh if validation fails', () => {
       // Arrange
+      process.env.LIST_TASKS_FUNCTION_NAME = 'test-list-tasks-function';
       process.env.LOGGING_LEVEL = 'debug';
       refreshConfig = require('./config').refreshConfig;
       config = require('./config').config;
 
       expect(config.LOGGING_LEVEL).toBe('debug');
 
-      // Act - remove optional variable and refresh with invalid value
-      process.env.LOGGING_LEVEL = 'invalid';
+      // Act - remove required variable and refresh
+      delete process.env.LIST_TASKS_FUNCTION_NAME;
 
       // Assert
       expect(() => refreshConfig()).toThrow('Configuration validation failed');
@@ -202,6 +250,7 @@ describe('config', () => {
   describe('config caching', () => {
     it('should cache config after first validation', () => {
       // Arrange
+      process.env.LIST_TASKS_FUNCTION_NAME = 'test-list-tasks-function';
       const configModule = require('./config');
 
       // Act
@@ -214,6 +263,7 @@ describe('config', () => {
 
     it('should return cached config on subsequent imports', () => {
       // Arrange
+      process.env.LIST_TASKS_FUNCTION_NAME = 'test-list-tasks-function';
       process.env.AWS_REGION = 'us-west-1';
 
       // Act
@@ -233,6 +283,7 @@ describe('config', () => {
   describe('error handling', () => {
     it('should provide detailed error message for multiple validation failures', () => {
       // Arrange
+      delete process.env.LIST_TASKS_FUNCTION_NAME;
       process.env.LOGGING_LEVEL = 'invalid';
       process.env.LOGGING_FORMAT = 'invalid';
 
@@ -245,7 +296,7 @@ describe('config', () => {
 
     it('should include field paths in error messages', () => {
       // Arrange
-      process.env.LOGGING_LEVEL = 'invalid';
+      delete process.env.LIST_TASKS_FUNCTION_NAME;
 
       // Act & Assert
       try {
@@ -255,7 +306,7 @@ describe('config', () => {
         fail('Should have thrown an error');
       } catch (error) {
         expect(error).toBeInstanceOf(Error);
-        expect((error as Error).message).toContain('LOGGING_LEVEL');
+        expect((error as Error).message).toContain('LIST_TASKS_FUNCTION_NAME');
         expect((error as Error).message).toContain('Configuration validation failed');
       }
     });
@@ -264,6 +315,7 @@ describe('config', () => {
   describe('type safety', () => {
     it('should export Config type matching validated schema', () => {
       // Arrange
+      process.env.LIST_TASKS_FUNCTION_NAME = 'test-list-tasks-function';
       process.env.AWS_REGION = 'us-east-1';
       process.env.LOGGING_ENABLED = 'true';
       process.env.LOGGING_LEVEL = 'info';
@@ -273,6 +325,7 @@ describe('config', () => {
       config = require('./config').config;
 
       // Assert - verify all expected properties exist and have correct types
+      expect(typeof config.LIST_TASKS_FUNCTION_NAME).toBe('string');
       expect(typeof config.AWS_REGION).toBe('string');
       expect(typeof config.LOGGING_ENABLED).toBe('boolean');
       expect(['debug', 'info', 'warn', 'error']).toContain(config.LOGGING_LEVEL);

@@ -27,6 +27,7 @@ new LambdaStack(app, `${config.CDK_APP_NAME}-lambda-stack-${config.CDK_ENV}`, {
   loggingLevel: config.CDK_APP_LOGGING_LEVEL,
   loggingFormat: config.CDK_APP_LOGGING_FORMAT,
   corsAllowOrigin: config.CDK_CORS_ALLOW_ORIGIN,
+  listTasksFunctionName: config.CDK_LIST_TASKS_FUNCTION_NAME,
   ...(environmentConfig && { env: environmentConfig }),
 });
 

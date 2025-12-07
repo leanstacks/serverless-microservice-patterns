@@ -15,6 +15,7 @@ describe('config', () => {
   describe('getConfig', () => {
     it('should return valid configuration when CDK_ENV is set', () => {
       process.env.CDK_ENV = 'dev';
+      process.env.CDK_LIST_TASKS_FUNCTION_NAME = 'test-function';
 
       const config = getConfig();
 
@@ -34,6 +35,7 @@ describe('config', () => {
       process.env.CDK_APP_LOGGING_ENABLED = 'false';
       process.env.CDK_APP_LOGGING_LEVEL = 'warn';
       process.env.CDK_APP_LOGGING_FORMAT = 'text';
+      process.env.CDK_LIST_TASKS_FUNCTION_NAME = 'test-function';
 
       const config = getConfig();
 
@@ -48,6 +50,7 @@ describe('config', () => {
         CDK_APP_LOGGING_ENABLED: false,
         CDK_APP_LOGGING_LEVEL: 'warn',
         CDK_APP_LOGGING_FORMAT: 'text',
+        CDK_LIST_TASKS_FUNCTION_NAME: 'test-function',
       });
     });
 
@@ -95,6 +98,7 @@ describe('config', () => {
         CDK_APP_LOGGING_ENABLED: true,
         CDK_APP_LOGGING_LEVEL: 'info',
         CDK_APP_LOGGING_FORMAT: 'json',
+        CDK_LIST_TASKS_FUNCTION_NAME: 'test-function',
       };
 
       const tags = getTags(config);
@@ -115,6 +119,7 @@ describe('config', () => {
         CDK_APP_LOGGING_ENABLED: true,
         CDK_APP_LOGGING_LEVEL: 'info',
         CDK_APP_LOGGING_FORMAT: 'json',
+        CDK_LIST_TASKS_FUNCTION_NAME: 'test-function',
       };
 
       const tags = getTags(config);
@@ -135,6 +140,7 @@ describe('config', () => {
         CDK_APP_LOGGING_ENABLED: true,
         CDK_APP_LOGGING_LEVEL: 'info',
         CDK_APP_LOGGING_FORMAT: 'json',
+        CDK_LIST_TASKS_FUNCTION_NAME: 'test-function',
       };
 
       const tags = getTags(config);
@@ -162,6 +168,7 @@ describe('config', () => {
         CDK_APP_LOGGING_ENABLED: true,
         CDK_APP_LOGGING_LEVEL: 'info',
         CDK_APP_LOGGING_FORMAT: 'json',
+        CDK_LIST_TASKS_FUNCTION_NAME: 'test-function',
       };
 
       const envConfig = getEnvironmentConfig(config);
@@ -185,6 +192,7 @@ describe('config', () => {
         CDK_APP_LOGGING_ENABLED: true,
         CDK_APP_LOGGING_LEVEL: 'info',
         CDK_APP_LOGGING_FORMAT: 'json',
+        CDK_LIST_TASKS_FUNCTION_NAME: 'test-function',
       };
 
       const envConfig = getEnvironmentConfig(config);
@@ -208,6 +216,7 @@ describe('config', () => {
         CDK_APP_LOGGING_ENABLED: true,
         CDK_APP_LOGGING_LEVEL: 'info',
         CDK_APP_LOGGING_FORMAT: 'json',
+        CDK_LIST_TASKS_FUNCTION_NAME: 'test-function',
       };
 
       const envConfig = getEnvironmentConfig(config);
@@ -231,6 +240,7 @@ describe('config', () => {
         CDK_APP_LOGGING_ENABLED: true,
         CDK_APP_LOGGING_LEVEL: 'info',
         CDK_APP_LOGGING_FORMAT: 'json',
+        CDK_LIST_TASKS_FUNCTION_NAME: 'test-function',
       };
 
       const envConfig = getEnvironmentConfig(config);
@@ -249,6 +259,7 @@ describe('config', () => {
         CDK_APP_LOGGING_ENABLED: true,
         CDK_APP_LOGGING_LEVEL: 'info',
         CDK_APP_LOGGING_FORMAT: 'json',
+        CDK_LIST_TASKS_FUNCTION_NAME: 'test-function',
       };
 
       const envConfig = getEnvironmentConfig(config);
@@ -267,6 +278,7 @@ describe('config', () => {
         CDK_APP_LOGGING_ENABLED: true,
         CDK_APP_LOGGING_LEVEL: 'info',
         CDK_APP_LOGGING_FORMAT: 'json',
+        CDK_LIST_TASKS_FUNCTION_NAME: 'test-function',
       };
 
       const envConfig = getEnvironmentConfig(config);

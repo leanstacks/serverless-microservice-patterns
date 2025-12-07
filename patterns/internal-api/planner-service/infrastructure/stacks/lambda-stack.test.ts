@@ -33,6 +33,7 @@ describe('LambdaStack', () => {
         loggingLevel: 'debug',
         loggingFormat: 'json',
         corsAllowOrigin: '*',
+        listTasksFunctionName: 'smp-task-service-list-tasks-dev',
       });
       template = Template.fromStack(stack);
     });
@@ -55,6 +56,7 @@ describe('LambdaStack', () => {
             LOGGING_LEVEL: 'debug',
             LOGGING_FORMAT: 'json',
             CORS_ALLOW_ORIGIN: '*',
+            LIST_TASKS_FUNCTION_NAME: 'smp-task-service-list-tasks-dev',
           },
         },
       });
@@ -147,6 +149,7 @@ describe('LambdaStack', () => {
         loggingLevel: 'info',
         loggingFormat: 'json',
         corsAllowOrigin: '*',
+        listTasksFunctionName: 'smp-task-service-list-tasks-prd',
       });
       template = Template.fromStack(stack);
     });
@@ -193,6 +196,7 @@ describe('LambdaStack', () => {
         loggingLevel: 'debug',
         loggingFormat: 'json',
         corsAllowOrigin: '*',
+        listTasksFunctionName: 'smp-task-service-list-tasks-dev',
       });
       template = Template.fromStack(stack);
     });

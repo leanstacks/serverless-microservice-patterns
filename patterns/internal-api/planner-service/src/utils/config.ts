@@ -18,7 +18,8 @@ const envSchema = z.object({
   // CORS configuration
   CORS_ALLOW_ORIGIN: z.string().default('*'),
 
-  // Add more environment variables as needed
+  // Lambda function names
+  LIST_TASKS_FUNCTION_NAME: z.string().min(1, 'LIST_TASKS_FUNCTION_NAME must not be empty'),
 });
 
 /**

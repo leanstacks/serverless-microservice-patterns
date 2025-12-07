@@ -1,6 +1,7 @@
 import * as path from 'path';
 import * as cdk from 'aws-cdk-lib';
 import * as apigateway from 'aws-cdk-lib/aws-apigateway';
+import * as iam from 'aws-cdk-lib/aws-iam';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
 import * as logs from 'aws-cdk-lib/aws-logs';
 import { NodejsFunction } from 'aws-cdk-lib/aws-lambda-nodejs';
@@ -39,6 +40,11 @@ export interface LambdaStackProps extends cdk.StackProps {
    * CORS allow origin value.
    */
   corsAllowOrigin: string;
+
+  /**
+   * Name of the task service list tasks Lambda function.
+   */
+  listTasksFunctionName: string;
 }
 
 /**
@@ -69,6 +75,7 @@ export class LambdaStack extends cdk.Stack {
         LOGGING_LEVEL: props.loggingLevel,
         LOGGING_FORMAT: props.loggingFormat,
         CORS_ALLOW_ORIGIN: props.corsAllowOrigin,
+        LIST_TASKS_FUNCTION_NAME: props.listTasksFunctionName,
       },
       timeout: cdk.Duration.seconds(10),
       memorySize: 256,
@@ -85,6 +92,15 @@ export class LambdaStack extends cdk.Stack {
         removalPolicy: props.envName === 'prd' ? cdk.RemovalPolicy.RETAIN : cdk.RemovalPolicy.DESTROY,
       }),
     });
+
+    // Grant the Daily Planner Lambda function permission to invoke the task service's list tasks function
+    this.dailyPlannerFunction.addToRolePolicy(
+      new iam.PolicyStatement({
+        effect: iam.Effect.ALLOW,
+        actions: ['lambda:InvokeFunction'],
+        resources: [`arn:aws:lambda:${this.region}:${this.account}:function:${props.listTasksFunctionName}`],
+      }),
+    );
 
     // Create API Gateway REST API
     this.api = new apigateway.RestApi(this, 'DailyPlannerApi', {
