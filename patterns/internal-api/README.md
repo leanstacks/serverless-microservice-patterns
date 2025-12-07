@@ -8,7 +8,33 @@ Some may say that calling a Lambda function from a Lambda function is an anti-pa
 
 That said, implement this pattern carefully and on an as-needed basis. It is important to remember that the calling service will block and wait for the called service to return. This increases the exeuction time of the calling service and therefore the cost. Consider if an event-driven, asynchronous pattern is a better fit for the use-case.
 
-![Design diagram](../../docs/img/diagram-internal-api.png 'Simple Web Service')
+![Design diagram](../../docs/img/diagram-internal-api.png "Simple Web Service")
+
+## What's inside
+
+This example demonstrates the Internal API pattern with two microservices:
+
+### Task Service
+
+The **Task Service** is a complete microservice that provides task management functionality. This service is shared across multiple patterns and is the same Task Service used in the "Simple Web Service" pattern. It exposes functions to:
+
+- Create new tasks
+- Retrieve a specific task
+- List all tasks
+- Update existing tasks
+- Delete tasks
+
+The Task Service functions interact with a DynamoDB table to persist task data.
+
+### Daily Planner Service
+
+The **Daily Planner Service** is a specialized microservice that provides daily planning functionality. It demonstrates the Internal API pattern by synchronously invoking the Task Service's **List Tasks** function using the AWS SDK with an `InvocationType` of `RequestResponse`.
+
+#### The Internal API Pattern in Action
+
+The key demonstration of the Internal API pattern occurs in the Daily Planner service. When the Daily Planner Lambda function executes, it makes a direct, synchronous call to the List Tasks Lambda function from the Task Service. This Lambda-to-Lambda invocation is the core of the Internal API pattern and showcases how one microservice can depend on another microservice by directly invoking its Lambda functions.
+
+This pattern allows the Daily Planner service to retrieve task data without duplicating the Task Service's logic, maintaining the principle of single responsibility while demonstrating service-to-service communication within a serverless architecture.
 
 ## Getting started
 
