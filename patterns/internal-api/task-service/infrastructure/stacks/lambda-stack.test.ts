@@ -58,16 +58,6 @@ describe('LambdaStack', () => {
       });
     });
 
-    it('should create a daily planner Lambda function', () => {
-      template.hasResourceProperties('AWS::Lambda::Function', {
-        FunctionName: 'smp-internal-api-task-service-daily-planner-dev',
-        Runtime: 'nodejs24.x',
-        Handler: 'handler',
-        Timeout: 10,
-        MemorySize: 256,
-      });
-    });
-
     it('should create a get task Lambda function', () => {
       template.hasResourceProperties('AWS::Lambda::Function', {
         FunctionName: 'smp-internal-api-task-service-get-task-dev',
@@ -130,21 +120,9 @@ describe('LambdaStack', () => {
     });
 
     it('should create a /tasks resource', () => {
-      template.resourceCountIs('AWS::ApiGateway::Resource', 4);
+      template.resourceCountIs('AWS::ApiGateway::Resource', 2);
       template.hasResourceProperties('AWS::ApiGateway::Resource', {
         PathPart: 'tasks',
-      });
-    });
-
-    it('should create a /planner resource', () => {
-      template.hasResourceProperties('AWS::ApiGateway::Resource', {
-        PathPart: 'planner',
-      });
-    });
-
-    it('should create a /planner/daily resource', () => {
-      template.hasResourceProperties('AWS::ApiGateway::Resource', {
-        PathPart: 'daily',
       });
     });
 

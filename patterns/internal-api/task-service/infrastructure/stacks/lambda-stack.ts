@@ -121,38 +121,6 @@ export class LambdaStack extends cdk.Stack {
     // Grant the Lambda function read access to the DynamoDB table
     props.taskTable.grantReadData(this.listTasksFunction);
 
-    // Create the daily planner Lambda function
-    this.dailyPlannerFunction = new NodejsFunction(this, 'DailyPlannerFunction', {
-      functionName: `${props.appName}-daily-planner-${props.envName}`,
-      runtime: lambda.Runtime.NODEJS_24_X,
-      handler: 'handler',
-      entry: path.join(__dirname, '../../src/handlers/daily-planner.ts'),
-      environment: {
-        LOGGING_ENABLED: props.loggingEnabled.toString(),
-        LOGGING_LEVEL: props.loggingLevel,
-        LOGGING_FORMAT: props.loggingFormat,
-        CORS_ALLOW_ORIGIN: props.corsAllowOrigin,
-        LIST_TASKS_FUNCTION_NAME: this.listTasksFunction.functionName,
-      },
-      timeout: cdk.Duration.seconds(10),
-      memorySize: 256,
-      bundling: {
-        minify: true,
-        sourceMap: true,
-      },
-      loggingFormat: lambda.LoggingFormat.JSON,
-      applicationLogLevelV2: lambda.ApplicationLogLevel.INFO,
-      systemLogLevelV2: lambda.SystemLogLevel.INFO,
-      logGroup: new logs.LogGroup(this, 'DailyPlannerFunctionLogGroup', {
-        logGroupName: `/aws/lambda/${props.appName}-daily-planner-${props.envName}`,
-        retention: props.envName === 'prd' ? logs.RetentionDays.ONE_MONTH : logs.RetentionDays.ONE_WEEK,
-        removalPolicy: props.envName === 'prd' ? cdk.RemovalPolicy.RETAIN : cdk.RemovalPolicy.DESTROY,
-      }),
-    });
-
-    // Grant the Daily Planner Lambda function permission to invoke the ListTasks Lambda function
-    this.listTasksFunction.grantInvoke(this.dailyPlannerFunction);
-
     // Create the get task Lambda function
     this.getTaskFunction = new NodejsFunction(this, 'GetTaskFunction', {
       functionName: `${props.appName}-get-task-${props.envName}`,
@@ -318,15 +286,6 @@ export class LambdaStack extends cdk.Stack {
     // Add DELETE method to /tasks/{taskId}
     taskResource.addMethod('DELETE', new apigateway.LambdaIntegration(this.deleteTaskFunction));
 
-    // Create /planner resource
-    const plannerResource = this.api.root.addResource('planner');
-
-    // Create /planner/daily resource
-    const dailyResource = plannerResource.addResource('daily');
-
-    // Add GET method to /planner/daily
-    dailyResource.addMethod('GET', new apigateway.LambdaIntegration(this.dailyPlannerFunction));
-
     // Output the API URL
     new cdk.CfnOutput(this, 'ApiUrl', {
       value: this.api.url,
@@ -346,13 +305,6 @@ export class LambdaStack extends cdk.Stack {
       value: this.listTasksFunction.functionArn,
       description: 'ARN of the list tasks Lambda function',
       exportName: `${props.appName}-list-tasks-function-arn-${props.envName}`,
-    });
-
-    // Output the daily planner function ARN
-    new cdk.CfnOutput(this, 'DailyPlannerFunctionArn', {
-      value: this.dailyPlannerFunction.functionArn,
-      description: 'ARN of the daily planner Lambda function',
-      exportName: `${props.appName}-daily-planner-function-arn-${props.envName}`,
     });
 
     // Output the get task function ARN
