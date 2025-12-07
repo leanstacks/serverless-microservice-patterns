@@ -91,7 +91,7 @@ Edit `.env` and set the required variables:
 # Required
 CDK_ENV=dev
 
-# Optional - Application name (default: smp-internal-api)
+# Optional - Application name (default: smp-internal-api-task-service)
 # CDK_APP_NAME=my-app
 
 # Optional - Override AWS credentials (uses CDK_DEFAULT_ACCOUNT/REGION from AWS CLI by default)
@@ -180,10 +180,10 @@ Error: CDK configuration validation failed: CDK_ENV: CDK_ENV must be one of: dev
 npm run cdk list
 
 # Show differences for a specific stack
-npm run cdk diff smp-internal-api-data-dev
+npm run cdk diff smp-internal-api-task-service-data-dev
 
 # Deploy a specific stack
-npm run cdk deploy smp-internal-api-data-dev
+npm run cdk deploy smp-internal-api-task-service-data-dev
 
 # View stack outputs
 npm run cdk list --long

@@ -37,7 +37,7 @@ describe('LambdaStack', () => {
       });
 
       const stack = new LambdaStack(testApp, 'TestLambdaStack', {
-        appName: 'smp-internal-api',
+        appName: 'smp-internal-api-task-service',
         envName: 'dev',
         taskTable: testMockTable,
         loggingEnabled: true,
@@ -50,7 +50,7 @@ describe('LambdaStack', () => {
 
     it('should create a list tasks Lambda function', () => {
       template.hasResourceProperties('AWS::Lambda::Function', {
-        FunctionName: 'smp-internal-api-list-tasks-dev',
+        FunctionName: 'smp-internal-api-task-service-list-tasks-dev',
         Runtime: 'nodejs24.x',
         Handler: 'handler',
         Timeout: 10,
@@ -60,7 +60,7 @@ describe('LambdaStack', () => {
 
     it('should create a daily planner Lambda function', () => {
       template.hasResourceProperties('AWS::Lambda::Function', {
-        FunctionName: 'smp-internal-api-daily-planner-dev',
+        FunctionName: 'smp-internal-api-task-service-daily-planner-dev',
         Runtime: 'nodejs24.x',
         Handler: 'handler',
         Timeout: 10,
@@ -70,7 +70,7 @@ describe('LambdaStack', () => {
 
     it('should create a get task Lambda function', () => {
       template.hasResourceProperties('AWS::Lambda::Function', {
-        FunctionName: 'smp-internal-api-get-task-dev',
+        FunctionName: 'smp-internal-api-task-service-get-task-dev',
         Runtime: 'nodejs24.x',
         Handler: 'handler',
         Timeout: 10,
@@ -80,7 +80,7 @@ describe('LambdaStack', () => {
 
     it('should create a create task Lambda function', () => {
       template.hasResourceProperties('AWS::Lambda::Function', {
-        FunctionName: 'smp-internal-api-create-task-dev',
+        FunctionName: 'smp-internal-api-task-service-create-task-dev',
         Runtime: 'nodejs24.x',
         Handler: 'handler',
         Timeout: 10,
@@ -90,7 +90,7 @@ describe('LambdaStack', () => {
 
     it('should create an update task Lambda function', () => {
       template.hasResourceProperties('AWS::Lambda::Function', {
-        FunctionName: 'smp-internal-api-update-task-dev',
+        FunctionName: 'smp-internal-api-task-service-update-task-dev',
         Runtime: 'nodejs24.x',
         Handler: 'handler',
         Timeout: 10,
@@ -100,7 +100,7 @@ describe('LambdaStack', () => {
 
     it('should create a delete task Lambda function', () => {
       template.hasResourceProperties('AWS::Lambda::Function', {
-        FunctionName: 'smp-internal-api-delete-task-dev',
+        FunctionName: 'smp-internal-api-task-service-delete-task-dev',
         Runtime: 'nodejs24.x',
         Handler: 'handler',
         Timeout: 10,
@@ -124,7 +124,7 @@ describe('LambdaStack', () => {
 
     it('should create an API Gateway REST API', () => {
       template.hasResourceProperties('AWS::ApiGateway::RestApi', {
-        Name: 'smp-internal-api-api-dev',
+        Name: 'smp-internal-api-task-service-api-dev',
         Description: 'Lambda Starter API for dev environment',
       });
     });
@@ -250,7 +250,7 @@ describe('LambdaStack', () => {
     it('should export API URL', () => {
       template.hasOutput('ApiUrl', {
         Export: {
-          Name: 'smp-internal-api-tasks-api-url-dev',
+          Name: 'smp-internal-api-task-service-tasks-api-url-dev',
         },
       });
     });
@@ -258,7 +258,7 @@ describe('LambdaStack', () => {
     it('should export API ID', () => {
       template.hasOutput('ApiId', {
         Export: {
-          Name: 'smp-internal-api-tasks-api-id-dev',
+          Name: 'smp-internal-api-task-service-tasks-api-id-dev',
         },
       });
     });
@@ -266,7 +266,7 @@ describe('LambdaStack', () => {
     it('should export Lambda function ARN', () => {
       template.hasOutput('ListTasksFunctionArn', {
         Export: {
-          Name: 'smp-internal-api-list-tasks-function-arn-dev',
+          Name: 'smp-internal-api-task-service-list-tasks-function-arn-dev',
         },
       });
     });
@@ -274,7 +274,7 @@ describe('LambdaStack', () => {
     it('should export create task function ARN', () => {
       template.hasOutput('CreateTaskFunctionArn', {
         Export: {
-          Name: 'smp-internal-api-create-task-function-arn-dev',
+          Name: 'smp-internal-api-task-service-create-task-function-arn-dev',
         },
       });
     });
@@ -282,7 +282,7 @@ describe('LambdaStack', () => {
     it('should export get task function ARN', () => {
       template.hasOutput('GetTaskFunctionArn', {
         Export: {
-          Name: 'smp-internal-api-get-task-function-arn-dev',
+          Name: 'smp-internal-api-task-service-get-task-function-arn-dev',
         },
       });
     });
@@ -290,7 +290,7 @@ describe('LambdaStack', () => {
     it('should export update task function ARN', () => {
       template.hasOutput('UpdateTaskFunctionArn', {
         Export: {
-          Name: 'smp-internal-api-update-task-function-arn-dev',
+          Name: 'smp-internal-api-task-service-update-task-function-arn-dev',
         },
       });
     });
@@ -298,7 +298,7 @@ describe('LambdaStack', () => {
     it('should export delete task function ARN', () => {
       template.hasOutput('DeleteTaskFunctionArn', {
         Export: {
-          Name: 'smp-internal-api-delete-task-function-arn-dev',
+          Name: 'smp-internal-api-task-service-delete-task-function-arn-dev',
         },
       });
     });
@@ -342,7 +342,7 @@ describe('LambdaStack', () => {
       });
 
       const stack = new LambdaStack(testApp, 'TestLambdaStack', {
-        appName: 'smp-internal-api',
+        appName: 'smp-internal-api-task-service',
         envName: 'prd',
         taskTable: testMockTable,
         loggingEnabled: true,
@@ -355,7 +355,7 @@ describe('LambdaStack', () => {
 
     it('should create Lambda with prd naming', () => {
       template.hasResourceProperties('AWS::Lambda::Function', {
-        FunctionName: 'smp-internal-api-list-tasks-prd',
+        FunctionName: 'smp-internal-api-task-service-list-tasks-prd',
       });
     });
 
@@ -371,7 +371,7 @@ describe('LambdaStack', () => {
 
     it('should create API Gateway with prd naming', () => {
       template.hasResourceProperties('AWS::ApiGateway::RestApi', {
-        Name: 'smp-internal-api-api-prd',
+        Name: 'smp-internal-api-task-service-api-prd',
         Description: 'Lambda Starter API for prd environment',
       });
     });
@@ -398,7 +398,7 @@ describe('LambdaStack', () => {
       });
 
       const stack = new LambdaStack(testApp, 'TestLambdaStack', {
-        appName: 'smp-internal-api',
+        appName: 'smp-internal-api-task-service',
         envName: 'dev',
         taskTable: testMockTable,
         loggingEnabled: true,

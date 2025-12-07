@@ -4,9 +4,6 @@ import { z } from 'zod';
  * Schema for validating environment variables
  */
 const envSchema = z.object({
-  // Required variables
-  TASKS_TABLE: z.string().min(1, 'TASKS_TABLE environment variable is required'),
-
   // Optional variables with defaults
   AWS_REGION: z.string().default('us-east-1'),
 
@@ -20,9 +17,6 @@ const envSchema = z.object({
 
   // CORS configuration
   CORS_ALLOW_ORIGIN: z.string().default('*'),
-
-  // Lambda function names for internal API invocations
-  LIST_TASKS_FUNCTION_NAME: z.string().optional(),
 
   // Add more environment variables as needed
 });

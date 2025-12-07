@@ -20,7 +20,7 @@ describe('config', () => {
 
       expect(config).toBeDefined();
       expect(config.CDK_ENV).toBe('dev');
-      expect(config.CDK_APP_NAME).toBe('smp-internal-api');
+      expect(config.CDK_APP_NAME).toBe('smp-internal-api-task-service');
     });
 
     it('should return configuration with optional values', () => {
@@ -87,7 +87,7 @@ describe('config', () => {
   describe('getTags', () => {
     it('should return standard tags', () => {
       const config: Config = {
-        CDK_APP_NAME: 'smp-internal-api',
+        CDK_APP_NAME: 'smp-internal-api-task-service',
         CDK_ENV: 'dev',
         CDK_OU: 'leanstacks',
         CDK_OWNER: 'platform-team',
@@ -100,7 +100,7 @@ describe('config', () => {
       const tags = getTags(config);
 
       expect(tags).toEqual({
-        App: 'smp-internal-api',
+        App: 'smp-internal-api-task-service',
         Env: 'dev',
         OU: 'leanstacks',
         Owner: 'platform-team',
@@ -109,7 +109,7 @@ describe('config', () => {
 
     it('should use default values for OU and Owner when not provided', () => {
       const config: Config = {
-        CDK_APP_NAME: 'smp-internal-api',
+        CDK_APP_NAME: 'smp-internal-api-task-service',
         CDK_ENV: 'qat',
         CDK_CORS_ALLOW_ORIGIN: '*',
         CDK_APP_LOGGING_ENABLED: true,
@@ -120,7 +120,7 @@ describe('config', () => {
       const tags = getTags(config);
 
       expect(tags).toEqual({
-        App: 'smp-internal-api',
+        App: 'smp-internal-api-task-service',
         Env: 'qat',
         OU: 'leanstacks',
         Owner: 'unknown',
@@ -154,7 +154,7 @@ describe('config', () => {
       process.env.CDK_REGION = 'us-west-2';
 
       const config: Config = {
-        CDK_APP_NAME: 'smp-internal-api',
+        CDK_APP_NAME: 'smp-internal-api-task-service',
         CDK_ENV: 'dev',
         CDK_ACCOUNT: '123456789012',
         CDK_REGION: 'us-west-2',
@@ -179,7 +179,7 @@ describe('config', () => {
       process.env.CDK_DEFAULT_REGION = 'eu-west-1';
 
       const config: Config = {
-        CDK_APP_NAME: 'smp-internal-api',
+        CDK_APP_NAME: 'smp-internal-api-task-service',
         CDK_ENV: 'dev',
         CDK_CORS_ALLOW_ORIGIN: '*',
         CDK_APP_LOGGING_ENABLED: true,
@@ -200,7 +200,7 @@ describe('config', () => {
       process.env.CDK_DEFAULT_REGION = 'us-east-1';
 
       const config: Config = {
-        CDK_APP_NAME: 'smp-internal-api',
+        CDK_APP_NAME: 'smp-internal-api-task-service',
         CDK_ENV: 'prd',
         CDK_ACCOUNT: '999999999999',
         CDK_REGION: 'ap-southeast-2',
@@ -225,7 +225,7 @@ describe('config', () => {
       delete process.env.CDK_DEFAULT_REGION;
 
       const config: Config = {
-        CDK_APP_NAME: 'smp-internal-api',
+        CDK_APP_NAME: 'smp-internal-api-task-service',
         CDK_ENV: 'dev',
         CDK_CORS_ALLOW_ORIGIN: '*',
         CDK_APP_LOGGING_ENABLED: true,
@@ -243,7 +243,7 @@ describe('config', () => {
       delete process.env.CDK_DEFAULT_REGION;
 
       const config: Config = {
-        CDK_APP_NAME: 'smp-internal-api',
+        CDK_APP_NAME: 'smp-internal-api-task-service',
         CDK_ENV: 'dev',
         CDK_CORS_ALLOW_ORIGIN: '*',
         CDK_APP_LOGGING_ENABLED: true,
@@ -261,7 +261,7 @@ describe('config', () => {
       process.env.CDK_DEFAULT_REGION = 'us-east-1';
 
       const config: Config = {
-        CDK_APP_NAME: 'smp-internal-api',
+        CDK_APP_NAME: 'smp-internal-api-task-service',
         CDK_ENV: 'dev',
         CDK_CORS_ALLOW_ORIGIN: '*',
         CDK_APP_LOGGING_ENABLED: true,

@@ -1,6 +1,5 @@
 import * as cdk from 'aws-cdk-lib';
 import { Match, Template } from 'aws-cdk-lib/assertions';
-import * as dynamodb from 'aws-cdk-lib/aws-dynamodb';
 import { LambdaStack } from './lambda-stack';
 
 // Mock NodejsFunction to avoid Docker bundling during tests
@@ -27,19 +26,9 @@ describe('LambdaStack', () => {
 
     beforeAll(() => {
       const testApp = new cdk.App();
-      const mockTestStack = new cdk.Stack(testApp, 'MockStack');
-      const testMockTable = new dynamodb.Table(mockTestStack, 'MockTaskTable', {
-        tableName: 'mock-task-table',
-        partitionKey: {
-          name: 'id',
-          type: dynamodb.AttributeType.STRING,
-        },
-      });
-
       const stack = new LambdaStack(testApp, 'TestLambdaStack', {
-        appName: 'smp-internal-api',
+        appName: 'smp-planner-service',
         envName: 'dev',
-        taskTable: testMockTable,
         loggingEnabled: true,
         loggingLevel: 'debug',
         loggingFormat: 'json',
@@ -48,59 +37,9 @@ describe('LambdaStack', () => {
       template = Template.fromStack(stack);
     });
 
-    it('should create a list tasks Lambda function', () => {
-      template.hasResourceProperties('AWS::Lambda::Function', {
-        FunctionName: 'smp-internal-api-list-tasks-dev',
-        Runtime: 'nodejs24.x',
-        Handler: 'handler',
-        Timeout: 10,
-        MemorySize: 256,
-      });
-    });
-
     it('should create a daily planner Lambda function', () => {
       template.hasResourceProperties('AWS::Lambda::Function', {
-        FunctionName: 'smp-internal-api-daily-planner-dev',
-        Runtime: 'nodejs24.x',
-        Handler: 'handler',
-        Timeout: 10,
-        MemorySize: 256,
-      });
-    });
-
-    it('should create a get task Lambda function', () => {
-      template.hasResourceProperties('AWS::Lambda::Function', {
-        FunctionName: 'smp-internal-api-get-task-dev',
-        Runtime: 'nodejs24.x',
-        Handler: 'handler',
-        Timeout: 10,
-        MemorySize: 256,
-      });
-    });
-
-    it('should create a create task Lambda function', () => {
-      template.hasResourceProperties('AWS::Lambda::Function', {
-        FunctionName: 'smp-internal-api-create-task-dev',
-        Runtime: 'nodejs24.x',
-        Handler: 'handler',
-        Timeout: 10,
-        MemorySize: 256,
-      });
-    });
-
-    it('should create an update task Lambda function', () => {
-      template.hasResourceProperties('AWS::Lambda::Function', {
-        FunctionName: 'smp-internal-api-update-task-dev',
-        Runtime: 'nodejs24.x',
-        Handler: 'handler',
-        Timeout: 10,
-        MemorySize: 256,
-      });
-    });
-
-    it('should create a delete task Lambda function', () => {
-      template.hasResourceProperties('AWS::Lambda::Function', {
-        FunctionName: 'smp-internal-api-delete-task-dev',
+        FunctionName: 'smp-planner-service-daily-planner-dev',
         Runtime: 'nodejs24.x',
         Handler: 'handler',
         Timeout: 10,
@@ -112,7 +51,6 @@ describe('LambdaStack', () => {
       template.hasResourceProperties('AWS::Lambda::Function', {
         Environment: {
           Variables: {
-            TASKS_TABLE: Match.anyValue(),
             LOGGING_ENABLED: 'true',
             LOGGING_LEVEL: 'debug',
             LOGGING_FORMAT: 'json',
@@ -124,15 +62,8 @@ describe('LambdaStack', () => {
 
     it('should create an API Gateway REST API', () => {
       template.hasResourceProperties('AWS::ApiGateway::RestApi', {
-        Name: 'smp-internal-api-api-dev',
-        Description: 'Lambda Starter API for dev environment',
-      });
-    });
-
-    it('should create a /tasks resource', () => {
-      template.resourceCountIs('AWS::ApiGateway::Resource', 4);
-      template.hasResourceProperties('AWS::ApiGateway::Resource', {
-        PathPart: 'tasks',
+        Name: 'smp-planner-service-api-dev',
+        Description: 'Daily Planner API for dev environment',
       });
     });
 
@@ -148,40 +79,9 @@ describe('LambdaStack', () => {
       });
     });
 
-    it('should create a /tasks/{taskId} resource', () => {
-      template.hasResourceProperties('AWS::ApiGateway::Resource', {
-        PathPart: '{taskId}',
-      });
-    });
-
-    it('should create a GET method on /tasks', () => {
-      template.hasResourceProperties('AWS::ApiGateway::Method', {
-        HttpMethod: 'GET',
-      });
-    });
-
     it('should create a GET method on /planner/daily', () => {
-      // Verify that a GET method exists (Daily Planner uses GET /planner/daily)
       template.hasResourceProperties('AWS::ApiGateway::Method', {
         HttpMethod: 'GET',
-      });
-    });
-
-    it('should create a POST method on /tasks', () => {
-      template.hasResourceProperties('AWS::ApiGateway::Method', {
-        HttpMethod: 'POST',
-      });
-    });
-
-    it('should create a PUT method on /tasks/{taskId}', () => {
-      template.hasResourceProperties('AWS::ApiGateway::Method', {
-        HttpMethod: 'PUT',
-      });
-    });
-
-    it('should create a DELETE method on /tasks/{taskId}', () => {
-      template.hasResourceProperties('AWS::ApiGateway::Method', {
-        HttpMethod: 'DELETE',
       });
     });
 
@@ -210,47 +110,10 @@ describe('LambdaStack', () => {
       });
     });
 
-    it('should grant Lambda read access to DynamoDB', () => {
-      template.hasResourceProperties('AWS::IAM::Policy', {
-        PolicyDocument: {
-          Statement: Match.arrayWith([
-            Match.objectLike({
-              Action: Match.arrayWith([
-                'dynamodb:BatchGetItem',
-                'dynamodb:Query',
-                'dynamodb:GetItem',
-                'dynamodb:Scan',
-                'dynamodb:ConditionCheckItem',
-                'dynamodb:DescribeTable',
-              ]),
-            }),
-          ]),
-        },
-      });
-    });
-
-    it('should grant Lambda write access to DynamoDB', () => {
-      template.hasResourceProperties('AWS::IAM::Policy', {
-        PolicyDocument: {
-          Statement: Match.arrayWith([
-            Match.objectLike({
-              Action: [
-                'dynamodb:BatchWriteItem',
-                'dynamodb:PutItem',
-                'dynamodb:UpdateItem',
-                'dynamodb:DeleteItem',
-                'dynamodb:DescribeTable',
-              ],
-            }),
-          ]),
-        },
-      });
-    });
-
     it('should export API URL', () => {
       template.hasOutput('ApiUrl', {
         Export: {
-          Name: 'smp-internal-api-tasks-api-url-dev',
+          Name: 'smp-planner-service-daily-planner-api-url-dev',
         },
       });
     });
@@ -258,70 +121,15 @@ describe('LambdaStack', () => {
     it('should export API ID', () => {
       template.hasOutput('ApiId', {
         Export: {
-          Name: 'smp-internal-api-tasks-api-id-dev',
+          Name: 'smp-planner-service-daily-planner-api-id-dev',
         },
       });
     });
 
-    it('should export Lambda function ARN', () => {
-      template.hasOutput('ListTasksFunctionArn', {
+    it('should export daily planner function ARN', () => {
+      template.hasOutput('DailyPlannerFunctionArn', {
         Export: {
-          Name: 'smp-internal-api-list-tasks-function-arn-dev',
-        },
-      });
-    });
-
-    it('should export create task function ARN', () => {
-      template.hasOutput('CreateTaskFunctionArn', {
-        Export: {
-          Name: 'smp-internal-api-create-task-function-arn-dev',
-        },
-      });
-    });
-
-    it('should export get task function ARN', () => {
-      template.hasOutput('GetTaskFunctionArn', {
-        Export: {
-          Name: 'smp-internal-api-get-task-function-arn-dev',
-        },
-      });
-    });
-
-    it('should export update task function ARN', () => {
-      template.hasOutput('UpdateTaskFunctionArn', {
-        Export: {
-          Name: 'smp-internal-api-update-task-function-arn-dev',
-        },
-      });
-    });
-
-    it('should export delete task function ARN', () => {
-      template.hasOutput('DeleteTaskFunctionArn', {
-        Export: {
-          Name: 'smp-internal-api-delete-task-function-arn-dev',
-        },
-      });
-    });
-
-    it('should grant Lambda read-write access to DynamoDB for update function', () => {
-      template.hasResourceProperties('AWS::IAM::Policy', {
-        PolicyDocument: {
-          Statement: Match.arrayWith([
-            Match.objectLike({
-              Action: Match.arrayWith([
-                'dynamodb:BatchGetItem',
-                'dynamodb:Query',
-                'dynamodb:GetItem',
-                'dynamodb:Scan',
-                'dynamodb:ConditionCheckItem',
-                'dynamodb:BatchWriteItem',
-                'dynamodb:PutItem',
-                'dynamodb:UpdateItem',
-                'dynamodb:DeleteItem',
-                'dynamodb:DescribeTable',
-              ]),
-            }),
-          ]),
+          Name: 'smp-planner-service-daily-planner-function-arn-dev',
         },
       });
     });
@@ -332,19 +140,9 @@ describe('LambdaStack', () => {
 
     beforeAll(() => {
       const testApp = new cdk.App();
-      const mockTestStack = new cdk.Stack(testApp, 'MockStack');
-      const testMockTable = new dynamodb.Table(mockTestStack, 'MockTaskTable', {
-        tableName: 'mock-task-table',
-        partitionKey: {
-          name: 'id',
-          type: dynamodb.AttributeType.STRING,
-        },
-      });
-
       const stack = new LambdaStack(testApp, 'TestLambdaStack', {
-        appName: 'smp-internal-api',
+        appName: 'smp-planner-service',
         envName: 'prd',
-        taskTable: testMockTable,
         loggingEnabled: true,
         loggingLevel: 'info',
         loggingFormat: 'json',
@@ -355,7 +153,7 @@ describe('LambdaStack', () => {
 
     it('should create Lambda with prd naming', () => {
       template.hasResourceProperties('AWS::Lambda::Function', {
-        FunctionName: 'smp-internal-api-list-tasks-prd',
+        FunctionName: 'smp-planner-service-daily-planner-prd',
       });
     });
 
@@ -371,8 +169,8 @@ describe('LambdaStack', () => {
 
     it('should create API Gateway with prd naming', () => {
       template.hasResourceProperties('AWS::ApiGateway::RestApi', {
-        Name: 'smp-internal-api-api-prd',
-        Description: 'Lambda Starter API for prd environment',
+        Name: 'smp-planner-service-api-prd',
+        Description: 'Daily Planner API for prd environment',
       });
     });
 
@@ -388,19 +186,9 @@ describe('LambdaStack', () => {
 
     beforeAll(() => {
       const testApp = new cdk.App();
-      const mockTestStack = new cdk.Stack(testApp, 'MockStack');
-      const testMockTable = new dynamodb.Table(mockTestStack, 'MockTaskTable', {
-        tableName: 'mock-task-table',
-        partitionKey: {
-          name: 'id',
-          type: dynamodb.AttributeType.STRING,
-        },
-      });
-
       const stack = new LambdaStack(testApp, 'TestLambdaStack', {
-        appName: 'smp-internal-api',
+        appName: 'smp-planner-service',
         envName: 'dev',
-        taskTable: testMockTable,
         loggingEnabled: true,
         loggingLevel: 'debug',
         loggingFormat: 'json',

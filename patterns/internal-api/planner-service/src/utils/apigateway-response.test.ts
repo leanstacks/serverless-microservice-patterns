@@ -11,7 +11,6 @@ import {
 jest.mock('./config', () => ({
   config: {
     CORS_ALLOW_ORIGIN: 'https://example.com',
-    TASKS_TABLE: 'mock-table',
   },
 }));
 

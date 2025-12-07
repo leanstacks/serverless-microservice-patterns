@@ -11,7 +11,6 @@ const mockLoggerError = jest.fn();
 
 jest.mock('../utils/config', () => ({
   config: {
-    TASKS_TABLE: 'test-tasks-table',
     AWS_REGION: 'us-east-1',
     LOGGING_ENABLED: true,
     LOGGING_LEVEL: 'info',
