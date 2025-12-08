@@ -1,4 +1,4 @@
-import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
+import { APIGatewayProxyResult } from 'aws-lambda';
 
 import { DailyPlanner } from '../models/daily-planner.js';
 import { Task } from '../models/task.js';
@@ -10,33 +10,23 @@ import { logger } from '../utils/logger.js';
  * Retrieves the daily planner data by invoking the ListTasks Lambda function
  * Demonstrates the Internal API pattern by synchronously invoking another Lambda
  *
- * @param requestId - The request ID for logging purposes
  * @returns The daily planner data containing tasks
  * @throws Error if Lambda invocation fails
  */
-export const getDailyPlanner = async (requestId: string): Promise<DailyPlanner> => {
-  logger.info('[PlannerService] > getDailyPlanner', { requestId });
+export const getDailyPlanner = async (): Promise<DailyPlanner> => {
+  logger.info('[PlannerService] > getDailyPlanner');
 
   try {
     // Invoke the ListTasks Lambda function synchronously
     logger.debug('[PlannerService] getDailyPlanner - invoking ListTasks function', {
       functionName: config.LIST_TASKS_FUNCTION_NAME,
-      requestId,
     });
 
-    const listTasksResponse = await invokeLambda<APIGatewayProxyResult>(config.LIST_TASKS_FUNCTION_NAME, {
-      httpMethod: 'GET',
-      path: '/tasks',
-      requestContext: {
-        requestId,
-      } as APIGatewayProxyEvent['requestContext'],
-    } as APIGatewayProxyEvent);
+    const listTasksResponse = await invokeLambda<APIGatewayProxyResult>(config.LIST_TASKS_FUNCTION_NAME, {});
 
     // Parse the tasks from the ListTasks response
     if (!listTasksResponse.body) {
-      logger.warn('[PlannerService] < getDailyPlanner - ListTasks returned empty body', {
-        requestId,
-      });
+      logger.warn('[PlannerService] < getDailyPlanner - ListTasks returned empty body');
       return { tasks: [] };
     }
 
@@ -48,14 +38,11 @@ export const getDailyPlanner = async (requestId: string): Promise<DailyPlanner> 
 
     logger.info('[PlannerService] < getDailyPlanner - successfully retrieved daily planner data', {
       taskCount: tasks.length,
-      requestId,
     });
 
     return dailyPlanner;
   } catch (error) {
-    logger.error('[PlannerService] < getDailyPlanner - failed to retrieve daily planner data', error as Error, {
-      requestId,
-    });
+    logger.error('[PlannerService] < getDailyPlanner - failed to retrieve daily planner data', error as Error);
     throw error;
   }
 };

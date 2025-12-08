@@ -21,23 +21,19 @@ const withRequestTracking = lambdaRequestTracker();
 export const handler = async (event: APIGatewayProxyEvent, context: Context): Promise<APIGatewayProxyResult> => {
   withRequestTracking(event, context);
   logger.info('[DailyPlanner] > handler', {
-    requestId: event.requestContext.requestId,
     event,
   });
 
   try {
-    const dailyPlanner = await getDailyPlanner(event.requestContext.requestId);
+    const dailyPlanner = await getDailyPlanner();
 
     logger.info('[DailyPlanner] < handler - successfully retrieved daily planner data', {
       taskCount: dailyPlanner.tasks.length,
-      requestId: event.requestContext.requestId,
     });
 
     return ok(dailyPlanner);
   } catch (error) {
-    logger.error('[DailyPlanner] < handler - failed to retrieve daily planner data', error as Error, {
-      requestId: event.requestContext.requestId,
-    });
+    logger.error('[DailyPlanner] < handler - failed to retrieve daily planner data', error as Error);
 
     return internalServerError('Failed to retrieve daily planner data');
   }

@@ -70,10 +70,8 @@ describe('planner-service', () => {
 
       mockInvokeLambda.mockResolvedValueOnce(listTasksResponse);
 
-      const requestId = 'test-request-id';
-
       // Act
-      const result: DailyPlanner = await getDailyPlanner(requestId);
+      const result: DailyPlanner = await getDailyPlanner();
 
       // Assert
       expect(result).toBeDefined();
@@ -81,7 +79,7 @@ describe('planner-service', () => {
       expect(result.tasks[0]?.id).toBe('1');
       expect(result.tasks[1]?.id).toBe('2');
       expect(mockInvokeLambda).toHaveBeenCalledTimes(1);
-      expect(mockLoggerInfo).toHaveBeenCalledWith('[PlannerService] > getDailyPlanner', { requestId });
+      expect(mockLoggerInfo).toHaveBeenCalledWith('[PlannerService] > getDailyPlanner');
     });
 
     it('should return empty tasks array when ListTasks returns empty list', async () => {
@@ -96,10 +94,8 @@ describe('planner-service', () => {
 
       mockInvokeLambda.mockResolvedValueOnce(listTasksResponse);
 
-      const requestId = 'test-request-id';
-
       // Act
-      const result: DailyPlanner = await getDailyPlanner(requestId);
+      const result: DailyPlanner = await getDailyPlanner();
 
       // Assert
       expect(result).toBeDefined();
@@ -118,20 +114,13 @@ describe('planner-service', () => {
 
       mockInvokeLambda.mockResolvedValueOnce(listTasksResponse);
 
-      const requestId = 'test-request-id';
-
       // Act
-      const result: DailyPlanner = await getDailyPlanner(requestId);
+      const result: DailyPlanner = await getDailyPlanner();
 
       // Assert
       expect(result).toBeDefined();
       expect(result.tasks).toHaveLength(0);
-      expect(mockLoggerWarn).toHaveBeenCalledWith(
-        '[PlannerService] < getDailyPlanner - ListTasks returned empty body',
-        {
-          requestId,
-        },
-      );
+      expect(mockLoggerWarn).toHaveBeenCalledWith('[PlannerService] < getDailyPlanner - ListTasks returned empty body');
     });
 
     it('should throw error when Lambda invocation fails', async () => {
@@ -139,16 +128,11 @@ describe('planner-service', () => {
       const error = new Error('Lambda invocation failed');
       mockInvokeLambda.mockRejectedValueOnce(error);
 
-      const requestId = 'test-request-id';
-
       // Act & Assert
-      await expect(getDailyPlanner(requestId)).rejects.toThrow('Lambda invocation failed');
+      await expect(getDailyPlanner()).rejects.toThrow('Lambda invocation failed');
       expect(mockLoggerError).toHaveBeenCalledWith(
         '[PlannerService] < getDailyPlanner - failed to retrieve daily planner data',
         error,
-        {
-          requestId,
-        },
       );
     });
 
@@ -174,17 +158,14 @@ describe('planner-service', () => {
 
       mockInvokeLambda.mockResolvedValueOnce(listTasksResponse);
 
-      const requestId = 'test-request-id';
-
       // Act
-      await getDailyPlanner(requestId);
+      await getDailyPlanner();
 
       // Assert
       expect(mockLoggerInfo).toHaveBeenCalledWith(
         '[PlannerService] < getDailyPlanner - successfully retrieved daily planner data',
         {
           taskCount: 1,
-          requestId,
         },
       );
     });
@@ -203,19 +184,11 @@ describe('planner-service', () => {
 
       mockInvokeLambda.mockResolvedValueOnce(listTasksResponse);
 
-      const requestId = 'test-request-id-123';
-
       // Act
-      await getDailyPlanner(requestId);
+      await getDailyPlanner();
 
       // Assert
-      expect(mockInvokeLambda).toHaveBeenCalledWith(
-        'test-list-tasks-function',
-        expect.objectContaining({
-          httpMethod: 'GET',
-          path: '/tasks',
-        }),
-      );
+      expect(mockInvokeLambda).toHaveBeenCalledWith('test-list-tasks-function', expect.any(Object));
     });
   });
 });

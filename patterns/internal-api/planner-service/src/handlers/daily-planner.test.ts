@@ -156,13 +156,7 @@ describe('daily-planner handler', () => {
     expect(body.tasks[0].id).toBe('1');
     expect(body.tasks[1].id).toBe('2');
     expect(mockInvokeLambda).toHaveBeenCalledTimes(1);
-    expect(mockInvokeLambda).toHaveBeenCalledWith(
-      'test-app-list-tasks-test',
-      expect.objectContaining({
-        httpMethod: 'GET',
-        path: '/tasks',
-      }),
-    );
+    expect(mockInvokeLambda).toHaveBeenCalledWith('test-app-list-tasks-test', {});
   });
 
   it('should return empty tasks array when ListTasks returns empty list', async () => {
