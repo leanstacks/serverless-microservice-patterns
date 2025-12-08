@@ -161,10 +161,7 @@ describe('delete-task handler', () => {
         message: 'Task not found',
       });
       expect(mockDeleteTask).not.toHaveBeenCalled();
-      expect(mockLoggerWarn).toHaveBeenCalledWith(
-        '[DeleteTask] < handler - missing taskId path parameter',
-        expect.any(Object),
-      );
+      expect(mockLoggerWarn).toHaveBeenCalledWith('[DeleteTask] < handler - missing taskId path parameter');
     });
 
     it('should return 404 when taskId is undefined', async () => {
@@ -201,11 +198,7 @@ describe('delete-task handler', () => {
         message: 'Failed to delete task',
       });
       expect(mockDeleteTask).toHaveBeenCalledTimes(1);
-      expect(mockLoggerError).toHaveBeenCalledWith(
-        '[DeleteTask] < handler - failed to delete task',
-        mockError,
-        expect.any(Object),
-      );
+      expect(mockLoggerError).toHaveBeenCalledWith('[DeleteTask] < handler - failed to delete task', mockError);
     });
 
     it('should include CORS headers in response', async () => {
@@ -236,7 +229,6 @@ describe('delete-task handler', () => {
       expect(mockLoggerInfo).toHaveBeenCalledWith(
         '[DeleteTask] > handler',
         expect.objectContaining({
-          requestId: 'test-request-id',
           event: expect.any(Object),
         }),
       );
@@ -289,7 +281,6 @@ describe('delete-task handler', () => {
         '[DeleteTask] < handler - successfully deleted task',
         expect.objectContaining({
           taskId,
-          requestId: 'test-request-id',
         }),
       );
     });
@@ -309,7 +300,6 @@ describe('delete-task handler', () => {
         '[DeleteTask] < handler - task not found',
         expect.objectContaining({
           taskId,
-          requestId: 'test-request-id',
         }),
       );
     });

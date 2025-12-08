@@ -172,10 +172,7 @@ describe('get-task handler', () => {
         message: 'Task not found',
       });
       expect(mockGetTask).not.toHaveBeenCalled();
-      expect(mockLoggerWarn).toHaveBeenCalledWith(
-        '[GetTask] < handler - missing taskId path parameter',
-        expect.any(Object),
-      );
+      expect(mockLoggerWarn).toHaveBeenCalledWith('[GetTask] < handler - missing taskId path parameter');
     });
 
     it('should return 404 when taskId is undefined', async () => {
@@ -212,11 +209,7 @@ describe('get-task handler', () => {
         message: 'Failed to retrieve task',
       });
       expect(mockGetTask).toHaveBeenCalledTimes(1);
-      expect(mockLoggerError).toHaveBeenCalledWith(
-        '[GetTask] < handler - failed to get task',
-        mockError,
-        expect.any(Object),
-      );
+      expect(mockLoggerError).toHaveBeenCalledWith('[GetTask] < handler - failed to get task', mockError);
     });
 
     it('should include CORS headers in response', async () => {
@@ -263,7 +256,6 @@ describe('get-task handler', () => {
       expect(mockLoggerInfo).toHaveBeenCalledWith(
         '[GetTask] > handler',
         expect.objectContaining({
-          requestId: 'test-request-id',
           event: expect.any(Object),
         }),
       );

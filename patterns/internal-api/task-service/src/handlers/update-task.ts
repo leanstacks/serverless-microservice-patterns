@@ -23,7 +23,6 @@ const withRequestTracking = lambdaRequestTracker();
 export const handler = async (event: APIGatewayProxyEvent, context: Context): Promise<APIGatewayProxyResult> => {
   withRequestTracking(event, context);
   logger.info('[UpdateTask] > handler', {
-    requestId: event.requestContext.requestId,
     event,
   });
 
@@ -31,17 +30,13 @@ export const handler = async (event: APIGatewayProxyEvent, context: Context): Pr
     // Extract taskId from path parameters
     const taskId = event.pathParameters?.taskId;
     if (!taskId) {
-      logger.warn('[UpdateTask] < handler - missing taskId', {
-        requestId: event.requestContext.requestId,
-      });
+      logger.warn('[UpdateTask] < handler - missing taskId');
       return badRequest('Task ID is required');
     }
 
     // Parse and validate request body
     if (!event.body) {
-      logger.warn('[UpdateTask] < handler - missing request body', {
-        requestId: event.requestContext.requestId,
-      });
+      logger.warn('[UpdateTask] < handler - missing request body');
       return badRequest('Request body is required');
     }
 
@@ -49,9 +44,7 @@ export const handler = async (event: APIGatewayProxyEvent, context: Context): Pr
     try {
       requestBody = JSON.parse(event.body);
     } catch (_error) {
-      logger.warn('[UpdateTask] < handler - invalid JSON in request body', {
-        requestId: event.requestContext.requestId,
-      });
+      logger.warn('[UpdateTask] < handler - invalid JSON in request body');
       return badRequest('Invalid JSON in request body');
     }
 
@@ -64,14 +57,12 @@ export const handler = async (event: APIGatewayProxyEvent, context: Context): Pr
     if (!task) {
       logger.info('[UpdateTask] < handler - task not found', {
         taskId,
-        requestId: event.requestContext.requestId,
       });
       return notFound();
     }
 
     logger.info('[UpdateTask] < handler - successfully updated task', {
       id: task.id,
-      requestId: event.requestContext.requestId,
     });
 
     return ok(task);
@@ -80,14 +71,11 @@ export const handler = async (event: APIGatewayProxyEvent, context: Context): Pr
       const errorMessages = error.issues.map((err) => `${err.path.join('.')}: ${err.message}`).join(', ');
       logger.warn('[UpdateTask] < handler - validation error', {
         errors: error.issues,
-        requestId: event.requestContext.requestId,
       });
       return badRequest(`Validation failed: ${errorMessages}`);
     }
 
-    logger.error('[UpdateTask] < handler - failed to update task', error as Error, {
-      requestId: event.requestContext.requestId,
-    });
+    logger.error('[UpdateTask] < handler - failed to update task', error as Error);
 
     return internalServerError('Failed to update task');
   }
