@@ -1,10 +1,8 @@
 import { APIGatewayProxyEvent, APIGatewayProxyResult, Context } from 'aws-lambda';
 import { lambdaRequestTracker } from 'pino-lambda';
 
-import { Task } from '../models/task.js';
-import { invokeLambda } from '../utils/lambda-client.js';
+import { getDailyPlanner } from '../services/planner-service.js';
 import { internalServerError, ok } from '../utils/apigateway-response.js';
-import { config } from '../utils/config.js';
 import { logger } from '../utils/logger.js';
 
 /**
@@ -12,13 +10,6 @@ import { logger } from '../utils/logger.js';
  * @see https://www.npmjs.com/package/pino-lambda#best-practices
  */
 const withRequestTracking = lambdaRequestTracker();
-
-/**
- * Response type for the Daily Planner handler
- */
-interface DailyPlannerResponse {
-  tasks: Task[];
-}
 
 /**
  * Lambda handler for the Daily Planner function
@@ -35,49 +26,14 @@ export const handler = async (event: APIGatewayProxyEvent, context: Context): Pr
   });
 
   try {
-    if (!config.LIST_TASKS_FUNCTION_NAME) {
-      logger.error(
-        '[DailyPlanner] < handler - LIST_TASKS_FUNCTION_NAME not configured',
-        new Error('Missing environment variable'),
-        {
-          requestId: event.requestContext.requestId,
-        },
-      );
-      return internalServerError('Daily planner service is not properly configured');
-    }
-
-    // Invoke the ListTasks Lambda function synchronously
-    logger.debug('[DailyPlanner] handler - invoking ListTasks function', {
-      functionName: config.LIST_TASKS_FUNCTION_NAME,
-      requestId: event.requestContext.requestId,
-    });
-
-    const listTasksResponse = await invokeLambda<APIGatewayProxyResult>(config.LIST_TASKS_FUNCTION_NAME, {
-      httpMethod: 'GET',
-      path: '/tasks',
-      requestContext: event.requestContext,
-    });
-
-    // Parse the tasks from the ListTasks response
-    if (!listTasksResponse.body) {
-      logger.warn('[DailyPlanner] < handler - ListTasks returned empty body', {
-        requestId: event.requestContext.requestId,
-      });
-      return ok({ tasks: [] } as DailyPlannerResponse);
-    }
-
-    const tasks = JSON.parse(listTasksResponse.body) as Task[];
-
-    const response: DailyPlannerResponse = {
-      tasks,
-    };
+    const dailyPlanner = await getDailyPlanner(event.requestContext.requestId);
 
     logger.info('[DailyPlanner] < handler - successfully retrieved daily planner data', {
-      taskCount: tasks.length,
+      taskCount: dailyPlanner.tasks.length,
       requestId: event.requestContext.requestId,
     });
 
-    return ok(response);
+    return ok(dailyPlanner);
   } catch (error) {
     logger.error('[DailyPlanner] < handler - failed to retrieve daily planner data', error as Error, {
       requestId: event.requestContext.requestId,

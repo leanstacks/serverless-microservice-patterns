@@ -24,7 +24,7 @@ export const invokeLambda = async <T = unknown>(functionName: string, payload: u
       Payload: JSON.stringify(payload),
     });
 
-    logger.debug('[LambdaClient] invokeLambda - InvokeCommand', { functionName });
+    logger.debug('[LambdaClient] invokeLambda - InvokeCommand', { command });
 
     const response = await _lambdaClient.send(command);
 
