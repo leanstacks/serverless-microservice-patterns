@@ -1,10 +1,4 @@
-# Pattern: The Simple Web Service
-
-This project provides a solid foundation for implementing Serverless Microservice Patterns with AWS Lambda functions using Node.js and TypeScript. The project uses the AWS CDK for infrastructure as code, Jest for testing, and modern development tooling.
-
-There are many Serverless Microservice Patterns which may be implemented with AWS Lambda functions. This project illustrates the "Simple Web Service" pattern, which is one of the most frequently used.
-
-![Design diagram](../../docs/img/diagram-simple-web-service.png 'Simple Web Service')
+# Task Service
 
 ## Getting started
 

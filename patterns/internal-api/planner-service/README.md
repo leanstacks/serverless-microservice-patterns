@@ -1,10 +1,4 @@
-# Pattern: The Simple Web Service
-
-This project provides a solid foundation for implementing Serverless Microservice Patterns with AWS Lambda functions using Node.js and TypeScript. The project uses the AWS CDK for infrastructure as code, Jest for testing, and modern development tooling.
-
-There are many Serverless Microservice Patterns which may be implemented with AWS Lambda functions. This project illustrates the "Simple Web Service" pattern, which is one of the most frequently used.
-
-![Design diagram](../../docs/img/diagram-simple-web-service.png 'Simple Web Service')
+# Planner Service
 
 ## Getting started
 
@@ -133,8 +127,7 @@ npm run test:watch
 
 ### Runtime Dependencies
 
-- **[@aws-sdk/client-dynamodb](https://www.npmjs.com/package/@aws-sdk/client-dynamodb)** - AWS SDK v3 DynamoDB client
-- **[@aws-sdk/lib-dynamodb](https://www.npmjs.com/package/@aws-sdk/lib-dynamodb)** - DynamoDB document client utilities
+- **[@aws-sdk/client-lambda](https://www.npmjs.com/package/@aws-sdk/client-lambda)** - AWS SDK v3 Lambda client
 - **[zod](https://www.npmjs.com/package/zod)** - TypeScript-first schema validation
 - **[pino](https://getpino.io/)** - Low overhead, fast logger for JavaScript
 

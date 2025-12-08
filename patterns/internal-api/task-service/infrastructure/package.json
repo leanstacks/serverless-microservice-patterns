@@ -1,0 +1,40 @@
+{
+  "name": "internal-api-task-service-infrastructure",
+  "version": "0.1.0",
+  "description": "AWS CDK infrastructure for simple-web-service",
+  "private": true,
+  "type": "commonjs",
+  "main": "app.js",
+  "scripts": {
+    "build": "tsc",
+    "clean": "rimraf cdk.out coverage dist",
+    "cdk": "cdk",
+    "synth": "cdk synth",
+    "deploy": "cdk deploy",
+    "deploy:all": "cdk deploy --all",
+    "diff": "cdk diff",
+    "destroy": "cdk destroy",
+    "destroy:all": "cdk destroy --all",
+    "test": "jest --coverage=false --silent --verbose",
+    "test:coverage": "jest --coverage --silent --verbose",
+    "test:watch": "jest --watch"
+  },
+  "devDependencies": {
+    "@types/jest": "30.0.0",
+    "@types/node": "24.10.1",
+    "aws-cdk": "2.1033.0",
+    "esbuild": "0.27.1",
+    "jest": "30.2.0",
+    "rimraf": "6.1.2",
+    "ts-jest": "29.4.6",
+    "ts-node": "10.9.2",
+    "typescript": "5.9.3"
+  },
+  "dependencies": {
+    "aws-cdk-lib": "2.232.1",
+    "constructs": "10.4.3",
+    "dotenv": "17.2.3",
+    "source-map-support": "0.5.21",
+    "zod": "4.1.13"
+  }
+}
