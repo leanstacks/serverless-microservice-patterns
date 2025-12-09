@@ -64,11 +64,11 @@ export class LambdaStack extends cdk.Stack {
     super(scope, id, props);
 
     // Create the authorization Lambda function
-    this.authorizerFunction = new NodejsFunction(this, 'AuthorizerFunction', {
-      functionName: `${props.appName}-authorizer-${props.envName}`,
+    this.authorizerFunction = new NodejsFunction(this, 'TokenAuthorizerFunction', {
+      functionName: `${props.appName}-token-authorizer-${props.envName}`,
       runtime: lambda.Runtime.NODEJS_24_X,
       handler: 'handler',
-      entry: path.join(__dirname, '../../src/handlers/authorize.ts'),
+      entry: path.join(__dirname, '../../src/handlers/token-authorizer.ts'),
       environment: {
         LOGGING_ENABLED: props.loggingEnabled.toString(),
         LOGGING_LEVEL: props.loggingLevel,
@@ -83,15 +83,15 @@ export class LambdaStack extends cdk.Stack {
       loggingFormat: lambda.LoggingFormat.JSON,
       applicationLogLevelV2: lambda.ApplicationLogLevel.INFO,
       systemLogLevelV2: lambda.SystemLogLevel.INFO,
-      logGroup: new logs.LogGroup(this, 'AuthorizerFunctionLogGroup', {
-        logGroupName: `/aws/lambda/${props.appName}-authorizer-${props.envName}`,
+      logGroup: new logs.LogGroup(this, 'TokenAuthorizerFunctionLogGroup', {
+        logGroupName: `/aws/lambda/${props.appName}-token-authorizer-${props.envName}`,
         retention: props.envName === 'prd' ? logs.RetentionDays.ONE_MONTH : logs.RetentionDays.ONE_WEEK,
         removalPolicy: props.envName === 'prd' ? cdk.RemovalPolicy.RETAIN : cdk.RemovalPolicy.DESTROY,
       }),
     });
 
     // Create API Gateway Token Authorizer
-    this.authorizer = new apigateway.TokenAuthorizer(this, 'LambdaAuthorizer', {
+    this.authorizer = new apigateway.TokenAuthorizer(this, 'LambdaTokenAuthorizer', {
       handler: this.authorizerFunction,
       identitySource: 'method.request.header.Authorization',
       resultsCacheTtl: cdk.Duration.seconds(300),

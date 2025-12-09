@@ -15,12 +15,12 @@ jest.mock('pino-lambda', () => ({
 }));
 
 describe('Authorize Handler', () => {
-  let handler: typeof import('./authorize').handler;
+  let handler: typeof import('./token-authorizer').handler;
 
   beforeEach(() => {
     jest.clearAllMocks();
     // Import handler after mocks are set up
-    handler = require('./authorize').handler;
+    handler = require('./token-authorizer').handler;
   });
 
   const mockMethodArn = 'arn:aws:execute-api:us-east-1:123456789012:abcdef/dev/GET/tasks';
