@@ -30,18 +30,9 @@ const dataStack = new DataStack(app, `${config.CDK_APP_NAME}-data-stack-${config
 
 // Import the API Gateway and authorizer from the auth-service stack
 // These are exported from auth-service infrastructure
-const apiId = cdk.Fn.importValue(`auth-service-api-id-${config.CDK_ENV}`);
-const authorizerId = cdk.Fn.importValue(`auth-service-authorizer-id-${config.CDK_ENV}`);
-
-// Get references to the shared API and authorizer
-const api = apigateway.RestApi.fromRestApiAttributes(app, 'SharedApi', {
-  restApiId: apiId,
-  rootResourceId: cdk.Fn.importValue(`auth-service-api-root-resource-id-${config.CDK_ENV}`),
-});
-
-const authorizer = apigateway.Authorizer.fromAuthorizerAttributes(app, 'SharedAuthorizer', {
-  authorizerId,
-});
+const apiId = cdk.Fn.importValue(`smp-gatekeeper-auth-service-api-id-${config.CDK_ENV}`);
+const authorizerId = cdk.Fn.importValue(`smp-gatekeeper-auth-service-authorizer-id-${config.CDK_ENV}`);
+const apiRootResourceId = cdk.Fn.importValue(`smp-gatekeeper-auth-service-api-root-resource-id-${config.CDK_ENV}`);
 
 // Create Lambda Stack with references to shared API and authorizer
 new LambdaStack(app, `${config.CDK_APP_NAME}-lambda-stack-${config.CDK_ENV}`, {
@@ -50,8 +41,9 @@ new LambdaStack(app, `${config.CDK_APP_NAME}-lambda-stack-${config.CDK_ENV}`, {
   stackName: `${config.CDK_APP_NAME}-lambda-${config.CDK_ENV}`,
   description: `Lambda functions for ${config.CDK_APP_NAME} (${config.CDK_ENV})`,
   taskTable: dataStack.taskTable,
-  api: api as apigateway.RestApi,
-  authorizer: authorizer as apigateway.TokenAuthorizer,
+  apiId: apiId as any,
+  apiRootResourceId: apiRootResourceId as any,
+  authorizerId: authorizerId as any,
   loggingEnabled: config.CDK_APP_LOGGING_ENABLED,
   loggingLevel: config.CDK_APP_LOGGING_LEVEL,
   loggingFormat: config.CDK_APP_LOGGING_FORMAT,

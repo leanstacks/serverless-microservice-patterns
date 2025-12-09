@@ -93,7 +93,7 @@ const buildPolicy = (
         {
           Action: 'execute-api:Invoke',
           Effect: effect,
-          Resource: resource,
+          Resource: resource + '/*',
         },
       ],
     },
@@ -136,7 +136,11 @@ export const handler: APIGatewayTokenAuthorizerHandler = async (
       throw new Error(validationResult.error || 'Token validation failed');
     }
 
-    const policy = buildPolicy(validationResult.principalId!, 'Allow', event.methodArn, validationResult.context);
+    const resourceParts = event.methodArn.split('/');
+    const baseResource = resourceParts.slice(0, 2).join('/'); // e.g., arn:aws:execute-api:region:account-id:api-id/stage
+    logger.debug('[Authorize] Base resource extracted', { baseResource });
+
+    const policy = buildPolicy(validationResult.principalId!, 'Allow', baseResource, validationResult.context);
 
     logger.info('[Authorize] < handler - authorization allowed', {
       policy,
