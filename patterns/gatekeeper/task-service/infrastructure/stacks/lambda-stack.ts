@@ -27,6 +27,16 @@ export interface LambdaStackProps extends cdk.StackProps {
   taskTable: dynamodb.ITable;
 
   /**
+   * Reference to the API Gateway from auth service.
+   */
+  api: apigateway.RestApi;
+
+  /**
+   * Reference to the Lambda authorizer from auth service.
+   */
+  authorizer: apigateway.TokenAuthorizer;
+
+  /**
    * Whether to enable application logging.
    */
   loggingEnabled: boolean;
@@ -48,23 +58,13 @@ export interface LambdaStackProps extends cdk.StackProps {
 }
 
 /**
- * CDK Stack for Lambda functions and API Gateway.
+ * CDK Stack for Lambda functions integrated with shared API Gateway.
  */
 export class LambdaStack extends cdk.Stack {
-  /**
-   * The API Gateway REST API.
-   */
-  public readonly api: apigateway.RestApi;
-
   /**
    * The list tasks Lambda function.
    */
   public readonly listTasksFunction: NodejsFunction;
-
-  /**
-   * The daily planner Lambda function.
-   */
-  public readonly dailyPlannerFunction: NodejsFunction;
 
   /**
    * The get task Lambda function.
@@ -249,55 +249,35 @@ export class LambdaStack extends cdk.Stack {
     // Grant the Lambda function read and write access to the DynamoDB table
     props.taskTable.grantReadWriteData(this.deleteTaskFunction);
 
-    // Create API Gateway REST API
-    this.api = new apigateway.RestApi(this, 'LambdaStarterApi', {
-      restApiName: `${props.appName}-api-${props.envName}`,
-      description: `Lambda Starter API for ${props.envName} environment`,
-      deployOptions: {
-        stageName: props.envName,
-        throttlingRateLimit: 100,
-        throttlingBurstLimit: 200,
-      },
-      defaultCorsPreflightOptions: {
-        allowOrigins: [props.corsAllowOrigin],
-        allowMethods: apigateway.Cors.ALL_METHODS,
-        allowHeaders: ['Content-Type', 'Authorization'],
-      },
+    // Create /tasks resource in the shared API Gateway from auth service
+    const tasksResource = props.api.root.addResource('tasks');
+
+    // Add GET method to /tasks with authorizer
+    tasksResource.addMethod('GET', new apigateway.LambdaIntegration(this.listTasksFunction), {
+      authorizer: props.authorizer,
     });
 
-    // Create /tasks resource
-    const tasksResource = this.api.root.addResource('tasks');
-
-    // Add GET method to /tasks
-    tasksResource.addMethod('GET', new apigateway.LambdaIntegration(this.listTasksFunction));
-
-    // Add POST method to /tasks
-    tasksResource.addMethod('POST', new apigateway.LambdaIntegration(this.createTaskFunction));
+    // Add POST method to /tasks with authorizer
+    tasksResource.addMethod('POST', new apigateway.LambdaIntegration(this.createTaskFunction), {
+      authorizer: props.authorizer,
+    });
 
     // Create /tasks/{taskId} resource
     const taskResource = tasksResource.addResource('{taskId}');
 
-    // Add GET method to /tasks/{taskId}
-    taskResource.addMethod('GET', new apigateway.LambdaIntegration(this.getTaskFunction));
-
-    // Add PUT method to /tasks/{taskId}
-    taskResource.addMethod('PUT', new apigateway.LambdaIntegration(this.updateTaskFunction));
-
-    // Add DELETE method to /tasks/{taskId}
-    taskResource.addMethod('DELETE', new apigateway.LambdaIntegration(this.deleteTaskFunction));
-
-    // Output the API URL
-    new cdk.CfnOutput(this, 'ApiUrl', {
-      value: this.api.url,
-      description: 'URL of the Tasks API',
-      exportName: `${props.appName}-tasks-api-url-${props.envName}`,
+    // Add GET method to /tasks/{taskId} with authorizer
+    taskResource.addMethod('GET', new apigateway.LambdaIntegration(this.getTaskFunction), {
+      authorizer: props.authorizer,
     });
 
-    // Output the API Gateway ID
-    new cdk.CfnOutput(this, 'ApiId', {
-      value: this.api.restApiId,
-      description: 'ID of the Tasks API',
-      exportName: `${props.appName}-tasks-api-id-${props.envName}`,
+    // Add PUT method to /tasks/{taskId} with authorizer
+    taskResource.addMethod('PUT', new apigateway.LambdaIntegration(this.updateTaskFunction), {
+      authorizer: props.authorizer,
+    });
+
+    // Add DELETE method to /tasks/{taskId} with authorizer
+    taskResource.addMethod('DELETE', new apigateway.LambdaIntegration(this.deleteTaskFunction), {
+      authorizer: props.authorizer,
     });
 
     // Output the list tasks function ARN
