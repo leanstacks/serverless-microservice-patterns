@@ -34,7 +34,6 @@ describe('config', () => {
       delete process.env.LOGGING_ENABLED;
       delete process.env.LOGGING_LEVEL;
       delete process.env.LOGGING_FORMAT;
-      delete process.env.CORS_ALLOW_ORIGIN;
 
       // Act
       config = require('./config').config;
@@ -45,14 +44,12 @@ describe('config', () => {
       expect(config.LOGGING_ENABLED).toBe(true);
       expect(config.LOGGING_LEVEL).toBe('debug');
       expect(config.LOGGING_FORMAT).toBe('json');
-      expect(config.CORS_ALLOW_ORIGIN).toBe('*');
     });
 
     it('should apply custom values when environment variables are set', () => {
       // Arrange
       process.env.AWS_REGION = 'eu-west-1';
       process.env.LOGGING_LEVEL = 'info';
-      process.env.CORS_ALLOW_ORIGIN = 'https://example.com';
 
       // Act
       config = require('./config').config;
@@ -60,7 +57,6 @@ describe('config', () => {
       // Assert
       expect(config.AWS_REGION).toBe('eu-west-1');
       expect(config.LOGGING_LEVEL).toBe('info');
-      expect(config.CORS_ALLOW_ORIGIN).toBe('https://example.com');
     });
 
     it('should support valid logging levels', () => {
@@ -150,17 +146,17 @@ describe('config', () => {
 
     it('should update cached config after refresh', () => {
       // Arrange
-      process.env.CORS_ALLOW_ORIGIN = 'https://old.example.com';
+      process.env.AWS_REGION = 'us-east-1';
       config = require('./config').config;
-      expect(config.CORS_ALLOW_ORIGIN).toBe('https://old.example.com');
+      expect(config.AWS_REGION).toBe('us-east-1');
 
       // Act
-      process.env.CORS_ALLOW_ORIGIN = 'https://new.example.com';
+      process.env.AWS_REGION = 'eu-west-1';
       refreshConfig = require('./config').refreshConfig;
       const newConfig = refreshConfig();
 
       // Assert
-      expect(newConfig.CORS_ALLOW_ORIGIN).toBe('https://new.example.com');
+      expect(newConfig.AWS_REGION).toBe('eu-west-1');
     });
   });
 
@@ -174,7 +170,6 @@ describe('config', () => {
       expect(typeof config.LOGGING_ENABLED).toBe('boolean');
       expect(typeof config.LOGGING_LEVEL).toBe('string');
       expect(typeof config.LOGGING_FORMAT).toBe('string');
-      expect(typeof config.CORS_ALLOW_ORIGIN).toBe('string');
     });
   });
 

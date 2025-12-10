@@ -11,7 +11,6 @@ const configSchema = z.object({
   CDK_REGION: z.string().optional(),
   CDK_OU: z.string().optional(),
   CDK_OWNER: z.string().optional(),
-  CDK_CORS_ALLOW_ORIGIN: z.string().default('*'),
   CDK_APP_LOGGING_ENABLED: z
     .enum(['true', 'false'] as const)
     .default('true')
