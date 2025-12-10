@@ -1,7 +1,6 @@
 #!/usr/bin/env node
 import 'source-map-support/register';
 import * as cdk from 'aws-cdk-lib';
-import * as apigateway from 'aws-cdk-lib/aws-apigateway';
 
 import { getConfig, getEnvironmentConfig, getTags } from './utils/config';
 import { DataStack } from './stacks/data-stack';
@@ -41,9 +40,9 @@ new LambdaStack(app, `${config.CDK_APP_NAME}-lambda-stack-${config.CDK_ENV}`, {
   stackName: `${config.CDK_APP_NAME}-lambda-${config.CDK_ENV}`,
   description: `Lambda functions for ${config.CDK_APP_NAME} (${config.CDK_ENV})`,
   taskTable: dataStack.taskTable,
-  apiId: apiId as any,
-  apiRootResourceId: apiRootResourceId as any,
-  authorizerId: authorizerId as any,
+  apiId: apiId,
+  apiRootResourceId: apiRootResourceId,
+  authorizerId: authorizerId,
   loggingEnabled: config.CDK_APP_LOGGING_ENABLED,
   loggingLevel: config.CDK_APP_LOGGING_LEVEL,
   loggingFormat: config.CDK_APP_LOGGING_FORMAT,
