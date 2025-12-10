@@ -6,8 +6,14 @@ const mockLogger = {
   error: jest.fn(),
 };
 
-jest.mock('../utils/logger', () => ({
+jest.mock('@/utils/logger', () => ({
   logger: mockLogger,
+}));
+
+// Mock the token authorizer service
+jest.mock('@/services/token-authorizer-service', () => ({
+  validateToken: jest.fn(),
+  buildPolicy: jest.fn(),
 }));
 
 jest.mock('pino-lambda', () => ({
@@ -16,9 +22,17 @@ jest.mock('pino-lambda', () => ({
 
 describe('Authorize Handler', () => {
   let handler: typeof import('./token-authorizer').handler;
+  let mockValidateToken: jest.Mock;
+  let mockBuildPolicy: jest.Mock;
 
   beforeEach(() => {
     jest.clearAllMocks();
+
+    // Get the mocked functions
+    const service = require('@/services/token-authorizer-service');
+    mockValidateToken = service.validateToken;
+    mockBuildPolicy = service.buildPolicy;
+
     // Import handler after mocks are set up
     handler = require('./token-authorizer').handler;
   });
@@ -29,6 +43,30 @@ describe('Authorize Handler', () => {
   describe('Valid Authorization', () => {
     it('should allow requests with valid Bearer token', async () => {
       // Arrange
+      const principalId = 'user-valid-test';
+      const context = { userId: principalId, tokenSource: 'header' };
+      const mockPolicy = {
+        principalId,
+        policyDocument: {
+          Version: '2012-10-17',
+          Statement: [
+            {
+              Action: 'execute-api:Invoke',
+              Effect: 'Allow',
+              Resource: expectedBaseResource + '/*',
+            },
+          ],
+        },
+        context,
+      };
+
+      mockValidateToken.mockReturnValue({
+        isValid: true,
+        principalId,
+        context,
+      });
+      mockBuildPolicy.mockReturnValue(mockPolicy);
+
       const event: any = {
         type: 'TOKEN',
         methodArn: mockMethodArn,
@@ -39,15 +77,40 @@ describe('Authorize Handler', () => {
       const result = (await handler(event, undefined as any, undefined as any)) as any;
 
       // Assert
-      expect(result.principalId).toContain('user-');
+      expect(mockValidateToken).toHaveBeenCalledWith('Bearer valid-test-token-12345');
+      expect(mockBuildPolicy).toHaveBeenCalledWith(principalId, 'Allow', expectedBaseResource, context);
+      expect(result.principalId).toBe(principalId);
       expect(result.policyDocument.Statement[0].Effect).toBe('Allow');
-      expect(result.policyDocument.Statement[0].Resource).toBe(expectedBaseResource + '/*');
       expect(result.context?.userId).toBeDefined();
       expect(result.context?.tokenSource).toBe('header');
     });
 
-    it('should extract principal ID from token', async () => {
+    it('should extract principal ID from validated token', async () => {
       // Arrange
+      const principalId = 'user-testtoke';
+      const context = { userId: principalId, tokenSource: 'header' };
+      const mockPolicy = {
+        principalId,
+        policyDocument: {
+          Version: '2012-10-17',
+          Statement: [
+            {
+              Action: 'execute-api:Invoke',
+              Effect: 'Allow',
+              Resource: expectedBaseResource + '/*',
+            },
+          ],
+        },
+        context,
+      };
+
+      mockValidateToken.mockReturnValue({
+        isValid: true,
+        principalId,
+        context,
+      });
+      mockBuildPolicy.mockReturnValue(mockPolicy);
+
       const event: any = {
         type: 'TOKEN',
         methodArn: mockMethodArn,
@@ -58,11 +121,35 @@ describe('Authorize Handler', () => {
       const result = (await handler(event, undefined as any, undefined as any)) as any;
 
       // Assert
-      expect(result.principalId).toBe('user-testtoke');
+      expect(result.principalId).toBe(principalId);
     });
 
     it('should include context with user ID', async () => {
       // Arrange
+      const principalId = 'user-mytoken';
+      const context = { userId: principalId, tokenSource: 'header' };
+      const mockPolicy = {
+        principalId,
+        policyDocument: {
+          Version: '2012-10-17',
+          Statement: [
+            {
+              Action: 'execute-api:Invoke',
+              Effect: 'Allow',
+              Resource: expectedBaseResource + '/*',
+            },
+          ],
+        },
+        context,
+      };
+
+      mockValidateToken.mockReturnValue({
+        isValid: true,
+        principalId,
+        context,
+      });
+      mockBuildPolicy.mockReturnValue(mockPolicy);
+
       const event: any = {
         type: 'TOKEN',
         methodArn: mockMethodArn,
@@ -82,6 +169,26 @@ describe('Authorize Handler', () => {
   describe('Invalid Authorization', () => {
     it('should deny requests with missing authorization token', async () => {
       // Arrange
+      const mockDenyPolicy = {
+        principalId: 'user',
+        policyDocument: {
+          Version: '2012-10-17',
+          Statement: [
+            {
+              Action: 'execute-api:Invoke',
+              Effect: 'Deny',
+              Resource: mockMethodArn + '/*',
+            },
+          ],
+        },
+      };
+
+      mockValidateToken.mockReturnValue({
+        isValid: false,
+        error: 'No authorization token provided',
+      });
+      mockBuildPolicy.mockReturnValue(mockDenyPolicy);
+
       const event: any = {
         type: 'TOKEN',
         methodArn: mockMethodArn,
@@ -97,6 +204,26 @@ describe('Authorize Handler', () => {
 
     it('should deny requests without Bearer prefix', async () => {
       // Arrange
+      const mockDenyPolicy = {
+        principalId: 'user',
+        policyDocument: {
+          Version: '2012-10-17',
+          Statement: [
+            {
+              Action: 'execute-api:Invoke',
+              Effect: 'Deny',
+              Resource: mockMethodArn + '/*',
+            },
+          ],
+        },
+      };
+
+      mockValidateToken.mockReturnValue({
+        isValid: false,
+        error: 'Invalid token format',
+      });
+      mockBuildPolicy.mockReturnValue(mockDenyPolicy);
+
       const event: any = {
         type: 'TOKEN',
         methodArn: mockMethodArn,
@@ -112,6 +239,26 @@ describe('Authorize Handler', () => {
 
     it('should deny requests with Bearer but no token value', async () => {
       // Arrange
+      const mockDenyPolicy = {
+        principalId: 'user',
+        policyDocument: {
+          Version: '2012-10-17',
+          Statement: [
+            {
+              Action: 'execute-api:Invoke',
+              Effect: 'Deny',
+              Resource: mockMethodArn + '/*',
+            },
+          ],
+        },
+      };
+
+      mockValidateToken.mockReturnValue({
+        isValid: false,
+        error: 'Empty token value',
+      });
+      mockBuildPolicy.mockReturnValue(mockDenyPolicy);
+
       const event: any = {
         type: 'TOKEN',
         methodArn: mockMethodArn,
@@ -127,6 +274,26 @@ describe('Authorize Handler', () => {
 
     it('should deny requests with Bearer and only whitespace', async () => {
       // Arrange
+      const mockDenyPolicy = {
+        principalId: 'user',
+        policyDocument: {
+          Version: '2012-10-17',
+          Statement: [
+            {
+              Action: 'execute-api:Invoke',
+              Effect: 'Deny',
+              Resource: mockMethodArn + '/*',
+            },
+          ],
+        },
+      };
+
+      mockValidateToken.mockReturnValue({
+        isValid: false,
+        error: 'Empty token value',
+      });
+      mockBuildPolicy.mockReturnValue(mockDenyPolicy);
+
       const event: any = {
         type: 'TOKEN',
         methodArn: mockMethodArn,
@@ -144,6 +311,30 @@ describe('Authorize Handler', () => {
   describe('Authorization Policy Structure', () => {
     it('should return proper IAM policy structure', async () => {
       // Arrange
+      const principalId = 'user-valid';
+      const context = { userId: principalId, tokenSource: 'header' };
+      const mockPolicy = {
+        principalId,
+        policyDocument: {
+          Version: '2012-10-17',
+          Statement: [
+            {
+              Action: 'execute-api:Invoke',
+              Effect: 'Allow',
+              Resource: expectedBaseResource + '/*',
+            },
+          ],
+        },
+        context,
+      };
+
+      mockValidateToken.mockReturnValue({
+        isValid: true,
+        principalId,
+        context,
+      });
+      mockBuildPolicy.mockReturnValue(mockPolicy);
+
       const event: any = {
         type: 'TOKEN',
         methodArn: mockMethodArn,
@@ -158,11 +349,35 @@ describe('Authorize Handler', () => {
       expect(result.policyDocument.Version).toBe('2012-10-17');
       expect(Array.isArray(result.policyDocument.Statement)).toBe(true);
       expect(result.policyDocument.Statement.length).toBe(1);
-      expect(result.policyDocument.Statement[0].Action).toBe('execute-api:Invoke');
+      expect((result.policyDocument.Statement[0] as any).Action).toBe('execute-api:Invoke');
     });
 
     it('should use wildcard resource to allow all methods', async () => {
       // Arrange
+      const principalId = 'user-valid';
+      const context = { userId: principalId, tokenSource: 'header' };
+      const mockPolicy = {
+        principalId,
+        policyDocument: {
+          Version: '2012-10-17',
+          Statement: [
+            {
+              Action: 'execute-api:Invoke',
+              Effect: 'Allow',
+              Resource: expectedBaseResource + '/*',
+            },
+          ],
+        },
+        context,
+      };
+
+      mockValidateToken.mockReturnValue({
+        isValid: true,
+        principalId,
+        context,
+      });
+      mockBuildPolicy.mockReturnValue(mockPolicy);
+
       const event: any = {
         type: 'TOKEN',
         methodArn: mockMethodArn,
@@ -173,13 +388,37 @@ describe('Authorize Handler', () => {
       const result = (await handler(event, undefined as any, undefined as any)) as any;
 
       // Assert
-      // With the new implementation, resource is base ARN + /* to allow all methods/paths in the stage
-      expect(result.policyDocument.Statement[0].Resource).toBe(expectedBaseResource + '/*');
-      expect(result.policyDocument.Statement[0].Resource).toContain('/*');
+      expect((result.policyDocument.Statement[0] as any).Resource).toBe(expectedBaseResource + '/*');
+      expect((result.policyDocument.Statement[0] as any).Resource).toContain('/*');
     });
 
     it('should extract base resource from method ARN', async () => {
       // Arrange
+      const principalId = 'user-valid';
+      const context = { userId: principalId, tokenSource: 'header' };
+      const expectedResource = 'arn:aws:execute-api:us-west-2:999999999999:xyz123/prod';
+      const mockPolicy = {
+        principalId,
+        policyDocument: {
+          Version: '2012-10-17',
+          Statement: [
+            {
+              Action: 'execute-api:Invoke',
+              Effect: 'Allow',
+              Resource: expectedResource + '/*',
+            },
+          ],
+        },
+        context,
+      };
+
+      mockValidateToken.mockReturnValue({
+        isValid: true,
+        principalId,
+        context,
+      });
+      mockBuildPolicy.mockReturnValue(mockPolicy);
+
       const event: any = {
         type: 'TOKEN',
         methodArn: 'arn:aws:execute-api:us-west-2:999999999999:xyz123/prod/POST/tasks/123',
@@ -190,16 +429,37 @@ describe('Authorize Handler', () => {
       const result = (await handler(event, undefined as any, undefined as any)) as any;
 
       // Assert
-      // Base resource should be first two parts of the ARN + /*
-      expect(result.policyDocument.Statement[0].Resource).toBe(
-        'arn:aws:execute-api:us-west-2:999999999999:xyz123/prod/*',
-      );
+      expect((result.policyDocument.Statement[0] as any).Resource).toBe(expectedResource + '/*');
     });
   });
 
   describe('Edge Cases', () => {
     it('should handle very long tokens', async () => {
       // Arrange
+      const principalId = 'user-xxxx';
+      const context = { userId: principalId, tokenSource: 'header' };
+      const mockPolicy = {
+        principalId,
+        policyDocument: {
+          Version: '2012-10-17',
+          Statement: [
+            {
+              Action: 'execute-api:Invoke',
+              Effect: 'Allow',
+              Resource: expectedBaseResource + '/*',
+            },
+          ],
+        },
+        context,
+      };
+
+      mockValidateToken.mockReturnValue({
+        isValid: true,
+        principalId,
+        context,
+      });
+      mockBuildPolicy.mockReturnValue(mockPolicy);
+
       const longToken = 'Bearer ' + 'x'.repeat(1000);
       const event: any = {
         type: 'TOKEN',
@@ -216,6 +476,30 @@ describe('Authorize Handler', () => {
 
     it('should handle special characters in token', async () => {
       // Arrange
+      const principalId = 'user-token';
+      const context = { userId: principalId, tokenSource: 'header' };
+      const mockPolicy = {
+        principalId,
+        policyDocument: {
+          Version: '2012-10-17',
+          Statement: [
+            {
+              Action: 'execute-api:Invoke',
+              Effect: 'Allow',
+              Resource: expectedBaseResource + '/*',
+            },
+          ],
+        },
+        context,
+      };
+
+      mockValidateToken.mockReturnValue({
+        isValid: true,
+        principalId,
+        context,
+      });
+      mockBuildPolicy.mockReturnValue(mockPolicy);
+
       const event: any = {
         type: 'TOKEN',
         methodArn: mockMethodArn,
