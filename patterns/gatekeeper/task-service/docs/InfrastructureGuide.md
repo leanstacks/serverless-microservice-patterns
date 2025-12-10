@@ -76,10 +76,9 @@ All resources are tagged for cost allocation and management:
 
 ---
 
-## Configuration & DevOps
+## Configuration
 
 - For environment variables, configuration, and validation, see the [Configuration Guide](./ConfigurationGuide.md).
-- For CI/CD, GitHub Actions, and DevOps automation, see the [DevOps Guide](./DevOpsGuide.md).
 
 ---
 
@@ -174,4 +173,3 @@ Or use a supported Node.js version (22.x or 20.x).
 
 - [AWS CDK Documentation](https://docs.aws.amazon.com/cdk/latest/guide/)
 - [Project Configuration Guide](./ConfigurationGuide.md)
-- [Project DevOps Guide](./DevOpsGuide.md)

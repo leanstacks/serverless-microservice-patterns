@@ -121,7 +121,6 @@ npm run test:watch
 - **Validation:** Zod
 - **Logging:** Pino + Pino Lambda
 - **Infrastructure:** AWS CDK
-- **DevOps:** GitHub Actions
 
 ## Key Dependencies
 
