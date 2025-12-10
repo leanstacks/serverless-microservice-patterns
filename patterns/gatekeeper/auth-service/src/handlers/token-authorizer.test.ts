@@ -24,6 +24,7 @@ describe('Authorize Handler', () => {
   });
 
   const mockMethodArn = 'arn:aws:execute-api:us-east-1:123456789012:abcdef/dev/GET/tasks';
+  const expectedBaseResource = 'arn:aws:execute-api:us-east-1:123456789012:abcdef/dev';
 
   describe('Valid Authorization', () => {
     it('should allow requests with valid Bearer token', async () => {
@@ -40,7 +41,7 @@ describe('Authorize Handler', () => {
       // Assert
       expect(result.principalId).toContain('user-');
       expect(result.policyDocument.Statement[0].Effect).toBe('Allow');
-      expect(result.policyDocument.Statement[0].Resource).toBe(mockMethodArn);
+      expect(result.policyDocument.Statement[0].Resource).toBe(expectedBaseResource + '/*');
       expect(result.context?.userId).toBeDefined();
       expect(result.context?.tokenSource).toBe('header');
     });
@@ -92,7 +93,6 @@ describe('Authorize Handler', () => {
 
       // Assert
       expect(result.policyDocument.Statement[0].Effect).toBe('Deny');
-      expect(result.policyDocument.Statement[0].Resource).toBe(mockMethodArn);
     });
 
     it('should deny requests without Bearer prefix', async () => {
@@ -161,7 +161,7 @@ describe('Authorize Handler', () => {
       expect(result.policyDocument.Statement[0].Action).toBe('execute-api:Invoke');
     });
 
-    it('should have correct resource in policy', async () => {
+    it('should use wildcard resource to allow all methods', async () => {
       // Arrange
       const event: any = {
         type: 'TOKEN',
@@ -173,7 +173,27 @@ describe('Authorize Handler', () => {
       const result = (await handler(event, undefined as any, undefined as any)) as any;
 
       // Assert
-      expect(result.policyDocument.Statement[0].Resource).toBe(mockMethodArn);
+      // With the new implementation, resource is base ARN + /* to allow all methods/paths in the stage
+      expect(result.policyDocument.Statement[0].Resource).toBe(expectedBaseResource + '/*');
+      expect(result.policyDocument.Statement[0].Resource).toContain('/*');
+    });
+
+    it('should extract base resource from method ARN', async () => {
+      // Arrange
+      const event: any = {
+        type: 'TOKEN',
+        methodArn: 'arn:aws:execute-api:us-west-2:999999999999:xyz123/prod/POST/tasks/123',
+        authorizationToken: 'Bearer valid-token',
+      };
+
+      // Act
+      const result = (await handler(event, undefined as any, undefined as any)) as any;
+
+      // Assert
+      // Base resource should be first two parts of the ARN + /*
+      expect(result.policyDocument.Statement[0].Resource).toBe(
+        'arn:aws:execute-api:us-west-2:999999999999:xyz123/prod/*',
+      );
     });
   });
 
@@ -208,22 +228,6 @@ describe('Authorize Handler', () => {
       // Assert
       expect(result.policyDocument.Statement[0].Effect).toBe('Allow');
       expect(result.principalId).toBeDefined();
-    });
-
-    it('should handle different method ARNs', async () => {
-      // Arrange
-      const differentArn = 'arn:aws:execute-api:us-west-2:999999999999:xyz123/prod/POST/tasks/123';
-      const event: any = {
-        type: 'TOKEN',
-        methodArn: differentArn,
-        authorizationToken: 'Bearer valid-token',
-      };
-
-      // Act
-      const result = (await handler(event, undefined as any, undefined as any)) as any;
-
-      // Assert
-      expect(result.policyDocument.Statement[0].Resource).toBe(differentArn);
     });
   });
 });
