@@ -6,6 +6,26 @@ There are many Serverless Microservice Patterns which may be implemented with AW
 
 ![Design diagram](../../docs/img/diagram-simple-web-service.png 'Simple Web Service')
 
+## What's inside
+
+### Task Service
+
+The **Task Service** is a complete microservice that provides task management functionality. It exposes REST API endpoints to:
+
+- Create new tasks
+- Retrieve a specific task
+- List all tasks
+- Update existing tasks
+- Delete tasks
+
+The Task Service Lambda functions interact with a DynamoDB table to persist task data. All requests are handled through an API Gateway which routes incoming HTTP requests to the appropriate Lambda handler functions.
+
+### The Simple Web Service Pattern in Action
+
+The Simple Web Service pattern demonstrates the fundamental architecture of a serverless microservice. When an HTTP request is made to an API Gateway endpoint, it routes the request to a Lambda function handler. The handler validates the request, calls the appropriate business logic service, and returns an HTTP response. The service layer handles the actual business logic and interacts with DynamoDB to manage task data.
+
+This pattern provides a solid, scalable foundation for building serverless microservices and serves as the basis for more advanced patterns that add authentication, authorization, or inter-service communication capabilities.
+
 ## Getting started
 
 ### Prerequisites

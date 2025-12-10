@@ -30,7 +30,7 @@ The Task Service functions interact with a DynamoDB table to persist task data.
 
 The **Daily Planner Service** is a specialized microservice that provides daily planning functionality. It demonstrates the Internal API pattern by synchronously invoking the Task Service's **List Tasks** function using the AWS SDK with an `InvocationType` of `RequestResponse`.
 
-#### The Internal API Pattern in Action
+### The Internal API Pattern in Action
 
 The key demonstration of the Internal API pattern occurs in the Daily Planner service. When the Daily Planner Lambda function executes, it makes a direct, synchronous call to the List Tasks Lambda function from the Task Service. This Lambda-to-Lambda invocation is the core of the Internal API pattern and showcases how one microservice can depend on another microservice by directly invoking its Lambda functions.
 
