@@ -6,60 +6,29 @@ This guide provides a concise overview of the AWS CDK infrastructure for the pro
 
 ## Stacks Overview
 
-The infrastructure is organized into two main AWS CDK stacks:
+The infrastructure is organized into the following AWS CDK stacks:
 
-| Stack Name Pattern        | Purpose                                    |
-| ------------------------- | ------------------------------------------ |
-| `{app-name}-data-{env}`   | Manages DynamoDB tables and data resources |
-| `{app-name}-lambda-{env}` | Manages Lambda functions and API Gateway   |
-
----
-
-## Data Stack
-
-**Purpose:** Manages DynamoDB tables and data-related resources.
-
-**Key Resources:**
-
-| Resource       | Name Pattern            | Key Properties                                                                                                                        |
-| -------------- | ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
-| DynamoDB Table | `{app-name}-task-{env}` | Partition Key: `pk` (String), On-demand billing, SSE encryption, PITR (prd only), Removal Policy: `RETAIN` (prd), `DESTROY` (dev/qat) |
-
-**Outputs:**
-
-| Output Name     | Export Name Pattern                | Description                           |
-| --------------- | ---------------------------------- | ------------------------------------- |
-| `TaskTableName` | `{app-name}-task-table-name-{env}` | Table name (exported as stack output) |
-| `TaskTableArn`  | `{app-name}-task-table-arn-{env}`  | Table ARN (exported as stack output)  |
+| Stack Name Pattern        | Purpose                                           |
+| ------------------------- | ------------------------------------------------- |
+| `{app-name}-lambda-{env}` | Manages Lambda functions and associated resources |
 
 ---
 
 ## Lambda Stack
 
-**Purpose:** Manages Lambda functions, API Gateway, and application runtime resources.
+**Purpose:** Manages Lambda functions and application runtime resources.
 
 **Key Resources:**
 
-| Resource        | Name Pattern                   | Purpose/Notes                        |
-| --------------- | ------------------------------ | ------------------------------------ |
-| Lambda Function | `{app-name}-list-tasks-{env}`  | List all tasks (DynamoDB Scan)       |
-| Lambda Function | `{app-name}-get-task-{env}`    | Get a task by ID (DynamoDB GetItem)  |
-| Lambda Function | `{app-name}-create-task-{env}` | Create a new task (DynamoDB PutItem) |
-| Lambda Function | `{app-name}-update-task-{env}` | Update a task (DynamoDB UpdateItem)  |
-| Lambda Function | `{app-name}-delete-task-{env}` | Delete a task (DynamoDB DeleteItem)  |
-| API Gateway     | `{app-name}-api-{env}`         | REST API for Lambda functions        |
+| Resource        | Name Pattern                        | Purpose/Notes                    |
+| --------------- | ----------------------------------- | -------------------------------- |
+| Lambda Function | `{app-name}-token-authorizer-{env}` | Token authorizer for API Gateway |
 
 **Outputs:**
 
-| Output Name             | Export Name Pattern                | Description                     |
-| ----------------------- | ---------------------------------- | ------------------------------- |
-| `ApiUrl`                | `{app-name}-api-url-{env}`         | API Gateway endpoint URL        |
-| `ApiId`                 | `{app-name}-api-id-{env}`          | API Gateway ID                  |
-| `ListTasksFunctionArn`  | `{app-name}-list-tasks-arn-{env}`  | List Tasks Lambda function ARN  |
-| `GetTaskFunctionArn`    | `{app-name}-get-task-arn-{env}`    | Get Task Lambda function ARN    |
-| `CreateTaskFunctionArn` | `{app-name}-create-task-arn-{env}` | Create Task Lambda function ARN |
-| `UpdateTaskFunctionArn` | `{app-name}-update-task-arn-{env}` | Update Task Lambda function ARN |
-| `DeleteTaskFunctionArn` | `{app-name}-delete-task-arn-{env}` | Delete Task Lambda function ARN |
+| Output Name             | Export Name Pattern                        | Description                          |
+| ----------------------- | ------------------------------------------ | ------------------------------------ |
+| `AuthorizerFunctionArn` | `{app-name}-authorizer-function-arn-{env}` | Token authorizer Lambda function ARN |
 
 ---
 
@@ -76,10 +45,9 @@ All resources are tagged for cost allocation and management:
 
 ---
 
-## Configuration & DevOps
+## Configuration
 
 - For environment variables, configuration, and validation, see the [Configuration Guide](./ConfigurationGuide.md).
-- For CI/CD, GitHub Actions, and DevOps automation, see the [DevOps Guide](./DevOpsGuide.md).
 
 ---
 
@@ -174,4 +142,3 @@ Or use a supported Node.js version (22.x or 20.x).
 
 - [AWS CDK Documentation](https://docs.aws.amazon.com/cdk/latest/guide/)
 - [Project Configuration Guide](./ConfigurationGuide.md)
-- [Project DevOps Guide](./DevOpsGuide.md)

@@ -5,7 +5,7 @@ AWS CDK infrastructure for this project.
 ## Technology Stack
 
 - **AWS CDK:** v2
-- **Language:** TypeScript 5.9+
+- **Language:** TypeScript
 - **Node.js:** v24+
 - **Package Manager:** npm
 - **Testing:** Jest
@@ -16,9 +16,7 @@ AWS CDK infrastructure for this project.
 ```
 /infrastructure
    /stacks
-      data-stack.ts           # DynamoDB tables and data resources
-      data-stack.test.ts      # Unit tests for data stack
-      lambda-stack.ts         # Lambda/API Gateway resources
+      lambda-stack.ts         # Lambda resources
       lambda-stack.test.ts    # Unit tests for lambda stack
    /utils
       config.ts               # Configuration management with Zod validation
@@ -180,10 +178,10 @@ Error: CDK configuration validation failed: CDK_ENV: CDK_ENV must be one of: dev
 npm run cdk list
 
 # Show differences for a specific stack
-npm run cdk diff smp-gatekeeper-task-service-data-dev
+npm run cdk diff smp-gatekeeper-auth-service-lambda-dev
 
 # Deploy a specific stack
-npm run cdk deploy smp-gatekeeper-task-service-data-dev
+npm run cdk deploy smp-gatekeeper-auth-service-lambda-dev
 
 # View stack outputs
 npm run cdk list --long
