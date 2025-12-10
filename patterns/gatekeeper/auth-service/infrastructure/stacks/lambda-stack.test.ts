@@ -1,5 +1,4 @@
 import * as cdk from 'aws-cdk-lib';
-import * as apigateway from 'aws-cdk-lib/aws-apigateway';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
 import { LambdaStack, type LambdaStackProps } from './lambda-stack';
 
@@ -15,7 +14,6 @@ describe('LambdaStack', () => {
       loggingEnabled: true,
       loggingLevel: 'debug',
       loggingFormat: 'json',
-      corsAllowOrigin: 'http://localhost:3000',
     };
 
     stack = new LambdaStack(app, 'TestLambdaStack', props);
@@ -30,16 +28,6 @@ describe('LambdaStack', () => {
     it('should create an authorizer function', () => {
       expect(stack.authorizerFunction).toBeDefined();
       expect(stack.authorizerFunction).toBeInstanceOf(lambda.Function);
-    });
-
-    it('should create a TokenAuthorizer', () => {
-      expect(stack.authorizer).toBeDefined();
-      expect(stack.authorizer).toBeInstanceOf(apigateway.TokenAuthorizer);
-    });
-
-    it('should create an API Gateway REST API', () => {
-      expect(stack.api).toBeDefined();
-      expect(stack.api).toBeInstanceOf(apigateway.RestApi);
     });
   });
 
@@ -62,25 +50,19 @@ describe('LambdaStack', () => {
     });
   });
 
-  describe('API Gateway', () => {
-    it('should have the correct API name', () => {
-      expect(stack.api.restApiName).toBe('gatekeeper-api-test');
-    });
-
-    it('should have a root resource', () => {
-      expect(stack.api.root).toBeDefined();
-      expect(stack.api.restApiId).toBeDefined();
-    });
-
-    it('should have REST API ID defined', () => {
-      expect(stack.api.restApiId).toBeTruthy();
-    });
-  });
-
   describe('CloudFormation Outputs', () => {
     it('should create stack outputs', () => {
       // Verify that the stack can be synthesized (outputs are defined)
       expect(stack.node.root).toBeDefined();
+    });
+
+    it('should export authorizer function ARN', () => {
+      const template = cdk.assertions.Template.fromStack(stack);
+      template.hasOutput('AuthorizerFunctionArn', {
+        Export: {
+          Name: 'gatekeeper-authorizer-function-arn-test',
+        },
+      });
     });
   });
 
@@ -92,7 +74,6 @@ describe('LambdaStack', () => {
         loggingEnabled: true,
         loggingLevel: 'info',
         loggingFormat: 'json',
-        corsAllowOrigin: 'https://example.com',
       });
 
       expect(prodStack).toBeInstanceOf(LambdaStack);
@@ -106,42 +87,20 @@ describe('LambdaStack', () => {
         loggingEnabled: true,
         loggingLevel: 'debug',
         loggingFormat: 'json',
-        corsAllowOrigin: '*',
       });
 
       expect(devStack).toBeInstanceOf(LambdaStack);
       expect(devStack.authorizerFunction).toBeDefined();
-    });
-
-    it('should accept custom CORS origin from props', () => {
-      const customStack = new LambdaStack(app, 'CustomStack', {
-        appName: 'gatekeeper',
-        envName: 'test',
-        loggingEnabled: true,
-        loggingLevel: 'debug',
-        loggingFormat: 'json',
-        corsAllowOrigin: 'https://custom-domain.com',
-      });
-
-      expect(customStack).toBeInstanceOf(LambdaStack);
-      expect(customStack.api).toBeDefined();
     });
   });
 
   describe('integration', () => {
     it('should have all required properties accessible', () => {
       expect(stack.authorizerFunction).toBeDefined();
-      expect(stack.authorizer).toBeDefined();
-      expect(stack.api).toBeDefined();
     });
 
     it('should create Lambda function with correct timeout', () => {
       expect(stack.authorizerFunction.timeout?.toSeconds()).toBe(10);
-    });
-
-    it('should create API with name containing appName', () => {
-      // The exact name includes tokens until synthesis, so just verify it exists
-      expect(stack.api.restApiName).toBeTruthy();
     });
 
     it('should support multiple stacks in same app', () => {
@@ -151,11 +110,9 @@ describe('LambdaStack', () => {
         loggingEnabled: true,
         loggingLevel: 'info',
         loggingFormat: 'json',
-        corsAllowOrigin: '*',
       });
 
       expect(stack.authorizerFunction).not.toBe(stack2.authorizerFunction);
-      expect(stack.api).not.toBe(stack2.api);
     });
   });
 
@@ -167,11 +124,9 @@ describe('LambdaStack', () => {
         loggingEnabled: true,
         loggingLevel: 'debug',
         loggingFormat: 'json',
-        corsAllowOrigin: 'http://localhost',
       });
 
       expect(customStack.authorizerFunction).toBeDefined();
-      expect(customStack.api).toBeDefined();
     });
 
     it('should accept envName property and apply it to resources', () => {
@@ -181,11 +136,9 @@ describe('LambdaStack', () => {
         loggingEnabled: false,
         loggingLevel: 'error',
         loggingFormat: 'text',
-        corsAllowOrigin: 'https://staging.example.com',
       });
 
       expect(stagingStack.authorizerFunction).toBeDefined();
-      expect(stagingStack.api).toBeDefined();
     });
 
     it('should accept logging configuration properties', () => {
@@ -195,7 +148,6 @@ describe('LambdaStack', () => {
         loggingEnabled: true,
         loggingLevel: 'warn',
         loggingFormat: 'text',
-        corsAllowOrigin: '*',
       });
 
       expect(loggingStack.authorizerFunction).toBeDefined();

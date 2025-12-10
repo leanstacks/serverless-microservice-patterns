@@ -25,47 +25,27 @@ jest.mock('aws-cdk-lib/aws-lambda-nodejs', () => {
 });
 
 /**
- * Helper function to create a mock auth service stack with API Gateway and authorizer
- * Note: We create the API and authorizer in a separate stack to simulate the cross-stack pattern
+ * Helper function to create a mock auth service stack that exports the authorizer function ARN
+ * Note: We only mock the authorizer function since this stack now owns the API Gateway
  */
-function createMockAuthStack(testApp: cdk.App): {
-  apiId: string;
-  apiRootResourceId: string;
-  authorizerId: string;
-  authFunction: lambda.Function;
-} {
+function createMockAuthorizerFunction(testApp: cdk.App): lambda.Function {
   const mockAuthStack = new cdk.Stack(testApp, 'MockAuthStack');
 
   // Create mock authorizer function
   const mockAuthorizerFunction = new lambda.Function(mockAuthStack, 'MockAuthorizerFunction', {
+    functionName: 'mock-authorizer-function',
     runtime: lambda.Runtime.NODEJS_24_X,
     handler: 'index.handler',
     code: lambda.Code.fromInline('exports.handler = async () => {};'),
   });
 
-  // Create API Gateway
-  const api = new apigateway.RestApi(mockAuthStack, 'MockApi', {
-    restApiName: 'mock-api',
+  // Export the function ARN (simulating what auth-service exports)
+  new cdk.CfnOutput(mockAuthStack, 'AuthorizerFunctionArn', {
+    value: mockAuthorizerFunction.functionArn,
+    exportName: 'mock-authorizer-function-arn',
   });
 
-  // Create token authorizer
-  const authorizer = new apigateway.TokenAuthorizer(mockAuthStack, 'MockAuthorizer', {
-    handler: mockAuthorizerFunction,
-    identitySource: 'method.request.header.Authorization',
-  });
-
-  // Attach authorizer to a method on the API (required by CDK validation)
-  api.root.addMethod('ANY', new apigateway.MockIntegration(), {
-    authorizer,
-    authorizationType: apigateway.AuthorizationType.CUSTOM,
-  });
-
-  return {
-    apiId: api.restApiId,
-    apiRootResourceId: api.root.resourceId,
-    authorizerId: authorizer.authorizerId,
-    authFunction: mockAuthorizerFunction,
-  };
+  return mockAuthorizerFunction;
 }
 
 describe('LambdaStack', () => {
@@ -85,17 +65,15 @@ describe('LambdaStack', () => {
         },
       });
 
-      // Create mock auth service resources
-      const { apiId, apiRootResourceId, authorizerId } = createMockAuthStack(testApp);
+      // Create mock auth service authorizer function
+      const mockAuthorizerFunction = createMockAuthorizerFunction(testApp);
 
-      // Create the task service Lambda stack
+      // Create the task service Lambda stack with API Gateway
       const stack = new LambdaStack(testApp, 'TestLambdaStack', {
         appName: 'smp-gatekeeper-task-service',
         envName: 'dev',
         taskTable: testMockTable,
-        apiId,
-        apiRootResourceId,
-        authorizerId,
+        authorizerFunctionArn: mockAuthorizerFunction.functionArn,
         loggingEnabled: true,
         loggingLevel: 'debug',
         loggingFormat: 'json',
@@ -260,17 +238,15 @@ describe('LambdaStack', () => {
         },
       });
 
-      // Create mock auth service resources
-      const { apiId, apiRootResourceId, authorizerId } = createMockAuthStack(testApp);
+      // Create mock auth service authorizer function
+      const mockAuthorizerFunction = createMockAuthorizerFunction(testApp);
 
-      // Create the task service Lambda stack
+      // Create the task service Lambda stack with API Gateway
       const stack = new LambdaStack(testApp, 'TestLambdaStack', {
         appName: 'smp-gatekeeper-task-service',
         envName: 'prd',
         taskTable: testMockTable,
-        apiId,
-        apiRootResourceId,
-        authorizerId,
+        authorizerFunctionArn: mockAuthorizerFunction.functionArn,
         loggingEnabled: true,
         loggingLevel: 'info',
         loggingFormat: 'json',
@@ -312,17 +288,15 @@ describe('LambdaStack', () => {
         },
       });
 
-      // Create mock auth service resources
-      const { apiId, apiRootResourceId, authorizerId } = createMockAuthStack(testApp);
+      // Create mock auth service authorizer function
+      const mockAuthorizerFunction = createMockAuthorizerFunction(testApp);
 
-      // Create the task service Lambda stack
+      // Create the task service Lambda stack with API Gateway
       const stack = new LambdaStack(testApp, 'TestLambdaStack', {
         appName: 'smp-gatekeeper-task-service',
         envName: 'dev',
         taskTable: testMockTable,
-        apiId,
-        apiRootResourceId,
-        authorizerId,
+        authorizerFunctionArn: mockAuthorizerFunction.functionArn,
         loggingEnabled: true,
         loggingLevel: 'debug',
         loggingFormat: 'json',
@@ -331,26 +305,16 @@ describe('LambdaStack', () => {
       template = Template.fromStack(stack);
     });
 
-    it('should accept API Gateway from auth service as props', () => {
-      // Verify that Lambda functions have permission to invoke API Gateway integration role
-      template.hasResourceProperties('AWS::IAM::Role', {
-        AssumeRolePolicyDocument: {
-          Statement: Match.arrayWith([
-            Match.objectLike({
-              Principal: {
-                Service: 'lambda.amazonaws.com',
-              },
-            }),
-          ]),
-        },
+    it('should create API Gateway REST API', () => {
+      template.hasResourceProperties('AWS::ApiGateway::RestApi', {
+        Name: 'smp-gatekeeper-task-service-api-dev',
       });
     });
 
-    it('should accept authorizer from auth service as props', () => {
-      // Verify that the stack was created with external resources
-      // The fact that the stack instantiated without errors is the proof
-      // of successful cross-stack integration
-      template.resourceCountIs('AWS::Lambda::Function', 5);
+    it('should create TokenAuthorizer using imported authorizer function', () => {
+      template.hasResourceProperties('AWS::ApiGateway::Authorizer', {
+        Type: 'TOKEN',
+      });
     });
 
     it('should reference DynamoDB table by name', () => {
@@ -380,17 +344,15 @@ describe('LambdaStack', () => {
         },
       });
 
-      // Create mock auth service resources
-      const { apiId, apiRootResourceId, authorizerId } = createMockAuthStack(testApp);
+      // Create mock auth service authorizer function
+      const mockAuthorizerFunction = createMockAuthorizerFunction(testApp);
 
-      // Create the task service Lambda stack
+      // Create the task service Lambda stack with API Gateway
       const stack = new LambdaStack(testApp, 'TestLambdaStack', {
         appName: 'smp-gatekeeper-task-service',
         envName: 'dev',
         taskTable: testMockTable,
-        apiId,
-        apiRootResourceId,
-        authorizerId,
+        authorizerFunctionArn: mockAuthorizerFunction.functionArn,
         loggingEnabled: true,
         loggingLevel: 'debug',
         loggingFormat: 'json',

@@ -27,19 +27,9 @@ export interface LambdaStackProps extends cdk.StackProps {
   taskTable: dynamodb.ITable;
 
   /**
-   * ID of the shared API Gateway.
+   * ARN of the Lambda authorizer function from auth service.
    */
-  apiId: string;
-
-  /**
-   * Root resource ID of the shared API Gateway.
-   */
-  apiRootResourceId: string;
-
-  /**
-   * ID of the Lambda authorizer from auth service.
-   */
-  authorizerId: string;
+  authorizerFunctionArn: string;
 
   /**
    * Whether to enable application logging.
@@ -63,9 +53,14 @@ export interface LambdaStackProps extends cdk.StackProps {
 }
 
 /**
- * CDK Stack for Lambda functions integrated with shared API Gateway.
+ * CDK Stack for Lambda functions and API Gateway with imported Lambda authorizer.
  */
 export class LambdaStack extends cdk.Stack {
+  /**
+   * The API Gateway REST API.
+   */
+  public readonly api: apigateway.RestApi;
+
   /**
    * The list tasks Lambda function.
    */
@@ -254,20 +249,39 @@ export class LambdaStack extends cdk.Stack {
     // Grant the Lambda function read and write access to the DynamoDB table
     props.taskTable.grantReadWriteData(this.deleteTaskFunction);
 
-    // Reconstruct the shared API from auth service
-    const api = apigateway.RestApi.fromRestApiAttributes(this, 'SharedApi', {
-      restApiId: props.apiId,
-      rootResourceId: props.apiRootResourceId,
+    // Create API Gateway REST API in this stack
+    this.api = new apigateway.RestApi(this, 'TaskApi', {
+      restApiName: `${props.appName}-api-${props.envName}`,
+      description: `Task API with Lambda authorizer for ${props.envName} environment`,
+      deployOptions: {
+        stageName: props.envName,
+        throttlingRateLimit: 100,
+        throttlingBurstLimit: 200,
+      },
+      defaultCorsPreflightOptions: {
+        allowOrigins: [props.corsAllowOrigin],
+        allowMethods: apigateway.Cors.ALL_METHODS,
+        allowHeaders: ['Content-Type', 'Authorization'],
+      },
     });
 
-    // Reconstruct the authorizer reference from auth service
-    // Since Authorizer.fromAuthorizerAttributes doesn't exist, we create an IAuthorizer-compatible object
-    const authorizer: apigateway.IAuthorizer = {
-      authorizerId: props.authorizerId,
-    };
+    // Import the authorizer Lambda function from auth service
+    // Note: sameEnvironment=true because both stacks are in the same AWS account/region
+    // Permission to invoke is granted in the auth-service stack
+    const authorizerFunction = lambda.Function.fromFunctionAttributes(this, 'AuthorizerFunction', {
+      functionArn: props.authorizerFunctionArn,
+      sameEnvironment: true,
+    });
 
-    // Create /tasks resource in the shared API Gateway from auth service
-    const tasksResource = api.root.addResource('tasks');
+    // Create the TokenAuthorizer using the imported function
+    const authorizer = new apigateway.TokenAuthorizer(this, 'TokenAuthorizer', {
+      handler: authorizerFunction,
+      identitySource: apigateway.IdentitySource.header('Authorization'),
+      resultsCacheTtl: cdk.Duration.seconds(300),
+    });
+
+    // Create /tasks resource
+    const tasksResource = this.api.root.addResource('tasks');
 
     // Add GET method to /tasks with authorizer
     tasksResource.addMethod('GET', new apigateway.LambdaIntegration(this.listTasksFunction), {
@@ -300,6 +314,13 @@ export class LambdaStack extends cdk.Stack {
     taskResource.addMethod('DELETE', new apigateway.LambdaIntegration(this.deleteTaskFunction), {
       authorizer,
       authorizationType: apigateway.AuthorizationType.CUSTOM,
+    });
+
+    // Output the API URL
+    new cdk.CfnOutput(this, 'ApiUrl', {
+      value: this.api.url,
+      description: 'URL of the Task API',
+      exportName: `${props.appName}-api-url-${props.envName}`,
     });
 
     // Output the list tasks function ARN

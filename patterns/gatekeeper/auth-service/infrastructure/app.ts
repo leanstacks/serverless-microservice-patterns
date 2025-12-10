@@ -17,16 +17,15 @@ const tags = getTags(config);
 // Get AWS environment configuration
 const environmentConfig = getEnvironmentConfig(config);
 
-// Create Lambda Stack with API Gateway and Lambda authorizer
+// Create Lambda Stack with authorizer function
 new LambdaStack(app, `${config.CDK_APP_NAME}-lambda-stack-${config.CDK_ENV}`, {
   appName: config.CDK_APP_NAME,
   envName: config.CDK_ENV,
   stackName: `${config.CDK_APP_NAME}-lambda-${config.CDK_ENV}`,
-  description: `Lambda authorizer and API Gateway for ${config.CDK_APP_NAME} (${config.CDK_ENV})`,
+  description: `Lambda authorizer function for ${config.CDK_APP_NAME} (${config.CDK_ENV})`,
   loggingEnabled: config.CDK_APP_LOGGING_ENABLED,
   loggingLevel: config.CDK_APP_LOGGING_LEVEL,
   loggingFormat: config.CDK_APP_LOGGING_FORMAT,
-  corsAllowOrigin: config.CDK_CORS_ALLOW_ORIGIN,
   ...(environmentConfig && { env: environmentConfig }),
 });
 
