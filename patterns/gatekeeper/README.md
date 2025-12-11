@@ -6,7 +6,7 @@ There are many Serverless Microservice Patterns which may be implemented with AW
 
 This pattern demonstrates how to implement a centralized authorization layer that protects multiple backend services. The Token Authorizer acts as a gatekeeper, validating tokens and determining which requests are allowed to proceed to the protected resources.
 
-![Design diagram](../../docs/img/gatekeeper.png "The Gatekeeper Pattern")
+![Design diagram](../../docs/img/diagram-gatekeeper.png "The Gatekeeper Pattern")
 
 ## What's inside
 
