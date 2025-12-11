@@ -21,6 +21,7 @@ const withRequestTracking = lambdaRequestTracker();
 export const handler = async (event: APIGatewayProxyEvent, context: Context): Promise<APIGatewayProxyResult> => {
   withRequestTracking(event, context);
   logger.info('[ListTasks] > handler', {
+    requestId: event.requestContext.requestId,
     event,
   });
 
@@ -29,11 +30,14 @@ export const handler = async (event: APIGatewayProxyEvent, context: Context): Pr
 
     logger.info('[ListTasks] < handler - successfully retrieved tasks', {
       count: tasks.length,
+      requestId: event.requestContext.requestId,
     });
 
     return ok(tasks);
   } catch (error) {
-    logger.error('[ListTasks] < handler - failed to list tasks', error as Error);
+    logger.error('[ListTasks] < handler - failed to list tasks', error as Error, {
+      requestId: event.requestContext.requestId,
+    });
 
     return internalServerError('Failed to retrieve tasks');
   }

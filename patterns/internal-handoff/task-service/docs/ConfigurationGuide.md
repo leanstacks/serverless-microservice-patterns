@@ -44,18 +44,18 @@ The infrastructure configuration is managed through environment variables prefix
 
 The following environment variables are available for configuring the infrastructure:
 
-| Variable                  | Type    | Description                                            | Default          | Required |
-| ------------------------- | ------- | ------------------------------------------------------ | ---------------- | -------- |
-| `CDK_APP_NAME`            | string  | The application name used in resource naming           | `smp-gatekeeper` | No       |
-| `CDK_ENV`                 | enum    | Environment: `dev`, `qat`, `prd`                       | -                | Yes      |
-| `CDK_ACCOUNT`             | string  | AWS account ID for deployment                          | -                | No       |
-| `CDK_REGION`              | string  | AWS region for deployment                              | -                | No       |
-| `CDK_OU`                  | string  | Organizational Unit for resource tagging               | `leanstacks`     | No       |
-| `CDK_OWNER`               | string  | Owner tag for resource tracking                        | `unknown`        | No       |
-| `CDK_CORS_ALLOW_ORIGIN`   | string  | CORS allow origin for API Gateway and Lambda functions | `*`              | No       |
-| `CDK_APP_LOGGING_ENABLED` | boolean | Enable logging in Lambda functions                     | `true`           | No       |
-| `CDK_APP_LOGGING_LEVEL`   | enum    | Logging level: `debug`, `info`, `warn`, `error`        | `info`           | No       |
-| `CDK_APP_LOGGING_FORMAT`  | enum    | Logging format: `text`, `json`                         | `json`           | No       |
+| Variable                  | Type    | Description                                            | Default                  | Required |
+| ------------------------- | ------- | ------------------------------------------------------ | ------------------------ | -------- |
+| `CDK_APP_NAME`            | string  | The application name used in resource naming           | `smp-simple-web-service` | No       |
+| `CDK_ENV`                 | enum    | Environment: `dev`, `qat`, `prd`                       | -                        | Yes      |
+| `CDK_ACCOUNT`             | string  | AWS account ID for deployment                          | -                        | No       |
+| `CDK_REGION`              | string  | AWS region for deployment                              | -                        | No       |
+| `CDK_OU`                  | string  | Organizational Unit for resource tagging               | `leanstacks`             | No       |
+| `CDK_OWNER`               | string  | Owner tag for resource tracking                        | `unknown`                | No       |
+| `CDK_CORS_ALLOW_ORIGIN`   | string  | CORS allow origin for API Gateway and Lambda functions | `*`                      | No       |
+| `CDK_APP_LOGGING_ENABLED` | boolean | Enable logging in Lambda functions                     | `true`                   | No       |
+| `CDK_APP_LOGGING_LEVEL`   | enum    | Logging level: `debug`, `info`, `warn`, `error`        | `info`                   | No       |
+| `CDK_APP_LOGGING_FORMAT`  | enum    | Logging format: `text`, `json`                         | `json`                   | No       |
 
 ### Usage
 

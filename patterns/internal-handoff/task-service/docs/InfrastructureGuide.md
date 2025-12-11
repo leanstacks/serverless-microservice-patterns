@@ -67,18 +67,19 @@ The infrastructure is organized into two main AWS CDK stacks:
 
 All resources are tagged for cost allocation and management:
 
-| Tag     | Source         | Example Value       |
-| ------- | -------------- | ------------------- |
-| `App`   | `CDK_APP_NAME` | `smp-gatekeeper`    |
-| `Env`   | `CDK_ENV`      | `dev`, `qat`, `prd` |
-| `OU`    | `CDK_OU`       | `leanstacks`        |
-| `Owner` | `CDK_OWNER`    | `platform-team`     |
+| Tag     | Source         | Example Value            |
+| ------- | -------------- | ------------------------ |
+| `App`   | `CDK_APP_NAME` | `smp-simple-web-service` |
+| `Env`   | `CDK_ENV`      | `dev`, `qat`, `prd`      |
+| `OU`    | `CDK_OU`       | `leanstacks`             |
+| `Owner` | `CDK_OWNER`    | `platform-team`          |
 
 ---
 
-## Configuration
+## Configuration & DevOps
 
 - For environment variables, configuration, and validation, see the [Configuration Guide](./ConfigurationGuide.md).
+- For CI/CD, GitHub Actions, and DevOps automation, see the [DevOps Guide](./DevOpsGuide.md).
 
 ---
 
@@ -173,3 +174,4 @@ Or use a supported Node.js version (22.x or 20.x).
 
 - [AWS CDK Documentation](https://docs.aws.amazon.com/cdk/latest/guide/)
 - [Project Configuration Guide](./ConfigurationGuide.md)
+- [Project DevOps Guide](./DevOpsGuide.md)

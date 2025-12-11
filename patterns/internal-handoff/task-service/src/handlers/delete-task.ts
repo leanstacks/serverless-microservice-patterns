@@ -21,6 +21,7 @@ const withRequestTracking = lambdaRequestTracker();
 export const handler = async (event: APIGatewayProxyEvent, context: Context): Promise<APIGatewayProxyResult> => {
   withRequestTracking(event, context);
   logger.info('[DeleteTask] > handler', {
+    requestId: event.requestContext.requestId,
     event,
   });
 
@@ -28,7 +29,9 @@ export const handler = async (event: APIGatewayProxyEvent, context: Context): Pr
     const taskId = event.pathParameters?.taskId;
 
     if (!taskId) {
-      logger.warn('[DeleteTask] < handler - missing taskId path parameter');
+      logger.warn('[DeleteTask] < handler - missing taskId path parameter', {
+        requestId: event.requestContext.requestId,
+      });
       return notFound('Task not found');
     }
 
@@ -37,17 +40,21 @@ export const handler = async (event: APIGatewayProxyEvent, context: Context): Pr
     if (!deleted) {
       logger.info('[DeleteTask] < handler - task not found', {
         taskId,
+        requestId: event.requestContext.requestId,
       });
       return notFound('Task not found');
     }
 
     logger.info('[DeleteTask] < handler - successfully deleted task', {
       taskId,
+      requestId: event.requestContext.requestId,
     });
 
     return noContent();
   } catch (error) {
-    logger.error('[DeleteTask] < handler - failed to delete task', error as Error);
+    logger.error('[DeleteTask] < handler - failed to delete task', error as Error, {
+      requestId: event.requestContext.requestId,
+    });
 
     return internalServerError('Failed to delete task');
   }

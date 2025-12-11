@@ -23,13 +23,16 @@ const withRequestTracking = lambdaRequestTracker();
 export const handler = async (event: APIGatewayProxyEvent, context: Context): Promise<APIGatewayProxyResult> => {
   withRequestTracking(event, context);
   logger.info('[CreateTask] > handler', {
+    requestId: event.requestContext.requestId,
     event,
   });
 
   try {
     // Parse and validate request body
     if (!event.body) {
-      logger.warn('[CreateTask] < handler - missing request body');
+      logger.warn('[CreateTask] < handler - missing request body', {
+        requestId: event.requestContext.requestId,
+      });
       return badRequest('Request body is required');
     }
 
@@ -37,7 +40,9 @@ export const handler = async (event: APIGatewayProxyEvent, context: Context): Pr
     try {
       requestBody = JSON.parse(event.body);
     } catch (_error) {
-      logger.warn('[CreateTask] < handler - invalid JSON in request body');
+      logger.warn('[CreateTask] < handler - invalid JSON in request body', {
+        requestId: event.requestContext.requestId,
+      });
       return badRequest('Invalid JSON in request body');
     }
 
@@ -49,6 +54,7 @@ export const handler = async (event: APIGatewayProxyEvent, context: Context): Pr
 
     logger.info('[CreateTask] < handler - successfully created task', {
       id: task.id,
+      requestId: event.requestContext.requestId,
     });
 
     return created(task);
@@ -57,11 +63,14 @@ export const handler = async (event: APIGatewayProxyEvent, context: Context): Pr
       const errorMessages = error.issues.map((err) => `${err.path.join('.')}: ${err.message}`).join(', ');
       logger.warn('[CreateTask] < handler - validation error', {
         errors: error.issues,
+        requestId: event.requestContext.requestId,
       });
       return badRequest(`Validation failed: ${errorMessages}`);
     }
 
-    logger.error('[CreateTask] < handler - failed to create task', error as Error);
+    logger.error('[CreateTask] < handler - failed to create task', error as Error, {
+      requestId: event.requestContext.requestId,
+    });
 
     return internalServerError('Failed to create task');
   }

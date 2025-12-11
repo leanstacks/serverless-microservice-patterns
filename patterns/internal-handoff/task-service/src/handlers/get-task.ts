@@ -21,6 +21,7 @@ const withRequestTracking = lambdaRequestTracker();
 export const handler = async (event: APIGatewayProxyEvent, context: Context): Promise<APIGatewayProxyResult> => {
   withRequestTracking(event, context);
   logger.info('[GetTask] > handler', {
+    requestId: event.requestContext.requestId,
     event,
   });
 
@@ -28,7 +29,9 @@ export const handler = async (event: APIGatewayProxyEvent, context: Context): Pr
     const taskId = event.pathParameters?.taskId;
 
     if (!taskId) {
-      logger.warn('[GetTask] < handler - missing taskId path parameter');
+      logger.warn('[GetTask] < handler - missing taskId path parameter', {
+        requestId: event.requestContext.requestId,
+      });
       return notFound('Task not found');
     }
 
@@ -37,17 +40,21 @@ export const handler = async (event: APIGatewayProxyEvent, context: Context): Pr
     if (!task) {
       logger.info('[GetTask] < handler - task not found', {
         taskId,
+        requestId: event.requestContext.requestId,
       });
       return notFound('Task not found');
     }
 
     logger.info('[GetTask] < handler - successfully retrieved task', {
       taskId,
+      requestId: event.requestContext.requestId,
     });
 
     return ok(task);
   } catch (error) {
-    logger.error('[GetTask] < handler - failed to get task', error as Error);
+    logger.error('[GetTask] < handler - failed to get task', error as Error, {
+      requestId: event.requestContext.requestId,
+    });
 
     return internalServerError('Failed to retrieve task');
   }

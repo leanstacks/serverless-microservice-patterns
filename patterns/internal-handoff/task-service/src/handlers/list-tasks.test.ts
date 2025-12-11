@@ -172,7 +172,11 @@ describe('list-tasks handler', () => {
         message: 'Failed to retrieve tasks',
       });
       expect(mockListTasks).toHaveBeenCalledTimes(1);
-      expect(mockLoggerError).toHaveBeenCalledWith('[ListTasks] < handler - failed to list tasks', mockError);
+      expect(mockLoggerError).toHaveBeenCalledWith(
+        '[ListTasks] < handler - failed to list tasks',
+        mockError,
+        expect.any(Object),
+      );
     });
 
     it('should include CORS headers in response', async () => {
@@ -201,6 +205,7 @@ describe('list-tasks handler', () => {
 
       // Assert
       expect(mockLoggerInfo).toHaveBeenCalledWith('[ListTasks] > handler', {
+        requestId: 'test-request-id',
         event,
       });
     });
@@ -226,6 +231,7 @@ describe('list-tasks handler', () => {
       // Assert
       expect(mockLoggerInfo).toHaveBeenCalledWith('[ListTasks] < handler - successfully retrieved tasks', {
         count: 1,
+        requestId: 'test-request-id',
       });
     });
   });

@@ -91,7 +91,7 @@ Edit `.env` and set the required variables:
 # Required
 CDK_ENV=dev
 
-# Optional - Application name (default: smp-gatekeeper-task-service)
+# Optional - Application name (default: smp-simple-web-service)
 # CDK_APP_NAME=my-app
 
 # Optional - Override AWS credentials (uses CDK_DEFAULT_ACCOUNT/REGION from AWS CLI by default)
@@ -180,10 +180,10 @@ Error: CDK configuration validation failed: CDK_ENV: CDK_ENV must be one of: dev
 npm run cdk list
 
 # Show differences for a specific stack
-npm run cdk diff smp-gatekeeper-task-service-data-dev
+npm run cdk diff smp-simple-web-service-data-dev
 
 # Deploy a specific stack
-npm run cdk deploy smp-gatekeeper-task-service-data-dev
+npm run cdk deploy smp-simple-web-service-data-dev
 
 # View stack outputs
 npm run cdk list --long

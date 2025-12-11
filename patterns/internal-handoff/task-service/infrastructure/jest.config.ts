@@ -14,7 +14,6 @@ const config: Config = {
     '!jest.config.ts',
     '!jest.setup.ts',
   ],
-  coveragePathIgnorePatterns: ['/node_modules/', '/cdk.out/', '/dist/'],
   coverageDirectory: 'coverage',
   coverageReporters: ['json', 'json-summary', 'text', 'lcov', 'clover'],
   setupFilesAfterEnv: ['<rootDir>/jest.setup.ts'],
