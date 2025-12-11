@@ -8,8 +8,9 @@ The following patterns are currently included in this repository:
 
 - [**Simple Web Service**](patterns/simple-web-service/README.md): A basic serverless web service pattern using API Gateway, Lambda, and DynamoDB.
 - [**Internal API**](patterns/internal-api/README.md): Similar to _Simple Web Service_ but without the API Gateway to allow public API consumption. Facilitates synchronous, internal microservice-to-microservice integration.
+- [**Gatekeeper**](patterns/gatekeeper/README.md): Builds on the _Simple Web Service_, adding an Auth microservice to authenticate and authorize API requests.
 
-More patterns, such as Gatekeeper, Aggregator, and others, will be added over time.
+More patterns, such as Aggregator, Router, Notifier, Fan Out/Fan In, Circuit Breaker, and others, will be added over time.
 
 ## Lambda Starter Project
 
