@@ -10,6 +10,7 @@ const config: Config = {
     '!**/*.test.ts',
     '!**/*.spec.ts',
     '!**/node_modules/**',
+    '!**/dist/**',
     '!**/cdk.out/**',
     '!jest.config.ts',
     '!jest.setup.ts',
