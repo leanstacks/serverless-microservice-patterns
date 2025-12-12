@@ -44,6 +44,7 @@ describe('LambdaStack', () => {
         loggingLevel: 'debug',
         loggingFormat: 'json',
         corsAllowOrigin: '*',
+        sendNotificationFunctionName: 'smp-internal-handoff-notification-service-send-notification-dev',
       });
       template = Template.fromStack(stack);
     });
@@ -107,6 +108,7 @@ describe('LambdaStack', () => {
             LOGGING_LEVEL: 'debug',
             LOGGING_FORMAT: 'json',
             CORS_ALLOW_ORIGIN: '*',
+            SEND_NOTIFICATION_FUNCTION_NAME: 'smp-internal-handoff-notification-service-send-notification-dev',
           },
         },
       });
@@ -320,6 +322,7 @@ describe('LambdaStack', () => {
         loggingLevel: 'info',
         loggingFormat: 'json',
         corsAllowOrigin: '*',
+        sendNotificationFunctionName: 'smp-internal-handoff-notification-service-send-notification-prd',
       });
       template = Template.fromStack(stack);
     });
@@ -376,6 +379,7 @@ describe('LambdaStack', () => {
         loggingLevel: 'debug',
         loggingFormat: 'json',
         corsAllowOrigin: '*',
+        sendNotificationFunctionName: 'smp-internal-handoff-notification-service-send-notification-dev',
       });
       template = Template.fromStack(stack);
     });

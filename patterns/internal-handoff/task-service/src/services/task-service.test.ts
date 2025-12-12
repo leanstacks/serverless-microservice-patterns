@@ -31,7 +31,7 @@ jest.mock('../utils/logger.js', () => ({
 jest.mock('../utils/config.js', () => ({
   config: {
     TASKS_TABLE: 'test-tasks-table',
-    SEND_NOTIFICATION_LAMBDA_FUNCTION_NAME: 'send-notification-function',
+    SEND_NOTIFICATION_FUNCTION_NAME: 'send-notification-function',
   },
 }));
 
