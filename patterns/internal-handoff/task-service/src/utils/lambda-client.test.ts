@@ -23,7 +23,7 @@ jest.mock('@aws-sdk/client-lambda', () => {
   };
 });
 
-import { invokeLambdaSync } from './lambda-client.js';
+import { invokeLambdaSync, invokeLambdaAsync } from './lambda-client.js';
 
 /**
  * Test suite for Lambda client utility
@@ -33,7 +33,7 @@ describe('lambda-client', () => {
     jest.clearAllMocks();
   });
 
-  describe('invokeLambda', () => {
+  describe('invokeLambdaSync', () => {
     it('should successfully invoke a Lambda function with RequestResponse invocation type', async () => {
       // Arrange
       const functionName = 'test-function';
@@ -51,9 +51,9 @@ describe('lambda-client', () => {
 
       // Assert
       expect(result).toEqual(mockResponse);
-      expect(mockLoggerInfo).toHaveBeenCalledWith('[LambdaClient] > invokeLambda', { functionName });
+      expect(mockLoggerInfo).toHaveBeenCalledWith('[LambdaClient] > invokeLambdaSync', { functionName });
       expect(mockLoggerInfo).toHaveBeenCalledWith(
-        '[LambdaClient] < invokeLambda - successfully invoked Lambda function',
+        '[LambdaClient] < invokeLambdaSync - successfully invoked Lambda function',
         {
           functionName,
           statusCode: 200,
@@ -137,7 +137,7 @@ describe('lambda-client', () => {
       // Act & Assert
       await expect(invokeLambdaSync(functionName, payload)).rejects.toThrow('Lambda function error: Unhandled');
       expect(mockLoggerError).toHaveBeenCalledWith(
-        '[LambdaClient] < invokeLambda - Lambda function returned an error',
+        '[LambdaClient] < invokeLambdaSync - Lambda function returned an error',
         expect.any(Error),
         expect.objectContaining({
           functionName,
@@ -157,7 +157,7 @@ describe('lambda-client', () => {
       // Act & Assert
       await expect(invokeLambdaSync(functionName, payload)).rejects.toThrow('Function not found');
       expect(mockLoggerError).toHaveBeenCalledWith(
-        '[LambdaClient] < invokeLambda - failed to invoke Lambda function',
+        '[LambdaClient] < invokeLambdaSync - failed to invoke Lambda function',
         error,
         { functionName },
       );
@@ -205,7 +205,10 @@ describe('lambda-client', () => {
       await invokeLambdaSync(functionName, payload);
 
       // Assert
-      expect(mockLoggerDebug).toHaveBeenCalledWith('[LambdaClient] invokeLambda - InvokeCommand', expect.any(Object));
+      expect(mockLoggerDebug).toHaveBeenCalledWith(
+        '[LambdaClient] invokeLambdaSync - InvokeCommand',
+        expect.any(Object),
+      );
     });
 
     it('should handle complex nested payloads', async () => {
@@ -314,13 +317,317 @@ describe('lambda-client', () => {
       await invokeLambdaSync(functionName, payload);
 
       // Assert
-      expect(mockLoggerInfo).toHaveBeenCalledWith('[LambdaClient] > invokeLambda', { functionName });
-      expect(mockLoggerDebug).toHaveBeenCalledWith('[LambdaClient] invokeLambda - InvokeCommand', expect.any(Object));
+      expect(mockLoggerInfo).toHaveBeenCalledWith('[LambdaClient] > invokeLambdaSync', { functionName });
+      expect(mockLoggerDebug).toHaveBeenCalledWith(
+        '[LambdaClient] invokeLambdaSync - InvokeCommand',
+        expect.any(Object),
+      );
       expect(mockLoggerInfo).toHaveBeenCalledWith(
-        '[LambdaClient] < invokeLambda - successfully invoked Lambda function',
+        '[LambdaClient] < invokeLambdaSync - successfully invoked Lambda function',
         {
           functionName,
           statusCode: 200,
+        },
+      );
+    });
+  });
+
+  describe('invokeLambdaAsync', () => {
+    it('should successfully invoke a Lambda function with Event invocation type', async () => {
+      // Arrange
+      const functionName = 'async-test-function';
+      const payload = { test: 'data' };
+      const mockResponse = { result: 'accepted' };
+
+      mockSend.mockResolvedValueOnce({
+        StatusCode: 202,
+        FunctionError: undefined,
+        Payload: new TextEncoder().encode(JSON.stringify(mockResponse)),
+      });
+
+      // Act
+      const result = await invokeLambdaAsync(functionName, payload);
+
+      // Assert
+      expect(result).toEqual(mockResponse);
+      expect(mockLoggerInfo).toHaveBeenCalledWith('[LambdaClient] > invokeLambdaAsync', { functionName });
+      expect(mockLoggerInfo).toHaveBeenCalledWith(
+        '[LambdaClient] < invokeLambdaAsync - successfully invoked Lambda function',
+        {
+          functionName,
+          statusCode: 202,
+        },
+      );
+    });
+
+    it('should serialize payload to JSON string for async invocation', async () => {
+      // Arrange
+      const functionName = 'async-test-function';
+      const payload = { httpMethod: 'POST', path: '/tasks', body: { title: 'New Task' } };
+
+      mockSend.mockResolvedValueOnce({
+        StatusCode: 202,
+        FunctionError: undefined,
+        Payload: new TextEncoder().encode(JSON.stringify({})),
+      });
+
+      // Act
+      await invokeLambdaAsync(functionName, payload);
+
+      // Assert
+      expect(mockSend).toHaveBeenCalled();
+    });
+
+    it('should deserialize response payload from Uint8Array for async invocation', async () => {
+      // Arrange
+      const functionName = 'async-test-function';
+      const payload = {};
+      const mockResponse = {
+        statusCode: 202,
+        body: JSON.stringify({ queued: true }),
+        headers: { 'Content-Type': 'application/json' },
+      };
+
+      mockSend.mockResolvedValueOnce({
+        StatusCode: 202,
+        FunctionError: undefined,
+        Payload: new TextEncoder().encode(JSON.stringify(mockResponse)),
+      });
+
+      // Act
+      const result = (await invokeLambdaAsync(functionName, payload)) as Record<string, unknown>;
+
+      // Assert
+      expect(result).toEqual(mockResponse);
+      expect(typeof result).toBe('object');
+      expect(result.statusCode).toBe(202);
+    });
+
+    it('should handle empty Payload from async Lambda response', async () => {
+      // Arrange
+      const functionName = 'async-test-function';
+      const payload = {};
+
+      mockSend.mockResolvedValueOnce({
+        StatusCode: 202,
+        FunctionError: undefined,
+        Payload: undefined,
+      });
+
+      // Act
+      const result = await invokeLambdaAsync(functionName, payload);
+
+      // Assert
+      expect(result).toBeNull();
+    });
+
+    it('should throw error when async Lambda function returns FunctionError', async () => {
+      // Arrange
+      const functionName = 'async-test-function';
+      const payload = {};
+      const errorResponse = { message: 'Internal error' };
+
+      mockSend.mockResolvedValueOnce({
+        StatusCode: 202,
+        FunctionError: 'Unhandled',
+        Payload: new TextEncoder().encode(JSON.stringify(errorResponse)),
+      });
+
+      // Act & Assert
+      await expect(invokeLambdaAsync(functionName, payload)).rejects.toThrow('Lambda function error: Unhandled');
+      expect(mockLoggerError).toHaveBeenCalledWith(
+        '[LambdaClient] < invokeLambdaAsync - Lambda function returned an error',
+        expect.any(Error),
+        expect.objectContaining({
+          functionName,
+          FunctionError: 'Unhandled',
+        }),
+      );
+    });
+
+    it('should handle Lambda SDK invocation errors for async invocation', async () => {
+      // Arrange
+      const functionName = 'non-existent-async-function';
+      const payload = {};
+      const error = new Error('Function not found');
+
+      mockSend.mockRejectedValueOnce(error);
+
+      // Act & Assert
+      await expect(invokeLambdaAsync(functionName, payload)).rejects.toThrow('Function not found');
+      expect(mockLoggerError).toHaveBeenCalledWith(
+        '[LambdaClient] < invokeLambdaAsync - failed to invoke Lambda function',
+        error,
+        { functionName },
+      );
+    });
+
+    it('should support generic type parameter for async response', async () => {
+      // Arrange
+      interface TaskQueueResponse {
+        jobId: string;
+        status: 'queued' | 'processing';
+      }
+
+      const functionName = 'create-task-async';
+      const payload = {};
+      const mockResponse: TaskQueueResponse = {
+        jobId: 'job-123',
+        status: 'queued',
+      };
+
+      mockSend.mockResolvedValueOnce({
+        StatusCode: 202,
+        FunctionError: undefined,
+        Payload: new TextEncoder().encode(JSON.stringify(mockResponse)),
+      });
+
+      // Act
+      const result = await invokeLambdaAsync<TaskQueueResponse>(functionName, payload);
+
+      // Assert
+      expect(result).toEqual(mockResponse);
+      const typedResult = result as TaskQueueResponse | null;
+      expect(typedResult?.jobId).toBeDefined();
+    });
+
+    it('should log debug information during async invocation', async () => {
+      // Arrange
+      const functionName = 'async-test-function';
+      const payload = { test: 'data' };
+
+      mockSend.mockResolvedValueOnce({
+        StatusCode: 202,
+        FunctionError: undefined,
+        Payload: new TextEncoder().encode(JSON.stringify({})),
+      });
+
+      // Act
+      await invokeLambdaAsync(functionName, payload);
+
+      // Assert
+      expect(mockLoggerDebug).toHaveBeenCalledWith(
+        '[LambdaClient] invokeLambdaAsync - InvokeCommand',
+        expect.any(Object),
+      );
+    });
+
+    it('should handle complex nested payloads for async invocation', async () => {
+      // Arrange
+      const functionName = 'process-data-async';
+      const complexPayload = {
+        event: {
+          httpMethod: 'POST',
+          path: '/api/v1/tasks',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ title: 'Background Task', priority: 'high' }),
+          requestContext: {
+            requestId: 'req-456',
+            accountId: '123456789012',
+          },
+        },
+        context: {
+          functionName: 'async-processor',
+          memoryLimit: 512,
+        },
+      };
+
+      const mockResponse = { jobId: 'async-job-456', queued: true };
+
+      mockSend.mockResolvedValueOnce({
+        StatusCode: 202,
+        FunctionError: undefined,
+        Payload: new TextEncoder().encode(JSON.stringify(mockResponse)),
+      });
+
+      // Act
+      const result = await invokeLambdaAsync(functionName, complexPayload);
+
+      // Assert
+      expect(result).toEqual(mockResponse);
+    });
+
+    it('should use Event invocation type for async invocation', async () => {
+      // Arrange
+      const functionName = 'event-function';
+      const payload = {};
+
+      mockSend.mockResolvedValueOnce({
+        StatusCode: 202,
+        FunctionError: undefined,
+        Payload: new TextEncoder().encode(JSON.stringify({ status: 'queued' })),
+      });
+
+      // Act
+      await invokeLambdaAsync(functionName, payload);
+
+      // Assert
+      expect(mockSend).toHaveBeenCalled();
+    });
+
+    it('should handle Lambda async response with non-JSON payload', async () => {
+      // Arrange
+      const functionName = 'text-async-function';
+      const payload = {};
+
+      mockSend.mockResolvedValueOnce({
+        StatusCode: 202,
+        FunctionError: undefined,
+        Payload: new TextEncoder().encode('plain text response'),
+      });
+
+      // Act & Assert
+      await expect(invokeLambdaAsync(functionName, payload)).rejects.toThrow();
+    });
+
+    it('should handle successful async invocation with various HTTP status codes', async () => {
+      // Arrange
+      const functionName = 'api-async-function';
+      const payload = {};
+      const mockResponse = {
+        statusCode: 202,
+        body: JSON.stringify({ message: 'Accepted' }),
+      };
+
+      mockSend.mockResolvedValueOnce({
+        StatusCode: 202,
+        FunctionError: undefined,
+        Payload: new TextEncoder().encode(JSON.stringify(mockResponse)),
+      });
+
+      // Act
+      const result = (await invokeLambdaAsync(functionName, payload)) as Record<string, unknown>;
+
+      // Assert
+      expect(result).toEqual(mockResponse);
+      expect(result.statusCode).toBe(202);
+    });
+
+    it('should include function name in async log messages', async () => {
+      // Arrange
+      const functionName = 'my-async-special-function';
+      const payload = {};
+
+      mockSend.mockResolvedValueOnce({
+        StatusCode: 202,
+        FunctionError: undefined,
+        Payload: new TextEncoder().encode(JSON.stringify({})),
+      });
+
+      // Act
+      await invokeLambdaAsync(functionName, payload);
+
+      // Assert
+      expect(mockLoggerInfo).toHaveBeenCalledWith('[LambdaClient] > invokeLambdaAsync', { functionName });
+      expect(mockLoggerDebug).toHaveBeenCalledWith(
+        '[LambdaClient] invokeLambdaAsync - InvokeCommand',
+        expect.any(Object),
+      );
+      expect(mockLoggerInfo).toHaveBeenCalledWith(
+        '[LambdaClient] < invokeLambdaAsync - successfully invoked Lambda function',
+        {
+          functionName,
+          statusCode: 202,
         },
       );
     });
