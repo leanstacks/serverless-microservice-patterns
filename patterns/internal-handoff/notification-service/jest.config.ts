@@ -3,6 +3,7 @@ import type { Config } from 'jest';
 const config: Config = {
   preset: 'ts-jest',
   testEnvironment: 'node',
+  rootDir: '.',
   testMatch: ['<rootDir>/src/**/*.test.ts'],
   collectCoverage: true,
   collectCoverageFrom: ['src/**/*.ts', '!src/**/*.test.ts', '!src/**/*.spec.ts'],
@@ -10,6 +11,7 @@ const config: Config = {
   coverageReporters: ['json', 'json-summary', 'lcov', 'text', 'clover'],
   moduleFileExtensions: ['ts', 'js', 'json'],
   moduleNameMapper: {
+    '^@/(.*)$': '<rootDir>/src/$1',
     '^(\\.{1,2}/.*)\\.js$': '$1',
   },
   transform: {
