@@ -113,7 +113,7 @@ npm run test:watch
 
 - **Language:** TypeScript
 - **Platform:** AWS Lambda
-- **Runtime:** Node.js 24+ (see .nvmrc)
+- **Runtime:** Node.js (see .nvmrc)
 - **Package Manager:** npm
 - **AWS SDK:** v3
 - **Testing:** Jest
@@ -121,7 +121,6 @@ npm run test:watch
 - **Validation:** Zod
 - **Logging:** Pino + Pino Lambda
 - **Infrastructure:** AWS CDK
-- **DevOps:** GitHub Actions
 
 ## Key Dependencies
 

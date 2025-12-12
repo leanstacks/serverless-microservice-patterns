@@ -5,7 +5,7 @@ AWS CDK infrastructure for this project.
 ## Technology Stack
 
 - **AWS CDK:** v2
-- **Language:** TypeScript 5.9+
+- **Language:** TypeScript
 - **Node.js:** v24+
 - **Package Manager:** npm
 - **Testing:** Jest
