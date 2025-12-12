@@ -16,9 +16,7 @@ AWS CDK infrastructure for this project.
 ```
 /infrastructure
    /stacks
-      data-stack.ts           # DynamoDB tables and data resources
-      data-stack.test.ts      # Unit tests for data stack
-      lambda-stack.ts         # Lambda/API Gateway resources
+      lambda-stack.ts         # Lambda functions, SQS DLQ, and logging
       lambda-stack.test.ts    # Unit tests for lambda stack
    /utils
       config.ts               # Configuration management with Zod validation

@@ -6,60 +6,33 @@ This guide provides a concise overview of the AWS CDK infrastructure for the pro
 
 ## Stacks Overview
 
-The infrastructure is organized into two main AWS CDK stacks:
+The infrastructure is organized into a single main AWS CDK stack:
 
-| Stack Name Pattern        | Purpose                                    |
-| ------------------------- | ------------------------------------------ |
-| `{app-name}-data-{env}`   | Manages DynamoDB tables and data resources |
-| `{app-name}-lambda-{env}` | Manages Lambda functions and API Gateway   |
-
----
-
-## Data Stack
-
-**Purpose:** Manages DynamoDB tables and data-related resources.
-
-**Key Resources:**
-
-| Resource       | Name Pattern            | Key Properties                                                                                                                        |
-| -------------- | ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
-| DynamoDB Table | `{app-name}-task-{env}` | Partition Key: `pk` (String), On-demand billing, SSE encryption, PITR (prd only), Removal Policy: `RETAIN` (prd), `DESTROY` (dev/qat) |
-
-**Outputs:**
-
-| Output Name     | Export Name Pattern                | Description                           |
-| --------------- | ---------------------------------- | ------------------------------------- |
-| `TaskTableName` | `{app-name}-task-table-name-{env}` | Table name (exported as stack output) |
-| `TaskTableArn`  | `{app-name}-task-table-arn-{env}`  | Table ARN (exported as stack output)  |
+| Stack Name Pattern        | Purpose                                        |
+| ------------------------- | ---------------------------------------------- |
+| `{app-name}-lambda-{env}` | Manages Lambda functions, SQS DLQ, and logging |
 
 ---
 
 ## Lambda Stack
 
-**Purpose:** Manages Lambda functions, API Gateway, and application runtime resources.
+**Purpose:** Manages the Lambda function, its Dead Letter Queue, and CloudWatch logging.
 
 **Key Resources:**
 
-| Resource        | Name Pattern                   | Purpose/Notes                        |
-| --------------- | ------------------------------ | ------------------------------------ |
-| Lambda Function | `{app-name}-list-tasks-{env}`  | List all tasks (DynamoDB Scan)       |
-| Lambda Function | `{app-name}-get-task-{env}`    | Get a task by ID (DynamoDB GetItem)  |
-| Lambda Function | `{app-name}-create-task-{env}` | Create a new task (DynamoDB PutItem) |
-| Lambda Function | `{app-name}-update-task-{env}` | Update a task (DynamoDB UpdateItem)  |
-| Lambda Function | `{app-name}-delete-task-{env}` | Delete a task (DynamoDB DeleteItem)  |
-| API Gateway     | `{app-name}-api-{env}`         | REST API for Lambda functions        |
+| Resource             | Name Pattern                                     | Key Properties                                                                                                                                   |
+| -------------------- | ------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Lambda Function      | `{app-name}-send-notification-{env}`             | Runtime: Node.js 24.x, Memory: 256 MB, Timeout: 10s, Async invocation with DLQ                                                                   |
+| SQS Queue (DLQ)      | `{app-name}-send-notification-dlq-{env}`         | Standard queue, 14-day retention, Removal Policy: `RETAIN` (prd), `DESTROY` (dev/qat)                                                            |
+| CloudWatch Log Group | `/aws/lambda/{app-name}-send-notification-{env}` | JSON logging format, System/App log level: INFO, Retention: 1 month (prd), 1 week (dev/qat), Removal Policy: `RETAIN` (prd), `DESTROY` (dev/qat) |
 
 **Outputs:**
 
-| Output Name             | Export Name Pattern                | Description                     |
-| ----------------------- | ---------------------------------- | ------------------------------- |
-| `ApiUrl`                | `{app-name}-api-url-{env}`         | API Gateway endpoint URL        |
-| `ApiId`                 | `{app-name}-api-id-{env}`          | API Gateway ID                  |
-| `ListTasksFunctionArn`  | `{app-name}-list-tasks-arn-{env}`  | List Tasks Lambda function ARN  |
-| `GetTaskFunctionArn`    | `{app-name}-get-task-arn-{env}`    | Get Task Lambda function ARN    |
-| `CreateTaskFunctionArn` | `{app-name}-create-task-arn-{env}` | Create Task Lambda function ARN |
-| `UpdateTaskFunctionArn` | `{app-name}-update-task-arn-{env}` | Update Task Lambda function ARN |
-| `DeleteTaskFunctionArn` | `{app-name}-delete-task-arn-{env}` | Delete Task Lambda function ARN |
+| Output Name                      | Export Name Pattern                                | Description                                         |
+| -------------------------------- | -------------------------------------------------- | --------------------------------------------------- |
+| `SendNotificationFunctionArn`    | `{app-name}-send-notification-function-arn-{env}`  | ARN of the send notification Lambda function        |
+| `SendNotificationFunctionName`   | `{app-name}-send-notification-function-name-{env}` | Name of the send notification Lambda function       |
+| `SendNotificationFunctionDlqUrl` | `{app-name}-send-notification-dlq-url-{env}`       | URL of the Dead Letter Queue for failed invocations |
 
 ---
 
@@ -79,7 +52,6 @@ All resources are tagged for cost allocation and management:
 ## Configuration & DevOps
 
 - For environment variables, configuration, and validation, see the [Configuration Guide](./ConfigurationGuide.md).
-- For CI/CD, GitHub Actions, and DevOps automation, see the [DevOps Guide](./DevOpsGuide.md).
 
 ---
 
