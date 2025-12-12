@@ -30,11 +30,33 @@ The Task Service functions interact with a DynamoDB table to persist task data.
 
 ### Notification Service
 
-TBD
+The **Notification Service** is a dedicated microservice responsible for sending notifications. This service follows the single responsibility principle by focusing exclusively on notification delivery. It exposes a single function to:
+
+- Send notifications (email, SMS, push notifications, etc.)
+
+The Notification Service is designed to be invoked asynchronously by other microservices. It receives notification requests, processes them, and handles delivery to external notification providers. By separating notification logic into its own microservice, the application achieves better modularity, independent scalability, and easier testing and maintenance.
+
+In this pattern, the Task Service invokes the Notification Service asynchronously when certain task events occur, such as task creation or completion. This decouples task management logic from notification delivery, allowing each service to evolve independently.
 
 ### The Internal Handoff Pattern in Action
 
-TBD
+The Internal Handoff pattern demonstrates how microservices can coordinate through asynchronous Lambda-to-Lambda invocations:
+
+1. **Task Creation**: A client creates a new task via the Task Service's `create-task` function.
+
+2. **Service Handoff**: After successfully creating the task in DynamoDB, the Task Service asynchronously invokes the Notification Service using the AWS SDK with `InvocationType: 'Event'`.
+
+3. **Asynchronous Notification**: The Notification Service receives the handoff event and sends a notification (e.g., "New task created") without blocking the Task Service's response.
+
+4. **Resilience**: If the Notification Service fails, AWS Lambda automatically retries the invocation (based on configured retry policy). Failed invocations that exhaust retries are sent to a Dead Letter Queue (SQS) for later analysis and replay.
+
+**Key Benefits of This Pattern:**
+
+- **Decoupling**: Services remain independent; the Task Service doesn't wait for notification delivery.
+- **Performance**: The Task Service responds to clients immediately without waiting for notification processing.
+- **Scalability**: Each service scales independently based on its specific workload.
+- **Resilience**: Built-in retry mechanism and Dead Letter Queue ensure no notifications are lost.
+- **Single Responsibility**: Each microservice has one well-defined purpose.
 
 ## Getting started
 
@@ -48,7 +70,61 @@ Follow the instructions in the [Notification Service documentation](./notificati
 
 ### Using the application
 
-TBD
+Once both services are deployed, you can interact with the application through the Task Service's API endpoints:
+
+#### Create a Task
+
+Send a POST request to the Task Service's `create-task` endpoint:
+
+```bash
+curl -X POST https://{api-gateway-url}/tasks \
+  -H "Content-Type: application/json" \
+  -d '{
+    "title": "Implement feature X"
+  }'
+```
+
+The Task Service will:
+
+1. Validate and store the task in DynamoDB
+2. Return a success response to the client immediately
+3. Asynchronously invoke the Notification Service to send a "task created" notification
+
+#### Retrieve a Task
+
+```bash
+curl https://{api-gateway-url}/tasks/{taskId}
+```
+
+#### List All Tasks
+
+```bash
+curl https://{api-gateway-url}/tasks
+```
+
+#### Update a Task
+
+```bash
+curl -X PUT https://{api-gateway-url}/tasks/{taskId} \
+  -H "Content-Type: application/json" \
+  -d '{
+    "title": "Updated title",
+    "status": "completed"
+  }'
+```
+
+#### Delete a Task
+
+```bash
+curl -X DELETE https://{api-gateway-url}/tasks/{taskId}
+```
+
+**Monitoring and Troubleshooting:**
+
+- Check CloudWatch Logs for both services to verify execution.
+- Inspect the SQS Dead Letter Queue to identify and replay failed notification requests.
+- Monitor Lambda metrics (duration, errors, throttling) in CloudWatch to optimize performance.
+- Review X-Ray service maps to visualize the interaction between services.
 
 ## Further Reading
 
