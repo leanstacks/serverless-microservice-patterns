@@ -96,6 +96,13 @@ export class LambdaStack extends cdk.Stack {
       exportName: `${props.appName}-send-notification-function-arn-${props.envName}`,
     });
 
+    // Output the function name
+    new cdk.CfnOutput(this, 'SendNotificationFunctionName', {
+      value: this.sendNotificationFunction.functionName,
+      description: 'Name of the send notification Lambda function',
+      exportName: `${props.appName}-send-notification-function-name-${props.envName}`,
+    });
+
     // Output the Dead Letter Queue ARN
     new cdk.CfnOutput(this, 'SendNotificationDLQArn', {
       value: this.sendNotificationFunctionDlq.queueArn,
