@@ -86,10 +86,8 @@ describe('send-notification handler', () => {
       // Arrange
       const event = { payload: { taskId: '123' } };
 
-      // Act
-      await handler(event, mockContext);
-
-      // Assert
+      // Act & Assert
+      await expect(handler(event, mockContext)).rejects.toThrow();
       expect(mockSendNotification).not.toHaveBeenCalled();
       expect(mockLogger.error).toHaveBeenCalledWith(
         '[SendNotificationHandler] < handler - Event validation failed',
@@ -104,10 +102,8 @@ describe('send-notification handler', () => {
       // Arrange
       const event = { action: '' };
 
-      // Act
-      await handler(event, mockContext);
-
-      // Assert
+      // Act & Assert
+      await expect(handler(event, mockContext)).rejects.toThrow();
       expect(mockSendNotification).not.toHaveBeenCalled();
       expect(mockLogger.error).toHaveBeenCalledWith(
         '[SendNotificationHandler] < handler - Event validation failed',
@@ -122,10 +118,8 @@ describe('send-notification handler', () => {
       // Arrange
       const event = { action: 123 };
 
-      // Act
-      await handler(event, mockContext);
-
-      // Assert
+      // Act & Assert
+      await expect(handler(event, mockContext)).rejects.toThrow();
       expect(mockSendNotification).not.toHaveBeenCalled();
       expect(mockLogger.error).toHaveBeenCalledWith(
         '[SendNotificationHandler] < handler - Event validation failed',
@@ -144,10 +138,8 @@ describe('send-notification handler', () => {
       const error = new Error('Service failed');
       mockSendNotification.mockRejectedValue(error);
 
-      // Act
-      await handler(event, mockContext);
-
-      // Assert
+      // Act & Assert
+      await expect(handler(event, mockContext)).rejects.toThrow();
       expect(mockLogger.error).toHaveBeenCalledWith(
         '[SendNotificationHandler] < handler - Failed to send notification',
         error,
@@ -160,10 +152,8 @@ describe('send-notification handler', () => {
       const unknownError = 'Some unknown error';
       mockSendNotification.mockRejectedValue(unknownError);
 
-      // Act
-      await handler(event, mockContext);
-
-      // Assert
+      // Act & Assert
+      await expect(handler(event, mockContext)).rejects.toThrow();
       expect(mockLogger.error).toHaveBeenCalledWith(
         '[SendNotificationHandler] < handler - Unknown error occurred',
         undefined,

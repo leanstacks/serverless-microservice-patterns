@@ -42,12 +42,15 @@ export const handler = async (event: unknown, context: Context): Promise<void> =
         issues: error.issues,
         message,
       });
+      throw new Error(`Event validation failed: ${message}`);
     } else if (error instanceof Error) {
       logger.error('[SendNotificationHandler] < handler - Failed to send notification', error);
+      throw error;
     } else {
       logger.error('[SendNotificationHandler] < handler - Unknown error occurred', undefined, {
         errorValue: String(error),
       });
+      throw new Error('An unknown error occurred while sending notification');
     }
   }
 };
