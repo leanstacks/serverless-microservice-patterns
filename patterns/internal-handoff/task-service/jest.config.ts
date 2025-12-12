@@ -10,6 +10,8 @@ const config: Config = {
   coverageReporters: ['json', 'json-summary', 'lcov', 'text', 'clover'],
   moduleFileExtensions: ['ts', 'js', 'json'],
   moduleNameMapper: {
+    '^@/(.+)\\.js$': '<rootDir>/src/$1.ts',
+    '^@/(.*)$': '<rootDir>/src/$1',
     '^(\\.{1,2}/.*)\\.js$': '$1',
   },
   transform: {

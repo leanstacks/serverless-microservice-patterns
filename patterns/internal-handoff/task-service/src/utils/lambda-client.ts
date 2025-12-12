@@ -60,13 +60,12 @@ export const invokeLambdaSync = async <T = unknown>(functionName: string, payloa
 };
 
 /**
- * Invokes a Lambda function asynchronously (RequestResponse)
+ * Invokes a Lambda function asynchronously (Event)
  * @param functionName - The name or ARN of the Lambda function to invoke
  * @param payload - The JSON payload to pass to the Lambda function
- * @returns The response payload from the Lambda function
  * @throws Error if the Lambda invocation fails
  */
-export const invokeLambdaAsync = async <T = unknown>(functionName: string, payload: unknown): Promise<T> => {
+export const invokeLambdaAsync = async (functionName: string, payload: unknown): Promise<void> => {
   logger.info('[LambdaClient] > invokeLambdaAsync', { functionName });
 
   try {
@@ -80,14 +79,6 @@ export const invokeLambdaAsync = async <T = unknown>(functionName: string, paylo
 
     const response = await _lambdaClient.send(command);
 
-    // Parse the response payload
-    const responsePayload = response.Payload ? JSON.parse(new TextDecoder().decode(response.Payload)) : null;
-
-    logger.info('[LambdaClient] < invokeLambdaAsync - successfully invoked Lambda function', {
-      functionName,
-      statusCode: response.StatusCode,
-    });
-
     // Check for function errors
     if (response.FunctionError) {
       logger.error(
@@ -95,14 +86,16 @@ export const invokeLambdaAsync = async <T = unknown>(functionName: string, paylo
         new Error(response.FunctionError),
         {
           functionName,
-          FunctionError: response.FunctionError,
-          responsePayload,
+          response,
         },
       );
       throw new Error(`Lambda function error: ${response.FunctionError}`);
     }
 
-    return responsePayload as T;
+    logger.info('[LambdaClient] < invokeLambdaAsync - successfully invoked Lambda function', {
+      functionName,
+      statusCode: response.StatusCode,
+    });
   } catch (error) {
     logger.error('[LambdaClient] < invokeLambdaAsync - failed to invoke Lambda function', error as Error, {
       functionName,

@@ -18,6 +18,11 @@ const tags = getTags(config);
 // Get AWS environment configuration
 const environmentConfig = getEnvironmentConfig(config);
 
+// Import the Send Notification Lambda function name from Notification Service CloudFormation stack
+const sendNotificationFunctionName = cdk.Fn.importValue(
+  `smp-internal-handoff-notification-service-send-notification-function-name-${config.CDK_ENV}`,
+);
+
 // Create Data Stack
 const dataStack = new DataStack(app, `${config.CDK_APP_NAME}-data-stack-${config.CDK_ENV}`, {
   appName: config.CDK_APP_NAME,
@@ -38,6 +43,7 @@ new LambdaStack(app, `${config.CDK_APP_NAME}-lambda-stack-${config.CDK_ENV}`, {
   loggingLevel: config.CDK_APP_LOGGING_LEVEL,
   loggingFormat: config.CDK_APP_LOGGING_FORMAT,
   corsAllowOrigin: config.CDK_CORS_ALLOW_ORIGIN,
+  sendNotificationFunctionName,
   ...(environmentConfig && { env: environmentConfig }),
 });
 

@@ -6,6 +6,7 @@ import { z } from 'zod';
 const envSchema = z.object({
   // Required variables
   TASKS_TABLE: z.string().min(1, 'TASKS_TABLE environment variable is required'),
+  SEND_NOTIFICATION_FUNCTION_NAME: z.string().min(1, 'SEND_NOTIFICATION_FUNCTION_NAME is required'),
 
   // Optional variables with defaults
   AWS_REGION: z.string().default('us-east-1'),

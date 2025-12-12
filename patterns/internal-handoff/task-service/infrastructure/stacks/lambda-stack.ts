@@ -45,6 +45,11 @@ export interface LambdaStackProps extends cdk.StackProps {
    * CORS allow origin value.
    */
   corsAllowOrigin: string;
+
+  /**
+   * The send notification Lambda function name.
+   */
+  sendNotificationFunctionName: string;
 }
 
 /**
@@ -96,6 +101,7 @@ export class LambdaStack extends cdk.Stack {
         LOGGING_LEVEL: props.loggingLevel,
         LOGGING_FORMAT: props.loggingFormat,
         CORS_ALLOW_ORIGIN: props.corsAllowOrigin,
+        SEND_NOTIFICATION_FUNCTION_NAME: props.sendNotificationFunctionName,
       },
       timeout: cdk.Duration.seconds(10),
       memorySize: 256,
@@ -116,6 +122,14 @@ export class LambdaStack extends cdk.Stack {
     // Grant the Lambda function read access to the DynamoDB table
     props.taskTable.grantReadData(this.listTasksFunction);
 
+    // Grant the Lambda function permission to invoke the Send Notification Lambda function
+    this.listTasksFunction.addToRolePolicy(
+      new cdk.aws_iam.PolicyStatement({
+        actions: ['lambda:InvokeFunction'],
+        resources: [`arn:aws:lambda:${this.region}:${this.account}:function:${props.sendNotificationFunctionName}`],
+      }),
+    );
+
     // Create the get task Lambda function
     this.getTaskFunction = new NodejsFunction(this, 'GetTaskFunction', {
       functionName: `${props.appName}-get-task-${props.envName}`,
@@ -128,6 +142,7 @@ export class LambdaStack extends cdk.Stack {
         LOGGING_LEVEL: props.loggingLevel,
         LOGGING_FORMAT: props.loggingFormat,
         CORS_ALLOW_ORIGIN: props.corsAllowOrigin,
+        SEND_NOTIFICATION_FUNCTION_NAME: props.sendNotificationFunctionName,
       },
       timeout: cdk.Duration.seconds(10),
       memorySize: 256,
@@ -148,6 +163,14 @@ export class LambdaStack extends cdk.Stack {
     // Grant the Lambda function read access to the DynamoDB table
     props.taskTable.grantReadData(this.getTaskFunction);
 
+    // Grant the Lambda function permission to invoke the Send Notification Lambda function
+    this.getTaskFunction.addToRolePolicy(
+      new cdk.aws_iam.PolicyStatement({
+        actions: ['lambda:InvokeFunction'],
+        resources: [`arn:aws:lambda:${this.region}:${this.account}:function:${props.sendNotificationFunctionName}`],
+      }),
+    );
+
     // Create the create task Lambda function
     this.createTaskFunction = new NodejsFunction(this, 'CreateTaskFunction', {
       functionName: `${props.appName}-create-task-${props.envName}`,
@@ -160,6 +183,7 @@ export class LambdaStack extends cdk.Stack {
         LOGGING_LEVEL: props.loggingLevel,
         LOGGING_FORMAT: props.loggingFormat,
         CORS_ALLOW_ORIGIN: props.corsAllowOrigin,
+        SEND_NOTIFICATION_FUNCTION_NAME: props.sendNotificationFunctionName,
       },
       timeout: cdk.Duration.seconds(10),
       memorySize: 256,
@@ -180,6 +204,14 @@ export class LambdaStack extends cdk.Stack {
     // Grant the Lambda function write access to the DynamoDB table
     props.taskTable.grantWriteData(this.createTaskFunction);
 
+    // Grant the Lambda function permission to invoke the Send Notification Lambda function
+    this.createTaskFunction.addToRolePolicy(
+      new cdk.aws_iam.PolicyStatement({
+        actions: ['lambda:InvokeFunction'],
+        resources: [`arn:aws:lambda:${this.region}:${this.account}:function:${props.sendNotificationFunctionName}`],
+      }),
+    );
+
     // Create the update task Lambda function
     this.updateTaskFunction = new NodejsFunction(this, 'UpdateTaskFunction', {
       functionName: `${props.appName}-update-task-${props.envName}`,
@@ -192,6 +224,7 @@ export class LambdaStack extends cdk.Stack {
         LOGGING_LEVEL: props.loggingLevel,
         LOGGING_FORMAT: props.loggingFormat,
         CORS_ALLOW_ORIGIN: props.corsAllowOrigin,
+        SEND_NOTIFICATION_FUNCTION_NAME: props.sendNotificationFunctionName,
       },
       timeout: cdk.Duration.seconds(10),
       memorySize: 256,
@@ -212,6 +245,14 @@ export class LambdaStack extends cdk.Stack {
     // Grant the Lambda function read and write access to the DynamoDB table
     props.taskTable.grantReadWriteData(this.updateTaskFunction);
 
+    // Grant the Lambda function permission to invoke the Send Notification Lambda function
+    this.updateTaskFunction.addToRolePolicy(
+      new cdk.aws_iam.PolicyStatement({
+        actions: ['lambda:InvokeFunction'],
+        resources: [`arn:aws:lambda:${this.region}:${this.account}:function:${props.sendNotificationFunctionName}`],
+      }),
+    );
+
     // Create the delete task Lambda function
     this.deleteTaskFunction = new NodejsFunction(this, 'DeleteTaskFunction', {
       functionName: `${props.appName}-delete-task-${props.envName}`,
@@ -224,6 +265,7 @@ export class LambdaStack extends cdk.Stack {
         LOGGING_LEVEL: props.loggingLevel,
         LOGGING_FORMAT: props.loggingFormat,
         CORS_ALLOW_ORIGIN: props.corsAllowOrigin,
+        SEND_NOTIFICATION_FUNCTION_NAME: props.sendNotificationFunctionName,
       },
       timeout: cdk.Duration.seconds(10),
       memorySize: 256,
@@ -243,6 +285,14 @@ export class LambdaStack extends cdk.Stack {
 
     // Grant the Lambda function read and write access to the DynamoDB table
     props.taskTable.grantReadWriteData(this.deleteTaskFunction);
+
+    // Grant the Lambda function permission to invoke the Send Notification Lambda function
+    this.deleteTaskFunction.addToRolePolicy(
+      new cdk.aws_iam.PolicyStatement({
+        actions: ['lambda:InvokeFunction'],
+        resources: [`arn:aws:lambda:${this.region}:${this.account}:function:${props.sendNotificationFunctionName}`],
+      }),
+    );
 
     // Create API Gateway REST API
     this.api = new apigateway.RestApi(this, 'LambdaStarterApi', {

@@ -1,12 +1,13 @@
 import { randomUUID } from 'crypto';
 import { DeleteCommand, GetCommand, PutCommand, ScanCommand, UpdateCommand } from '@aws-sdk/lib-dynamodb';
 
-import { CreateTaskDto } from '../models/create-task-dto.js';
-import { UpdateTaskDto } from '../models/update-task-dto.js';
-import { Task, TaskItem, TaskKeys, toTask } from '../models/task.js';
-import { config } from '../utils/config.js';
-import { dynamoDocClient } from '../utils/dynamodb-client.js';
-import { logger } from '../utils/logger.js';
+import { CreateTaskDto } from '@/models/create-task-dto.js';
+import { UpdateTaskDto } from '@/models/update-task-dto.js';
+import { Task, TaskItem, TaskKeys, toTask } from '@/models/task.js';
+import { config } from '@/utils/config.js';
+import { dynamoDocClient } from '@/utils/dynamodb-client.js';
+import { logger } from '@/utils/logger.js';
+import { invokeLambdaAsync } from '@/utils/lambda-client.js';
 
 /**
  * Retrieves all tasks from the DynamoDB table
@@ -116,6 +117,12 @@ export const createTask = async (createTaskDto: CreateTaskDto): Promise<Task> =>
 
     logger.info('[TaskService] < createTask - successfully created task', {
       id: task.id,
+    });
+
+    // Asynchronous post-creation actions (e.g., sending notifications) can be added here
+    await invokeLambdaAsync(config.SEND_NOTIFICATION_FUNCTION_NAME, {
+      action: 'task_created',
+      payload: { task },
     });
 
     return task;

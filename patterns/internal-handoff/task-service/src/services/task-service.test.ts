@@ -1,25 +1,26 @@
-import { CreateTaskDto } from '../models/create-task-dto';
-import { UpdateTaskDto } from '../models/update-task-dto';
-import { TaskItem } from '../models/task';
+import { CreateTaskDto } from '@/models/create-task-dto';
+import { UpdateTaskDto } from '@/models/update-task-dto';
+import { TaskItem } from '@/models/task';
 
-// Mock dependencies
+// Mock dependencies must be declared before importing the module under test
 const mockSend = jest.fn();
 const mockLoggerDebug = jest.fn();
 const mockLoggerInfo = jest.fn();
 const mockLoggerError = jest.fn();
 const mockRandomUUID = jest.fn();
+const mockInvokeLambdaAsync = jest.fn();
 
 jest.mock('crypto', () => ({
   randomUUID: mockRandomUUID,
 }));
 
-jest.mock('../utils/dynamodb-client', () => ({
+jest.mock('../utils/dynamodb-client.js', () => ({
   dynamoDocClient: {
     send: mockSend,
   },
 }));
 
-jest.mock('../utils/logger', () => ({
+jest.mock('../utils/logger.js', () => ({
   logger: {
     debug: mockLoggerDebug,
     info: mockLoggerInfo,
@@ -27,10 +28,15 @@ jest.mock('../utils/logger', () => ({
   },
 }));
 
-jest.mock('../utils/config', () => ({
+jest.mock('../utils/config.js', () => ({
   config: {
     TASKS_TABLE: 'test-tasks-table',
+    SEND_NOTIFICATION_LAMBDA_FUNCTION_NAME: 'send-notification-function',
   },
+}));
+
+jest.mock('../utils/lambda-client.js', () => ({
+  invokeLambdaAsync: mockInvokeLambdaAsync,
 }));
 
 describe('task-service', () => {
@@ -271,6 +277,9 @@ describe('task-service', () => {
 
       // Mock UUID generation
       mockRandomUUID.mockReturnValue('123e4567-e89b-12d3-a456-426614174000');
+
+      // Mock Lambda async invocation
+      mockInvokeLambdaAsync.mockResolvedValue(undefined);
     });
 
     afterEach(() => {
@@ -322,6 +331,19 @@ describe('task-service', () => {
       expect(mockLoggerInfo).toHaveBeenCalledWith('[TaskService] > createTask', {
         tableName: 'test-tasks-table',
       });
+      expect(mockInvokeLambdaAsync).toHaveBeenCalledTimes(1);
+      expect(mockInvokeLambdaAsync).toHaveBeenCalledWith(
+        'send-notification-function',
+        expect.objectContaining({
+          action: 'task_created',
+          payload: expect.objectContaining({
+            task: expect.objectContaining({
+              id: '123e4567-e89b-12d3-a456-426614174000',
+              title: 'Test Task',
+            }),
+          }),
+        }),
+      );
     });
 
     it('should create a task with only required fields', async () => {
@@ -348,6 +370,7 @@ describe('task-service', () => {
       expect(result).not.toHaveProperty('detail');
       expect(result).not.toHaveProperty('dueAt');
       expect(mockSend).toHaveBeenCalledTimes(1);
+      expect(mockInvokeLambdaAsync).toHaveBeenCalledTimes(1);
     });
 
     it('should create a task with isComplete defaulting to false when undefined', async () => {
@@ -365,6 +388,7 @@ describe('task-service', () => {
       // Assert
       expect(result.isComplete).toBe(false);
       expect(mockSend).toHaveBeenCalledTimes(1);
+      expect(mockInvokeLambdaAsync).toHaveBeenCalledTimes(1);
     });
 
     it('should create a task with isComplete set to true', async () => {
@@ -382,6 +406,7 @@ describe('task-service', () => {
       // Assert
       expect(result.isComplete).toBe(true);
       expect(mockSend).toHaveBeenCalledTimes(1);
+      expect(mockInvokeLambdaAsync).toHaveBeenCalledTimes(1);
     });
 
     it('should generate a unique UUID for each task', async () => {
@@ -398,6 +423,7 @@ describe('task-service', () => {
 
       // Assert
       expect(mockRandomUUID).toHaveBeenCalledTimes(1);
+      expect(mockInvokeLambdaAsync).toHaveBeenCalledTimes(1);
     });
 
     it('should set createdAt and updatedAt to the current time', async () => {
@@ -415,6 +441,7 @@ describe('task-service', () => {
       // Assert
       expect(result.createdAt).toBe('2025-12-01T10:00:00.000Z');
       expect(result.updatedAt).toBe('2025-12-01T10:00:00.000Z');
+      expect(mockInvokeLambdaAsync).toHaveBeenCalledTimes(1);
     });
 
     it('should handle DynamoDB errors and rethrow them', async () => {
@@ -431,6 +458,7 @@ describe('task-service', () => {
       await expect(createTask(createTaskDto)).rejects.toThrow('DynamoDB error');
       expect(mockSend).toHaveBeenCalledTimes(1);
       expect(mockLoggerError).toHaveBeenCalled();
+      expect(mockInvokeLambdaAsync).not.toHaveBeenCalled();
     });
 
     it('should not include pk field in returned task', async () => {
@@ -447,6 +475,7 @@ describe('task-service', () => {
 
       // Assert
       expect(result).not.toHaveProperty('pk');
+      expect(mockInvokeLambdaAsync).toHaveBeenCalledTimes(1);
     });
   });
 
