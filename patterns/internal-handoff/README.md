@@ -60,13 +60,13 @@ The Internal Handoff pattern demonstrates how microservices can coordinate throu
 
 ## Getting started
 
-### Deploy the Task Service
-
-Follow the instructions in the [Task Service documentation](./task-service/README.md) to deploy the Task Service to AWS.
-
 ### Deploy the Notification Service
 
 Follow the instructions in the [Notification Service documentation](./notification-service/README.md) to deploy the Notification Service to AWS.
+
+### Deploy the Task Service
+
+Follow the instructions in the [Task Service documentation](./task-service/README.md) to deploy the Task Service to AWS.
 
 ### Using the application
 
