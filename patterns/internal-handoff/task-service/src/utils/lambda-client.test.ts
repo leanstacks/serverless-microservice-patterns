@@ -11,6 +11,13 @@ jest.mock('./logger.js', () => ({
   },
 }));
 
+// Mock the config module
+jest.mock('./config.js', () => ({
+  config: {
+    AWS_REGION: 'us-east-1',
+  },
+}));
+
 // Mock the Lambda client
 let mockSend: jest.Mock;
 jest.mock('@aws-sdk/client-lambda', () => {

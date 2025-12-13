@@ -1,11 +1,12 @@
 import { InvokeCommand, LambdaClient } from '@aws-sdk/client-lambda';
 
-import { logger } from './logger.js';
+import { config } from './config';
+import { logger } from './logger';
 
 /**
  * AWS Lambda service client
  */
-const _lambdaClient = new LambdaClient({ region: process.env.AWS_REGION || 'us-east-1' });
+const _lambdaClient = new LambdaClient({ region: config.AWS_REGION });
 
 /**
  * Invokes a Lambda function synchronously (RequestResponse)
