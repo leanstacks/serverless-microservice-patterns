@@ -335,13 +335,16 @@ describe('task-service', () => {
       expect(mockPublishToTopic).toHaveBeenCalledWith(
         'arn:aws:sns:us-east-1:123456789012:test-task-topic',
         expect.objectContaining({
-          action: 'task_created',
-          payload: expect.objectContaining({
-            task: expect.objectContaining({
-              id: '123e4567-e89b-12d3-a456-426614174000',
-              title: 'Test Task',
-            }),
+          task: expect.objectContaining({
+            id: '123e4567-e89b-12d3-a456-426614174000',
+            title: 'Test Task',
           }),
+        }),
+        expect.objectContaining({
+          event: {
+            DataType: 'String',
+            StringValue: 'task_created',
+          },
         }),
       );
     });
@@ -503,6 +506,17 @@ describe('task-service', () => {
         isComplete: true,
       };
 
+      const oldTaskItem: TaskItem = {
+        pk: 'TASK#123e4567-e89b-12d3-a456-426614174000',
+        id: taskId,
+        title: 'Original Task',
+        detail: 'Original detail',
+        dueAt: '2025-11-30T23:59:59.000Z',
+        isComplete: false,
+        createdAt: '2025-11-01T10:00:00.000Z',
+        updatedAt: '2025-11-01T10:00:00.000Z',
+      };
+
       const updatedTaskItem: TaskItem = {
         pk: 'TASK#123e4567-e89b-12d3-a456-426614174000',
         id: taskId,
@@ -514,9 +528,13 @@ describe('task-service', () => {
         updatedAt: '2025-12-01T10:00:00.000Z',
       };
 
-      mockSend.mockResolvedValue({
-        Attributes: updatedTaskItem,
-      });
+      mockSend
+        .mockResolvedValueOnce({
+          Item: oldTaskItem,
+        })
+        .mockResolvedValueOnce({
+          Attributes: updatedTaskItem,
+        });
 
       // Act
       const result = await updateTask(taskId, updateTaskDto);
@@ -528,11 +546,30 @@ describe('task-service', () => {
       expect(result?.dueAt).toBe('2025-12-31T23:59:59.000Z');
       expect(result?.isComplete).toBe(true);
       expect(result?.updatedAt).toBe('2025-12-01T10:00:00.000Z');
-      expect(mockSend).toHaveBeenCalledTimes(1);
+      expect(mockSend).toHaveBeenCalledTimes(2);
       expect(mockLoggerInfo).toHaveBeenCalledWith('[TaskService] > updateTask', {
         tableName: 'test-tasks-table',
         id: taskId,
       });
+      expect(mockPublishToTopic).toHaveBeenCalledWith(
+        'arn:aws:sns:us-east-1:123456789012:test-task-topic',
+        expect.objectContaining({
+          oldTask: expect.objectContaining({
+            id: taskId,
+            title: 'Original Task',
+          }),
+          newTask: expect.objectContaining({
+            id: taskId,
+            title: 'Updated Task',
+          }),
+        }),
+        expect.objectContaining({
+          event: {
+            DataType: 'String',
+            StringValue: 'task_updated',
+          },
+        }),
+      );
     });
 
     it('should update a task with only required fields', async () => {
@@ -541,6 +578,15 @@ describe('task-service', () => {
       const updateTaskDto: UpdateTaskDto = {
         title: 'Updated Task',
         isComplete: false,
+      };
+
+      const oldTaskItem: TaskItem = {
+        pk: 'TASK#123e4567-e89b-12d3-a456-426614174000',
+        id: taskId,
+        title: 'Original Task',
+        isComplete: true,
+        createdAt: '2025-11-01T10:00:00.000Z',
+        updatedAt: '2025-11-01T10:00:00.000Z',
       };
 
       const updatedTaskItem: TaskItem = {
@@ -552,9 +598,13 @@ describe('task-service', () => {
         updatedAt: '2025-12-01T10:00:00.000Z',
       };
 
-      mockSend.mockResolvedValue({
-        Attributes: updatedTaskItem,
-      });
+      mockSend
+        .mockResolvedValueOnce({
+          Item: oldTaskItem,
+        })
+        .mockResolvedValueOnce({
+          Attributes: updatedTaskItem,
+        });
 
       // Act
       const result = await updateTask(taskId, updateTaskDto);
@@ -565,7 +615,7 @@ describe('task-service', () => {
       expect(result?.detail).toBeUndefined();
       expect(result?.dueAt).toBeUndefined();
       expect(result?.isComplete).toBe(false);
-      expect(mockSend).toHaveBeenCalledTimes(1);
+      expect(mockSend).toHaveBeenCalledTimes(2);
     });
 
     it('should return null when task is not found', async () => {
@@ -599,6 +649,15 @@ describe('task-service', () => {
         isComplete: false,
       };
 
+      const oldTaskItem: TaskItem = {
+        pk: 'TASK#123e4567-e89b-12d3-a456-426614174000',
+        id: taskId,
+        title: 'Original Task',
+        isComplete: true,
+        createdAt: '2025-11-01T10:00:00.000Z',
+        updatedAt: '2025-11-01T10:00:00.000Z',
+      };
+
       const updatedTaskItem: TaskItem = {
         pk: 'TASK#123e4567-e89b-12d3-a456-426614174000',
         id: taskId,
@@ -608,9 +667,13 @@ describe('task-service', () => {
         updatedAt: '2025-12-01T10:00:00.000Z',
       };
 
-      mockSend.mockResolvedValue({
-        Attributes: updatedTaskItem,
-      });
+      mockSend
+        .mockResolvedValueOnce({
+          Item: oldTaskItem,
+        })
+        .mockResolvedValueOnce({
+          Attributes: updatedTaskItem,
+        });
 
       // Act
       const result = await updateTask(taskId, updateTaskDto);
@@ -644,6 +707,15 @@ describe('task-service', () => {
         isComplete: false,
       };
 
+      const oldTaskItem: TaskItem = {
+        pk: 'TASK#123e4567-e89b-12d3-a456-426614174000',
+        id: taskId,
+        title: 'Original Task',
+        isComplete: true,
+        createdAt: '2025-11-01T10:00:00.000Z',
+        updatedAt: '2025-11-01T10:00:00.000Z',
+      };
+
       const updatedTaskItem: TaskItem = {
         pk: 'TASK#123e4567-e89b-12d3-a456-426614174000',
         id: taskId,
@@ -653,9 +725,13 @@ describe('task-service', () => {
         updatedAt: '2025-12-01T10:00:00.000Z',
       };
 
-      mockSend.mockResolvedValue({
-        Attributes: updatedTaskItem,
-      });
+      mockSend
+        .mockResolvedValueOnce({
+          Item: oldTaskItem,
+        })
+        .mockResolvedValueOnce({
+          Attributes: updatedTaskItem,
+        });
 
       // Act
       const result = await updateTask(taskId, updateTaskDto);
@@ -673,28 +749,42 @@ describe('task-service', () => {
         isComplete: false,
       };
 
-      mockSend.mockResolvedValue({
-        Attributes: {
-          pk: 'TASK#123e4567-e89b-12d3-a456-426614174000',
-          id: taskId,
-          title: 'Updated Task',
-          detail: 'Updated detail',
-          isComplete: false,
-          createdAt: '2025-11-01T10:00:00.000Z',
-          updatedAt: '2025-12-01T10:00:00.000Z',
-        },
-      });
+      const oldTaskItem: TaskItem = {
+        pk: 'TASK#123e4567-e89b-12d3-a456-426614174000',
+        id: taskId,
+        title: 'Original Task',
+        detail: 'Original detail',
+        isComplete: true,
+        createdAt: '2025-11-01T10:00:00.000Z',
+        updatedAt: '2025-11-01T10:00:00.000Z',
+      };
+
+      mockSend
+        .mockResolvedValueOnce({
+          Item: oldTaskItem,
+        })
+        .mockResolvedValueOnce({
+          Attributes: {
+            pk: 'TASK#123e4567-e89b-12d3-a456-426614174000',
+            id: taskId,
+            title: 'Updated Task',
+            detail: 'Updated detail',
+            isComplete: false,
+            createdAt: '2025-11-01T10:00:00.000Z',
+            updatedAt: '2025-12-01T10:00:00.000Z',
+          },
+        });
 
       // Act
       await updateTask(taskId, updateTaskDto);
 
       // Assert
-      expect(mockSend).toHaveBeenCalledTimes(1);
-      const command = mockSend.mock.calls[0][0];
-      expect(command.input.TableName).toBe('test-tasks-table');
-      expect(command.input.Key).toEqual({ pk: 'TASK#123e4567-e89b-12d3-a456-426614174000' });
-      expect(command.input.ConditionExpression).toBe('attribute_exists(pk)');
-      expect(command.input.ReturnValues).toBe('ALL_NEW');
+      expect(mockSend).toHaveBeenCalledTimes(2);
+      const updateCommand = mockSend.mock.calls[1][0];
+      expect(updateCommand.input.TableName).toBe('test-tasks-table');
+      expect(updateCommand.input.Key).toEqual({ pk: 'TASK#123e4567-e89b-12d3-a456-426614174000' });
+      expect(updateCommand.input.ConditionExpression).toBe('attribute_exists(pk)');
+      expect(updateCommand.input.ReturnValues).toBe('ALL_NEW');
     });
 
     it('should add detail to update expression when detail is provided', async () => {
@@ -706,25 +796,39 @@ describe('task-service', () => {
         isComplete: false,
       };
 
-      mockSend.mockResolvedValue({
-        Attributes: {
-          pk: 'TASK#123e4567-e89b-12d3-a456-426614174000',
-          id: taskId,
-          title: 'Updated Task',
-          detail: 'New detail',
-          isComplete: false,
-          createdAt: '2025-11-01T10:00:00.000Z',
-          updatedAt: '2025-12-01T10:00:00.000Z',
-        },
-      });
+      const oldTaskItem: TaskItem = {
+        pk: 'TASK#123e4567-e89b-12d3-a456-426614174000',
+        id: taskId,
+        title: 'Original Task',
+        detail: 'Old detail',
+        isComplete: true,
+        createdAt: '2025-11-01T10:00:00.000Z',
+        updatedAt: '2025-11-01T10:00:00.000Z',
+      };
+
+      mockSend
+        .mockResolvedValueOnce({
+          Item: oldTaskItem,
+        })
+        .mockResolvedValueOnce({
+          Attributes: {
+            pk: 'TASK#123e4567-e89b-12d3-a456-426614174000',
+            id: taskId,
+            title: 'Updated Task',
+            detail: 'New detail',
+            isComplete: false,
+            createdAt: '2025-11-01T10:00:00.000Z',
+            updatedAt: '2025-12-01T10:00:00.000Z',
+          },
+        });
 
       // Act
       await updateTask(taskId, updateTaskDto);
 
       // Assert
-      const command = mockSend.mock.calls[0][0];
-      expect(command.input.UpdateExpression).toContain('detail = :detail');
-      expect(command.input.ExpressionAttributeValues[':detail']).toBe('New detail');
+      const updateCommand = mockSend.mock.calls[1][0];
+      expect(updateCommand.input.UpdateExpression).toContain('detail = :detail');
+      expect(updateCommand.input.ExpressionAttributeValues[':detail']).toBe('New detail');
     });
 
     it('should add dueAt to update expression when dueAt is provided', async () => {
@@ -736,25 +840,39 @@ describe('task-service', () => {
         isComplete: false,
       };
 
-      mockSend.mockResolvedValue({
-        Attributes: {
-          pk: 'TASK#123e4567-e89b-12d3-a456-426614174000',
-          id: taskId,
-          title: 'Updated Task',
-          dueAt: '2025-12-31T23:59:59.000Z',
-          isComplete: false,
-          createdAt: '2025-11-01T10:00:00.000Z',
-          updatedAt: '2025-12-01T10:00:00.000Z',
-        },
-      });
+      const oldTaskItem: TaskItem = {
+        pk: 'TASK#123e4567-e89b-12d3-a456-426614174000',
+        id: taskId,
+        title: 'Original Task',
+        dueAt: '2025-11-30T23:59:59.000Z',
+        isComplete: true,
+        createdAt: '2025-11-01T10:00:00.000Z',
+        updatedAt: '2025-11-01T10:00:00.000Z',
+      };
+
+      mockSend
+        .mockResolvedValueOnce({
+          Item: oldTaskItem,
+        })
+        .mockResolvedValueOnce({
+          Attributes: {
+            pk: 'TASK#123e4567-e89b-12d3-a456-426614174000',
+            id: taskId,
+            title: 'Updated Task',
+            dueAt: '2025-12-31T23:59:59.000Z',
+            isComplete: false,
+            createdAt: '2025-11-01T10:00:00.000Z',
+            updatedAt: '2025-12-01T10:00:00.000Z',
+          },
+        });
 
       // Act
       await updateTask(taskId, updateTaskDto);
 
       // Assert
-      const command = mockSend.mock.calls[0][0];
-      expect(command.input.UpdateExpression).toContain('dueAt = :dueAt');
-      expect(command.input.ExpressionAttributeValues[':dueAt']).toBe('2025-12-31T23:59:59.000Z');
+      const updateCommand = mockSend.mock.calls[1][0];
+      expect(updateCommand.input.UpdateExpression).toContain('dueAt = :dueAt');
+      expect(updateCommand.input.ExpressionAttributeValues[':dueAt']).toBe('2025-12-31T23:59:59.000Z');
     });
   });
 
@@ -762,7 +880,19 @@ describe('task-service', () => {
     it('should delete a task successfully', async () => {
       // Arrange
       const taskId = '123e4567-e89b-12d3-a456-426614174000';
-      mockSend.mockResolvedValue({});
+      const deletedTaskItem: TaskItem = {
+        pk: 'TASK#123e4567-e89b-12d3-a456-426614174000',
+        id: taskId,
+        title: 'Task to Delete',
+        detail: 'This task will be deleted',
+        isComplete: false,
+        createdAt: '2025-11-01T10:00:00.000Z',
+        updatedAt: '2025-12-01T10:00:00.000Z',
+      };
+
+      mockSend.mockResolvedValue({
+        Attributes: deletedTaskItem,
+      });
 
       // Act
       const result = await deleteTask(taskId);
@@ -778,6 +908,7 @@ describe('task-service', () => {
               pk: `TASK#${taskId}`,
             },
             ConditionExpression: 'attribute_exists(pk)',
+            ReturnValues: 'ALL_OLD',
           }),
         }),
       );
@@ -788,6 +919,21 @@ describe('task-service', () => {
       expect(mockLoggerInfo).toHaveBeenCalledWith('[TaskService] < deleteTask - successfully deleted task', {
         id: taskId,
       });
+      expect(mockPublishToTopic).toHaveBeenCalledWith(
+        'arn:aws:sns:us-east-1:123456789012:test-task-topic',
+        expect.objectContaining({
+          task: expect.objectContaining({
+            id: taskId,
+            title: 'Task to Delete',
+          }),
+        }),
+        expect.objectContaining({
+          event: {
+            DataType: 'String',
+            StringValue: 'task_deleted',
+          },
+        }),
+      );
     });
 
     it('should return false when task does not exist', async () => {
@@ -830,7 +976,17 @@ describe('task-service', () => {
     it('should construct correct DynamoDB key with task ID', async () => {
       // Arrange
       const taskId = 'custom-task-id-456';
-      mockSend.mockResolvedValue({});
+      const taskItem: TaskItem = {
+        pk: `TASK#${taskId}`,
+        id: taskId,
+        title: 'Test Task',
+        isComplete: false,
+        createdAt: '2025-11-01T10:00:00.000Z',
+        updatedAt: '2025-11-01T10:00:00.000Z',
+      };
+      mockSend.mockResolvedValue({
+        Attributes: taskItem,
+      });
 
       // Act
       await deleteTask(taskId);
@@ -845,7 +1001,17 @@ describe('task-service', () => {
     it('should include condition expression to ensure task exists', async () => {
       // Arrange
       const taskId = '123e4567-e89b-12d3-a456-426614174000';
-      mockSend.mockResolvedValue({});
+      const taskItem: TaskItem = {
+        pk: `TASK#${taskId}`,
+        id: taskId,
+        title: 'Test Task',
+        isComplete: false,
+        createdAt: '2025-11-01T10:00:00.000Z',
+        updatedAt: '2025-11-01T10:00:00.000Z',
+      };
+      mockSend.mockResolvedValue({
+        Attributes: taskItem,
+      });
 
       // Act
       await deleteTask(taskId);

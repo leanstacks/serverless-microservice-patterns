@@ -120,10 +120,16 @@ export const createTask = async (createTaskDto: CreateTaskDto): Promise<Task> =>
     });
 
     // Publish task_created event to SNS topic
-    await publishToTopic(config.TASK_TOPIC_ARN, {
-      action: 'task_created',
-      payload: { task },
-    });
+    await publishToTopic(
+      config.TASK_TOPIC_ARN,
+      { task },
+      {
+        event: {
+          DataType: 'String',
+          StringValue: 'task_created',
+        },
+      },
+    );
 
     return task;
   } catch (error) {
@@ -145,6 +151,16 @@ export const updateTask = async (id: string, updateTaskDto: UpdateTaskDto): Prom
   logger.info('[TaskService] > updateTask', { tableName: config.TASKS_TABLE, id });
 
   try {
+    // Fetch the existing task before updating to include in event
+    const oldTask = await getTask(id);
+
+    // If task doesn't exist, return null
+    if (!oldTask) {
+      logger.info('[TaskService] < updateTask - task not found', { id });
+      return null;
+    }
+
+    // Prepare updated attributes
     const now = new Date().toISOString();
 
     // Build update expression dynamically
@@ -196,6 +212,7 @@ export const updateTask = async (id: string, updateTaskDto: UpdateTaskDto): Prom
     });
     logger.debug('[TaskService] updateTask - UpdateCommand', { command });
 
+    // Update the task in DynamoDB and retrieve the new attributes
     const response = await dynamoDocClient.send(command);
 
     if (!response.Attributes) {
@@ -203,17 +220,23 @@ export const updateTask = async (id: string, updateTaskDto: UpdateTaskDto): Prom
       return null;
     }
 
-    const task = toTask(response.Attributes as TaskItem);
+    const newTask = toTask(response.Attributes as TaskItem);
 
     logger.info('[TaskService] < updateTask - successfully updated task', { id });
 
     // Publish task_updated event to SNS topic
-    await publishToTopic(config.TASK_TOPIC_ARN, {
-      action: 'task_updated',
-      payload: { task },
-    });
+    await publishToTopic(
+      config.TASK_TOPIC_ARN,
+      { oldTask, newTask },
+      {
+        event: {
+          DataType: 'String',
+          StringValue: 'task_updated',
+        },
+      },
+    );
 
-    return task;
+    return newTask;
   } catch (error) {
     // Check if the error is a conditional check failure (task not found)
     if (error instanceof Error && error.name === 'ConditionalCheckFailedException') {
@@ -239,24 +262,33 @@ export const deleteTask = async (id: string): Promise<boolean> => {
   logger.info('[TaskService] > deleteTask', { tableName: config.TASKS_TABLE, id });
 
   try {
+    // Use ReturnValues: 'ALL_OLD' to get the deleted task in a single DynamoDB call
     const command = new DeleteCommand({
       TableName: config.TASKS_TABLE,
       Key: {
         pk: TaskKeys.pk(id),
       },
       ConditionExpression: 'attribute_exists(pk)',
+      ReturnValues: 'ALL_OLD',
     });
     logger.debug('[TaskService] deleteTask - DeleteCommand', { command });
 
-    await dynamoDocClient.send(command);
+    const response = await dynamoDocClient.send(command);
 
     logger.info('[TaskService] < deleteTask - successfully deleted task', { id });
 
-    // Publish task_deleted event to SNS topic
-    await publishToTopic(config.TASK_TOPIC_ARN, {
-      action: 'task_deleted',
-      payload: { taskId: id },
-    });
+    // Publish task_deleted event to SNS topic with the deleted task object
+    const deletedTask = response.Attributes ? toTask(response.Attributes as TaskItem) : null;
+    await publishToTopic(
+      config.TASK_TOPIC_ARN,
+      { task: deletedTask },
+      {
+        event: {
+          DataType: 'String',
+          StringValue: 'task_deleted',
+        },
+      },
+    );
 
     return true;
   } catch (error) {
