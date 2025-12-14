@@ -1,6 +1,7 @@
 import * as cdk from 'aws-cdk-lib';
 import { Match, Template } from 'aws-cdk-lib/assertions';
 import * as dynamodb from 'aws-cdk-lib/aws-dynamodb';
+import * as sns from 'aws-cdk-lib/aws-sns';
 import { LambdaStack } from './lambda-stack';
 
 // Mock NodejsFunction to avoid Docker bundling during tests
@@ -35,16 +36,19 @@ describe('LambdaStack', () => {
           type: dynamodb.AttributeType.STRING,
         },
       });
+      const testMockTopic = new sns.Topic(mockTestStack, 'MockTaskTopic', {
+        topicName: 'mock-task-topic',
+      });
 
       const stack = new LambdaStack(testApp, 'TestLambdaStack', {
         appName: 'smp-pubsub-task-service',
         envName: 'dev',
         taskTable: testMockTable,
+        taskTopic: testMockTopic,
         loggingEnabled: true,
         loggingLevel: 'debug',
         loggingFormat: 'json',
         corsAllowOrigin: '*',
-        sendNotificationFunctionName: 'smp-pubsub-notification-service-send-notification-dev',
       });
       template = Template.fromStack(stack);
     });
@@ -104,11 +108,11 @@ describe('LambdaStack', () => {
         Environment: {
           Variables: {
             TASKS_TABLE: Match.anyValue(),
+            TASK_TOPIC_ARN: Match.anyValue(),
             LOGGING_ENABLED: 'true',
             LOGGING_LEVEL: 'debug',
             LOGGING_FORMAT: 'json',
             CORS_ALLOW_ORIGIN: '*',
-            SEND_NOTIFICATION_FUNCTION_NAME: 'smp-pubsub-notification-service-send-notification-dev',
           },
         },
       });
@@ -313,16 +317,19 @@ describe('LambdaStack', () => {
           type: dynamodb.AttributeType.STRING,
         },
       });
+      const testMockTopic = new sns.Topic(mockTestStack, 'MockTaskTopic', {
+        topicName: 'mock-task-topic',
+      });
 
       const stack = new LambdaStack(testApp, 'TestLambdaStack', {
         appName: 'smp-pubsub-task-service',
         envName: 'prd',
         taskTable: testMockTable,
+        taskTopic: testMockTopic,
         loggingEnabled: true,
         loggingLevel: 'info',
         loggingFormat: 'json',
         corsAllowOrigin: '*',
-        sendNotificationFunctionName: 'smp-pubsub-notification-service-send-notification-prd',
       });
       template = Template.fromStack(stack);
     });
@@ -370,16 +377,19 @@ describe('LambdaStack', () => {
           type: dynamodb.AttributeType.STRING,
         },
       });
+      const testMockTopic = new sns.Topic(mockTestStack, 'MockTaskTopic', {
+        topicName: 'mock-task-topic',
+      });
 
       const stack = new LambdaStack(testApp, 'TestLambdaStack', {
         appName: 'smp-pubsub-task-service',
         envName: 'dev',
         taskTable: testMockTable,
+        taskTopic: testMockTopic,
         loggingEnabled: true,
         loggingLevel: 'debug',
         loggingFormat: 'json',
         corsAllowOrigin: '*',
-        sendNotificationFunctionName: 'smp-pubsub-notification-service-send-notification-dev',
       });
       template = Template.fromStack(stack);
     });

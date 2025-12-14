@@ -53,7 +53,7 @@
   },
   "dependencies": {
     "@aws-sdk/client-dynamodb": "3.948.0",
-    "@aws-sdk/client-lambda": "3.950.0",
+    "@aws-sdk/client-sns": "3.948.0",
     "@aws-sdk/lib-dynamodb": "3.948.0",
     "pino": "10.1.0",
     "pino-lambda": "4.4.1",

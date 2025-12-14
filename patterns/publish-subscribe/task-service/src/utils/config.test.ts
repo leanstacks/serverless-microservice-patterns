@@ -31,7 +31,7 @@ describe('config', () => {
     it('should validate and return config with required environment variables', () => {
       // Arrange
       process.env.TASKS_TABLE = 'my-tasks-table';
-      process.env.SEND_NOTIFICATION_FUNCTION_NAME = 'send-notification';
+      process.env.TASK_TOPIC_ARN = 'arn:aws:sns:us-east-1:123456789012:task-topic';
 
       // Act
       config = require('./config').config;
@@ -44,7 +44,7 @@ describe('config', () => {
     it('should apply default values for optional environment variables', () => {
       // Arrange
       process.env.TASKS_TABLE = 'my-tasks-table';
-      process.env.SEND_NOTIFICATION_FUNCTION_NAME = 'send-notification';
+      process.env.TASK_TOPIC_ARN = 'arn:aws:sns:us-east-1:123456789012:task-topic';
 
       // Act
       config = require('./config').config;
@@ -60,7 +60,7 @@ describe('config', () => {
     it('should use provided values instead of defaults', () => {
       // Arrange
       process.env.TASKS_TABLE = 'my-tasks-table';
-      process.env.SEND_NOTIFICATION_FUNCTION_NAME = 'send-notification';
+      process.env.TASK_TOPIC_ARN = 'arn:aws:sns:us-east-1:123456789012:task-topic';
       process.env.AWS_REGION = 'us-west-2';
       process.env.LOGGING_ENABLED = 'false';
       process.env.LOGGING_LEVEL = 'error';
@@ -81,6 +81,7 @@ describe('config', () => {
     it('should throw error when required TASKS_TABLE is missing', () => {
       // Arrange
       delete process.env.TASKS_TABLE;
+      process.env.TASK_TOPIC_ARN = 'arn:aws:sns:us-east-1:123456789012:task-topic';
 
       // Act & Assert
       expect(() => {
@@ -96,6 +97,7 @@ describe('config', () => {
     it('should throw error when TASKS_TABLE is empty string', () => {
       // Arrange
       process.env.TASKS_TABLE = '';
+      process.env.TASK_TOPIC_ARN = 'arn:aws:sns:us-east-1:123456789012:task-topic';
 
       // Act & Assert
       expect(() => {
@@ -111,7 +113,7 @@ describe('config', () => {
     it('should transform LOGGING_ENABLED string to boolean true', () => {
       // Arrange
       process.env.TASKS_TABLE = 'my-tasks-table';
-      process.env.SEND_NOTIFICATION_FUNCTION_NAME = 'send-notification';
+      process.env.TASK_TOPIC_ARN = 'arn:aws:sns:us-east-1:123456789012:task-topic';
       process.env.LOGGING_ENABLED = 'true';
 
       // Act
@@ -125,7 +127,7 @@ describe('config', () => {
     it('should transform LOGGING_ENABLED string to boolean false', () => {
       // Arrange
       process.env.TASKS_TABLE = 'my-tasks-table';
-      process.env.SEND_NOTIFICATION_FUNCTION_NAME = 'send-notification';
+      process.env.TASK_TOPIC_ARN = 'arn:aws:sns:us-east-1:123456789012:task-topic';
       process.env.LOGGING_ENABLED = 'false';
 
       // Act
@@ -139,14 +141,14 @@ describe('config', () => {
     it('should validate LOGGING_LEVEL enum values', () => {
       // Arrange
       process.env.TASKS_TABLE = 'my-tasks-table';
-      process.env.SEND_NOTIFICATION_FUNCTION_NAME = 'send-notification';
+      process.env.TASK_TOPIC_ARN = 'arn:aws:sns:us-east-1:123456789012:task-topic';
 
       // Act & Assert - valid values
       const validLogLevels = ['debug', 'info', 'warn', 'error'];
       validLogLevels.forEach((level) => {
         jest.resetModules();
         process.env.TASKS_TABLE = 'my-tasks-table';
-        process.env.SEND_NOTIFICATION_FUNCTION_NAME = 'send-notification';
+        process.env.TASK_TOPIC_ARN = 'arn:aws:sns:us-east-1:123456789012:task-topic';
         process.env.LOGGING_LEVEL = level;
         config = require('./config').config;
         expect(config.LOGGING_LEVEL).toBe(level);
@@ -182,14 +184,14 @@ describe('config', () => {
     it('should validate LOGGING_FORMAT enum values', () => {
       // Arrange
       process.env.TASKS_TABLE = 'my-tasks-table';
-      process.env.SEND_NOTIFICATION_FUNCTION_NAME = 'send-notification';
+      process.env.TASK_TOPIC_ARN = 'arn:aws:sns:us-east-1:123456789012:task-topic';
 
       // Act & Assert - valid values
       const validLogFormats = ['text', 'json'];
       validLogFormats.forEach((format) => {
         jest.resetModules();
         process.env.TASKS_TABLE = 'my-tasks-table';
-        process.env.SEND_NOTIFICATION_FUNCTION_NAME = 'send-notification';
+        process.env.TASK_TOPIC_ARN = 'arn:aws:sns:us-east-1:123456789012:task-topic';
         process.env.LOGGING_FORMAT = format;
         config = require('./config').config;
         expect(config.LOGGING_FORMAT).toBe(format);
@@ -214,7 +216,7 @@ describe('config', () => {
     it('should refresh config when environment variables change', () => {
       // Arrange
       process.env.TASKS_TABLE = 'original-table';
-      process.env.SEND_NOTIFICATION_FUNCTION_NAME = 'send-notification';
+      process.env.TASK_TOPIC_ARN = 'arn:aws:sns:us-east-1:123456789012:task-topic';
       process.env.AWS_REGION = 'us-east-1';
       refreshConfig = require('./config').refreshConfig;
       config = require('./config').config;
@@ -235,7 +237,7 @@ describe('config', () => {
     it('should update cached config after refresh', () => {
       // Arrange
       process.env.TASKS_TABLE = 'original-table';
-      process.env.SEND_NOTIFICATION_FUNCTION_NAME = 'send-notification';
+      process.env.TASK_TOPIC_ARN = 'arn:aws:sns:us-east-1:123456789012:task-topic';
       refreshConfig = require('./config').refreshConfig;
       const configModule = require('./config');
       const originalConfig = configModule.config;
@@ -255,7 +257,7 @@ describe('config', () => {
     it('should throw error on refresh if validation fails', () => {
       // Arrange
       process.env.TASKS_TABLE = 'valid-table';
-      process.env.SEND_NOTIFICATION_FUNCTION_NAME = 'send-notification';
+      process.env.TASK_TOPIC_ARN = 'arn:aws:sns:us-east-1:123456789012:task-topic';
       refreshConfig = require('./config').refreshConfig;
       config = require('./config').config;
 
@@ -273,7 +275,7 @@ describe('config', () => {
     it('should cache config after first validation', () => {
       // Arrange
       process.env.TASKS_TABLE = 'my-tasks-table';
-      process.env.SEND_NOTIFICATION_FUNCTION_NAME = 'send-notification';
+      process.env.TASK_TOPIC_ARN = 'arn:aws:sns:us-east-1:123456789012:task-topic';
       const configModule = require('./config');
 
       // Act
@@ -287,7 +289,7 @@ describe('config', () => {
     it('should return cached config on subsequent imports', () => {
       // Arrange
       process.env.TASKS_TABLE = 'cached-table';
-      process.env.SEND_NOTIFICATION_FUNCTION_NAME = 'send-notification';
+      process.env.TASK_TOPIC_ARN = 'arn:aws:sns:us-east-1:123456789012:task-topic';
       process.env.AWS_REGION = 'us-west-1';
 
       // Act
@@ -340,7 +342,7 @@ describe('config', () => {
     it('should export Config type matching validated schema', () => {
       // Arrange
       process.env.TASKS_TABLE = 'my-tasks-table';
-      process.env.SEND_NOTIFICATION_FUNCTION_NAME = 'send-notification';
+      process.env.TASK_TOPIC_ARN = 'arn:aws:sns:us-east-1:123456789012:task-topic';
       process.env.AWS_REGION = 'us-east-1';
       process.env.LOGGING_ENABLED = 'true';
       process.env.LOGGING_LEVEL = 'info';
@@ -351,6 +353,7 @@ describe('config', () => {
 
       // Assert - verify all expected properties exist and have correct types
       expect(typeof config.TASKS_TABLE).toBe('string');
+      expect(typeof config.TASK_TOPIC_ARN).toBe('string');
       expect(typeof config.AWS_REGION).toBe('string');
       expect(typeof config.LOGGING_ENABLED).toBe('boolean');
       expect(['debug', 'info', 'warn', 'error']).toContain(config.LOGGING_LEVEL);

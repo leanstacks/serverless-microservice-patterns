@@ -7,7 +7,7 @@ import { Task, TaskItem, TaskKeys, toTask } from '@/models/task.js';
 import { config } from '@/utils/config.js';
 import { dynamoDocClient } from '@/utils/dynamodb-client.js';
 import { logger } from '@/utils/logger.js';
-import { invokeLambdaAsync } from '@/utils/lambda-client.js';
+import { publishToTopic } from '@/utils/sns-client.js';
 
 /**
  * Retrieves all tasks from the DynamoDB table
@@ -119,8 +119,8 @@ export const createTask = async (createTaskDto: CreateTaskDto): Promise<Task> =>
       id: task.id,
     });
 
-    // Asynchronous post-creation actions (e.g., sending notifications) can be added here
-    await invokeLambdaAsync(config.SEND_NOTIFICATION_FUNCTION_NAME, {
+    // Publish task_created event to SNS topic
+    await publishToTopic(config.TASK_TOPIC_ARN, {
       action: 'task_created',
       payload: { task },
     });
@@ -207,6 +207,12 @@ export const updateTask = async (id: string, updateTaskDto: UpdateTaskDto): Prom
 
     logger.info('[TaskService] < updateTask - successfully updated task', { id });
 
+    // Publish task_updated event to SNS topic
+    await publishToTopic(config.TASK_TOPIC_ARN, {
+      action: 'task_updated',
+      payload: { task },
+    });
+
     return task;
   } catch (error) {
     // Check if the error is a conditional check failure (task not found)
@@ -245,6 +251,12 @@ export const deleteTask = async (id: string): Promise<boolean> => {
     await dynamoDocClient.send(command);
 
     logger.info('[TaskService] < deleteTask - successfully deleted task', { id });
+
+    // Publish task_deleted event to SNS topic
+    await publishToTopic(config.TASK_TOPIC_ARN, {
+      action: 'task_deleted',
+      payload: { taskId: id },
+    });
 
     return true;
   } catch (error) {

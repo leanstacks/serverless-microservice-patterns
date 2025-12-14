@@ -4,6 +4,7 @@ import * as cdk from 'aws-cdk-lib';
 
 import { getConfig, getEnvironmentConfig, getTags } from './utils/config';
 import { DataStack } from './stacks/data-stack';
+import { SnsStack } from './stacks/sns-stack';
 import { LambdaStack } from './stacks/lambda-stack';
 
 // Load and validate configuration
@@ -18,17 +19,21 @@ const tags = getTags(config);
 // Get AWS environment configuration
 const environmentConfig = getEnvironmentConfig(config);
 
-// Import the Send Notification Lambda function name from Notification Service CloudFormation stack
-const sendNotificationFunctionName = cdk.Fn.importValue(
-  `smp-pubsub-notification-service-send-notification-function-name-${config.CDK_ENV}`,
-);
-
 // Create Data Stack
 const dataStack = new DataStack(app, `${config.CDK_APP_NAME}-data-stack-${config.CDK_ENV}`, {
   appName: config.CDK_APP_NAME,
   envName: config.CDK_ENV,
   stackName: `${config.CDK_APP_NAME}-data-${config.CDK_ENV}`,
   description: `Data resources for ${config.CDK_APP_NAME} (${config.CDK_ENV})`,
+  ...(environmentConfig && { env: environmentConfig }),
+});
+
+// Create SNS Stack
+const snsStack = new SnsStack(app, `${config.CDK_APP_NAME}-sns-stack-${config.CDK_ENV}`, {
+  appName: config.CDK_APP_NAME,
+  envName: config.CDK_ENV,
+  stackName: `${config.CDK_APP_NAME}-sns-${config.CDK_ENV}`,
+  description: `SNS resources for ${config.CDK_APP_NAME} (${config.CDK_ENV})`,
   ...(environmentConfig && { env: environmentConfig }),
 });
 
@@ -39,11 +44,11 @@ new LambdaStack(app, `${config.CDK_APP_NAME}-lambda-stack-${config.CDK_ENV}`, {
   stackName: `${config.CDK_APP_NAME}-lambda-${config.CDK_ENV}`,
   description: `Lambda functions and API Gateway for ${config.CDK_APP_NAME} (${config.CDK_ENV})`,
   taskTable: dataStack.taskTable,
+  taskTopic: snsStack.taskTopic,
   loggingEnabled: config.CDK_APP_LOGGING_ENABLED,
   loggingLevel: config.CDK_APP_LOGGING_LEVEL,
   loggingFormat: config.CDK_APP_LOGGING_FORMAT,
   corsAllowOrigin: config.CDK_CORS_ALLOW_ORIGIN,
-  sendNotificationFunctionName,
   ...(environmentConfig && { env: environmentConfig }),
 });
 
