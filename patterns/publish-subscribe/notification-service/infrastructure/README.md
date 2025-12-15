@@ -16,7 +16,9 @@ AWS CDK infrastructure for this project.
 ```
 /infrastructure
    /stacks
-      lambda-stack.ts         # Lambda functions, SQS DLQ, and logging
+      sqs-stack.ts            # SQS queues and SNS subscriptions
+      sqs-stack.test.ts       # Unit tests for SQS stack
+      lambda-stack.ts         # Lambda function and event sources
       lambda-stack.test.ts    # Unit tests for lambda stack
    /utils
       config.ts               # Configuration management with Zod validation
@@ -35,21 +37,19 @@ AWS CDK infrastructure for this project.
 
 ## Prerequisites
 
-Before you begin, ensure you have the following installed and configured:
+Before you begin (use NVM to manage Node.js versions)
 
-1. **Node.js v24 or later** (use NVM to manage Node.js versions)
+```bash
+# Install NVM (if not already installed)
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.0/install.sh | bash
 
-   ```bash
-   # Install NVM (if not already installed)
-   curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.0/install.sh | bash
+# Install and use the Node.js version specified in .nvmrc
+nvm install
+nvm use
 
-   # Install and use the Node.js version specified in .nvmrc
-   nvm install
-   nvm use
-
-   # Verify installation
-   node --version  # Should match the version in .nvmrc
-   ```
+# Verify installation
+node --version  # Should match the version in .nvmrc
+```
 
 2. **AWS CLI** configured with appropriate credentials
 

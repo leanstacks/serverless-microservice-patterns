@@ -6,33 +6,77 @@ This guide provides a concise overview of the AWS CDK infrastructure for the pro
 
 ## Stacks Overview
 
-The infrastructure is organized into a single main AWS CDK stack:
+The infrastructure is organized into two AWS CDK stacks:
 
-| Stack Name Pattern        | Purpose                                        |
-| ------------------------- | ---------------------------------------------- |
-| `{app-name}-lambda-{env}` | Manages Lambda functions, SQS DLQ, and logging |
+| Stack Name Pattern        | Purpose                                                         |
+| ------------------------- | --------------------------------------------------------------- |
+| `{app-name}-sqs-{env}`    | Manages SQS queues for event consumption from SNS topics        |
+| `{app-name}-lambda-{env}` | Manages Lambda functions, event sources, and CloudWatch logging |
+
+---
+
+## SQS Stack
+
+**Purpose:** Manages SQS queues for consuming events from SNS topics using pub-sub pattern.
+
+**Key Resources:**
+
+| Resource           | Name Pattern                        | Key Properties                                                                                                    |
+| ------------------ | ----------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| Notification Queue | `{app-name}-notification-{env}`     | Standard queue, 4-day retention, 1-minute visibility timeout, Removal Policy: `RETAIN` (prd), `DESTROY` (dev/qat) |
+| Notification DLQ   | `{app-name}-notification-dlq-{env}` | Standard queue, 14-day retention, Removal Policy: `RETAIN` (prd), `DESTROY` (dev/qat), Max receive count: 3       |
+| SNS Subscription   | Auto-generated                      | Subscribes to Task SNS topic, raw message delivery enabled, filter policy for `task_created` events               |
+
+**Key Behaviors:**
+
+- Queue automatically redrives failed messages to DLQ after 3 failed receive attempts
+- SNS-to-SQS subscription filters incoming events to only `task_created` event type
+
+**SQS Stack Outputs:**
+
+| Output Name               | Export Name Pattern                       | Description                                     |
+| ------------------------- | ----------------------------------------- | ----------------------------------------------- |
+| `NotificationQueueArn`    | `{app-name}-notification-queue-arn-{env}` | ARN of the notification queue                   |
+| `NotificationQueueUrl`    | `{app-name}-notification-queue-url-{env}` | URL of the notification queue                   |
+| `NotificationQueueDLQArn` | `{app-name}-notification-dlq-arn-{env}`   | ARN of the notification queue Dead Letter Queue |
+| `NotificationQueueDLQUrl` | `{app-name}-notification-dlq-url-{env}`   | URL of the notification queue Dead Letter Queue |
 
 ---
 
 ## Lambda Stack
 
-**Purpose:** Manages the Lambda function, its Dead Letter Queue, and CloudWatch logging.
+**Purpose:** Manages the Lambda function for processing notification events and CloudWatch logging.
 
 **Key Resources:**
 
 | Resource             | Name Pattern                                     | Key Properties                                                                                                                                   |
 | -------------------- | ------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Lambda Function      | `{app-name}-send-notification-{env}`             | Runtime: Node.js 24.x, Memory: 256 MB, Timeout: 10s, Async invocation with DLQ                                                                   |
-| SQS Queue (DLQ)      | `{app-name}-send-notification-dlq-{env}`         | Standard queue, 14-day retention, Removal Policy: `RETAIN` (prd), `DESTROY` (dev/qat)                                                            |
+| Lambda Function      | `{app-name}-send-notification-{env}`             | Runtime: Node.js 24.x, Memory: 256 MB, Timeout: 15s, Batch size: 10, Batch window: 30s                                                           |
 | CloudWatch Log Group | `/aws/lambda/{app-name}-send-notification-{env}` | JSON logging format, System/App log level: INFO, Retention: 1 month (prd), 1 week (dev/qat), Removal Policy: `RETAIN` (prd), `DESTROY` (dev/qat) |
 
-**Outputs:**
+**Key Behaviors:**
 
-| Output Name                      | Export Name Pattern                                | Description                                         |
-| -------------------------------- | -------------------------------------------------- | --------------------------------------------------- |
-| `SendNotificationFunctionArn`    | `{app-name}-send-notification-function-arn-{env}`  | ARN of the send notification Lambda function        |
-| `SendNotificationFunctionName`   | `{app-name}-send-notification-function-name-{env}` | Name of the send notification Lambda function       |
-| `SendNotificationFunctionDlqUrl` | `{app-name}-send-notification-dlq-url-{env}`       | URL of the Dead Letter Queue for failed invocations |
+- Lambda subscribes to Notification Queue with SQS event source
+- Filters messages to only process `task_created` events
+- Reports batch item failures to enable partial successful processing
+- Uses bundling with minification and source maps for optimized code
+
+**Lambda Stack Outputs:**
+
+| Output Name                    | Export Name Pattern                                | Description                                   |
+| ------------------------------ | -------------------------------------------------- | --------------------------------------------- |
+| `SendNotificationFunctionArn`  | `{app-name}-send-notification-function-arn-{env}`  | ARN of the send notification Lambda function  |
+| `SendNotificationFunctionName` | `{app-name}-send-notification-function-name-{env}` | Name of the send notification Lambda function |
+
+---
+
+## Stack Dependencies
+
+The Lambda Stack depends on the SQS Stack to ensure proper resource creation order:
+
+1. SQS Stack creates the notification queue and DLQ
+2. SNS topic subscription is configured in the SQS Stack
+3. Lambda Stack creates the Lambda function and subscribes it to the notification queue
 
 ---
 
@@ -40,12 +84,12 @@ The infrastructure is organized into a single main AWS CDK stack:
 
 All resources are tagged for cost allocation and management:
 
-| Tag     | Source         | Example Value            |
-| ------- | -------------- | ------------------------ |
-| `App`   | `CDK_APP_NAME` | `smp-simple-web-service` |
-| `Env`   | `CDK_ENV`      | `dev`, `qat`, `prd`      |
-| `OU`    | `CDK_OU`       | `leanstacks`             |
-| `Owner` | `CDK_OWNER`    | `platform-team`          |
+| Tag     | Source         | Example Value                     |
+| ------- | -------------- | --------------------------------- |
+| `App`   | `CDK_APP_NAME` | `smp-pubsub-notification-service` |
+| `Env`   | `CDK_ENV`      | `dev`, `qat`, `prd`               |
+| `OU`    | `CDK_OU`       | `leanstacks`                      |
+| `Owner` | `CDK_OWNER`    | `platform-team`                   |
 
 ---
 
