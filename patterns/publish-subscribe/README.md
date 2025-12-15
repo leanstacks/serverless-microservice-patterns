@@ -2,9 +2,9 @@
 
 This project provides a solid foundation for implementing Serverless Microservice Patterns with AWS Lambda functions using Node.js and TypeScript. The project uses the AWS CDK for infrastructure as code, Jest for testing, and modern development tooling.
 
-There are many Serverless Microservice Patterns which may be implemented with AWS Lambda functions. This project illustrates the "Publish Subscribe" pattern, also known as Pub/Sub. The Pub/Sub pattern is similar to the Notifier where the first service _publishes_ events to a SNS topic. Any number of services may _subscribe_ to the topic so that they may take action when those events occur.
+There are many Serverless Microservice Patterns which may be implemented with AWS Lambda functions. This project illustrates the "Publish Subscribe" pattern, also known as "Pub/Sub". The Pub/Sub pattern is similar to the Notifier pattern where the first service _publishes_ events to a SNS topic. Any number of services may _subscribe_ to the topic so that they may take action when those events occur.
 
-To prevent losing events when unforseen issues occur and to manage the volume of incoming events, services subscribe to SNS topics with their own SQS queues rather than directly from the Lambda functions. When repeated failures occur, services place messages in a Dead Letter Queue, DLQ, for review and replay. Ensure the subscribing functions' logic are idempotent and can process the same event delivered multiple times.
+To prevent losing events when unforseen issues occur and to manage the volume of incoming events, services subscribe to SNS topics with their own SQS queues rather than directly from the Lambda functions. When repeated failures occur, messages are moved to a Dead Letter Queue, DLQ, for review and potential replay. Ensure the subscribing function's logic is idempotent and can safely process the same event delivered multiple times.
 
 The Publish Subscribe pattern is one of the essential patterns in an event-driven architecture. It promotes **loose coupling** between services. Services do not need to know the implementation details of other services, only the format of published events.
 
@@ -32,39 +32,40 @@ The **Notification Service** is a dedicated microservice responsible for sending
 
 - Send notifications (email, SMS, push notifications, etc.)
 
-The Notification Service is designed to be invoked asynchronously by other microservices. It receives notification requests, processes them, and handles delivery to external notification providers. By separating notification logic into its own microservice, the application achieves better modularity, independent scalability, and easier testing and maintenance.
+The Notification Service is designed as an event consumer in the Pub/Sub pattern. It subscribes to the Task Service's SNS topic through its own SQS queue, allowing it to receive task events asynchronously. The Notification Service uses subscription message filtering to consume only relevant events (e.g., "task created"). This ensures the service only processes events it cares about while remaining independent from other event consumers.
 
-In this pattern, the Task Service invokes the Notification Service asynchronously when certain task events occur, such as task creation or completion. This decouples task management logic from notification delivery, allowing each service to evolve independently.
+By separating notification logic into its own microservice, the application achieves better modularity, independent scalability, and easier testing and maintenance. The decoupling provided by SNS/SQS allows the Task Service and Notification Service to evolve independently without direct dependencies.
 
 ### The Publish Subscribe Pattern in Action
 
-The Publish Subscribe pattern demonstrates how microservices can coordinate through asynchronous Lambda-to-Lambda invocations:
+The Publish Subscribe pattern demonstrates how microservices can coordinate through asynchronous event publishing and subscription:
 
-1. **Task Creation**: A client creates a new task via the Task Service's `create-task` function.
+1. **Event Publication**: A client creates a new task via the Task Service's `create-task` function. After successfully storing the task in DynamoDB, the Task Service publishes a "task created" event to an SNS topic.
 
-2. **Service Handoff**: After successfully creating the task in DynamoDB, the Task Service asynchronously invokes the Notification Service using the AWS SDK with `InvocationType: 'Event'`.
+2. **Event Subscription**: The Notification Service subscribes to the Task Service's SNS topic through its own SQS queue. The subscription includes a message filter that ensures only "task created" events are delivered to the queue.
 
-3. **Asynchronous Notification**: The Notification Service receives the handoff event and sends a notification (e.g., "New task created") without blocking the Task Service's response.
+3. **Asynchronous Processing**: The Notification Service Lambda function is automatically triggered by messages in its SQS queue. It receives the task created event and sends a notification (e.g., "New task created") without blocking the Task Service's response.
 
-4. **Resilience**: If the Notification Service fails, AWS Lambda automatically retries the invocation (based on configured retry policy). Failed invocations that exhaust retries are sent to a Dead Letter Queue (SQS) for later analysis and replay.
+4. **Resilience and Recovery**: If the Notification Service fails to process a message, it remains in the SQS queue and is automatically retried based on the configured visibility timeout. If failures persist after the maximum number of retries, the message is moved to a Dead Letter Queue (DLQ) for later analysis and potential replay.
 
 **Key Benefits of This Pattern:**
 
-- **Decoupling**: Services remain independent; the Task Service doesn't wait for notification delivery.
-- **Performance**: The Task Service responds to clients immediately without waiting for notification processing.
-- **Scalability**: Each service scales independently based on its specific workload.
-- **Resilience**: Built-in retry mechanism and Dead Letter Queue ensure no notifications are lost.
-- **Single Responsibility**: Each microservice has one well-defined purpose.
+- **Loose Coupling**: The Task Service doesn't know about the Notification Service; it only publishes to an SNS topic. Other services can subscribe to the same topic independently.
+- **Scalability**: Multiple independent consumers can subscribe to the same SNS topic, each with their own SQS queue and Lambda function.
+- **Resilience**: SNS/SQS provides built-in message durability, automatic retries, and Dead Letter Queue support for failed messages.
+- **Selectivity**: Subscription message filtering allows consumers to process only events relevant to them, reducing unnecessary processing.
+- **Performance**: The Task Service responds to clients immediately without waiting for event consumers to process notifications.
+- **Single Responsibility**: Each microservice has one well-defined purpose and evolves independently.
 
 ## Getting started
-
-### Deploy the Notification Service
-
-Follow the instructions in the [Notification Service documentation](./notification-service/README.md) to deploy the Notification Service to AWS.
 
 ### Deploy the Task Service
 
 Follow the instructions in the [Task Service documentation](./task-service/README.md) to deploy the Task Service to AWS.
+
+### Deploy the Notification Service
+
+Follow the instructions in the [Notification Service documentation](./notification-service/README.md) to deploy the Notification Service to AWS.
 
 ### Using the application
 
@@ -85,8 +86,10 @@ curl -X POST https://{api-gateway-url}/tasks \
 The Task Service will:
 
 1. Validate and store the task in DynamoDB
-2. Return a success response to the client immediately
-3. Asynchronously invoke the Notification Service to send a "task created" notification
+2. Publish a "task created" event to the Task Service SNS topic
+3. Return a success response to the client immediately
+4. The Notification Service's SQS queue receives the event (via the SNS subscription with filtering)
+5. The Notification Service Lambda processes the event asynchronously and sends a notification
 
 #### Retrieve a Task
 
