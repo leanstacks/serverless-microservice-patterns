@@ -60,11 +60,16 @@ export class SqsStack extends cdk.Stack {
       removalPolicy: props.envName === 'prd' ? cdk.RemovalPolicy.RETAIN : cdk.RemovalPolicy.DESTROY,
     });
 
-    // Subscribe the Notification Queue to the Task SNS topic
+    // Subscribe the Notification Queue to the Task SNS topic with filter policy
     const taskTopic = sns.Topic.fromTopicArn(this, 'TaskTopic', props.taskTopicArn);
     taskTopic.addSubscription(
       new subscriptions.SqsSubscription(this.notificationQueue, {
         rawMessageDelivery: true,
+        filterPolicy: {
+          event: sns.SubscriptionFilter.stringFilter({
+            allowlist: ['task_created'],
+          }),
+        },
       }),
     );
 

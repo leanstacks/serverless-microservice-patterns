@@ -81,12 +81,19 @@ export class LambdaStack extends cdk.Stack {
       }),
     });
 
-    // Add SQS event source to Lambda function
+    // Add SQS event source to Lambda function with filter policy
     this.sendNotificationFunction.addEventSource(
       new lambdaEventSources.SqsEventSource(props.notificationQueue, {
         batchSize: 10,
         maxBatchingWindow: cdk.Duration.seconds(30),
         reportBatchItemFailures: true,
+        filters: [
+          lambda.FilterCriteria.filter({
+            messageAttributes: {
+              event: { stringValue: lambda.FilterRule.isEqual('task_created') },
+            },
+          }),
+        ],
       }),
     );
 

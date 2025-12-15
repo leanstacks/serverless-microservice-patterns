@@ -74,9 +74,22 @@ describe('LambdaStack', () => {
       });
     });
 
-    it('should create event source mapping from SQS to Lambda', () => {
+    it('should create event source mapping from SQS to Lambda with filter policy', () => {
+      // Check that event source mapping exists with filter criteria
+      template.resourceCountIs('AWS::Lambda::EventSourceMapping', 1);
       template.hasResourceProperties('AWS::Lambda::EventSourceMapping', {
         BatchSize: 10,
+        FilterCriteria: {
+          Filters: [
+            {
+              Pattern: JSON.stringify({
+                messageAttributes: {
+                  event: { stringValue: ['task_created'] },
+                },
+              }),
+            },
+          ],
+        },
       });
     });
 

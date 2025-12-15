@@ -79,6 +79,16 @@ describe('SqsStack', () => {
         },
       });
     });
+
+    it('should create SNS subscription with filter policy for task_created events', () => {
+      template.hasResourceProperties('AWS::SNS::Subscription', {
+        Protocol: 'sqs',
+        RawMessageDelivery: true,
+        FilterPolicy: {
+          event: ['task_created'],
+        },
+      });
+    });
   });
 
   describe('prd environment', () => {
@@ -110,10 +120,13 @@ describe('SqsStack', () => {
       });
     });
 
-    it('should create SNS subscription from Task Topic to Notification Queue', () => {
+    it('should create SNS subscription with filter policy for task_created events in prd', () => {
       template.hasResourceProperties('AWS::SNS::Subscription', {
         Protocol: 'sqs',
         RawMessageDelivery: true,
+        FilterPolicy: {
+          event: ['task_created'],
+        },
       });
     });
   });
