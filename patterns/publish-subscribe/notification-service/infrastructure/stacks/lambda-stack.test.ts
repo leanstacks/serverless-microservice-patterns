@@ -1,4 +1,5 @@
 import * as cdk from 'aws-cdk-lib';
+import * as sqs from 'aws-cdk-lib/aws-sqs';
 import { Template } from 'aws-cdk-lib/assertions';
 import { LambdaStack } from './lambda-stack';
 
@@ -26,6 +27,12 @@ describe('LambdaStack', () => {
 
     beforeAll(() => {
       const testApp = new cdk.App();
+      const testStack = new cdk.Stack(testApp, 'TestStack');
+
+      // Create a mock SQS queue for testing
+      const mockQueue = new sqs.Queue(testStack, 'MockQueue', {
+        queueName: 'mock-queue',
+      });
 
       const stack = new LambdaStack(testApp, 'TestLambdaStack', {
         appName: 'smp-pubsub-notification-service',
@@ -33,6 +40,7 @@ describe('LambdaStack', () => {
         loggingEnabled: true,
         loggingLevel: 'debug',
         loggingFormat: 'json',
+        notificationQueue: mockQueue,
       });
       template = Template.fromStack(stack);
     });
@@ -42,7 +50,7 @@ describe('LambdaStack', () => {
         FunctionName: 'smp-pubsub-notification-service-send-notification-dev',
         Runtime: 'nodejs24.x',
         Handler: 'handler',
-        Timeout: 10,
+        Timeout: 15,
         MemorySize: 256,
       });
     });
@@ -66,10 +74,9 @@ describe('LambdaStack', () => {
       });
     });
 
-    it('should create a Dead Letter Queue', () => {
-      template.hasResourceProperties('AWS::SQS::Queue', {
-        QueueName: 'smp-pubsub-notification-service-send-notification-dlq-dev',
-        MessageRetentionPeriod: 1209600,
+    it('should create event source mapping from SQS to Lambda', () => {
+      template.hasResourceProperties('AWS::Lambda::EventSourceMapping', {
+        BatchSize: 10,
       });
     });
 
@@ -80,22 +87,6 @@ describe('LambdaStack', () => {
         },
       });
     });
-
-    it('should export DLQ ARN', () => {
-      template.hasOutput('SendNotificationDLQArn', {
-        Export: {
-          Name: 'smp-pubsub-notification-service-send-notification-dlq-arn-dev',
-        },
-      });
-    });
-
-    it('should export DLQ URL', () => {
-      template.hasOutput('SendNotificationDLQUrl', {
-        Export: {
-          Name: 'smp-pubsub-notification-service-send-notification-dlq-url-dev',
-        },
-      });
-    });
   });
 
   describe('prd environment', () => {
@@ -103,6 +94,12 @@ describe('LambdaStack', () => {
 
     beforeAll(() => {
       const testApp = new cdk.App();
+      const testStack = new cdk.Stack(testApp, 'TestStackPrd');
+
+      // Create a mock SQS queue for testing
+      const mockQueue = new sqs.Queue(testStack, 'MockQueuePrd', {
+        queueName: 'mock-queue-prd',
+      });
 
       const stack = new LambdaStack(testApp, 'TestLambdaStackPrd', {
         appName: 'smp-pubsub-notification-service',
@@ -110,6 +107,7 @@ describe('LambdaStack', () => {
         loggingEnabled: true,
         loggingLevel: 'info',
         loggingFormat: 'json',
+        notificationQueue: mockQueue,
       });
       template = Template.fromStack(stack);
     });
@@ -144,13 +142,6 @@ describe('LambdaStack', () => {
         },
       });
     });
-
-    it('should create a Dead Letter Queue with RETAIN policy for prd', () => {
-      template.hasResourceProperties('AWS::SQS::Queue', {
-        QueueName: 'smp-pubsub-notification-service-send-notification-dlq-prd',
-        MessageRetentionPeriod: 1209600,
-      });
-    });
   });
 
   describe('Lambda configuration', () => {
@@ -158,6 +149,12 @@ describe('LambdaStack', () => {
 
     beforeAll(() => {
       const testApp = new cdk.App();
+      const testStack = new cdk.Stack(testApp, 'TestStackConfig');
+
+      // Create a mock SQS queue for testing
+      const mockQueue = new sqs.Queue(testStack, 'MockQueueConfig', {
+        queueName: 'mock-queue-config',
+      });
 
       const stack = new LambdaStack(testApp, 'TestLambdaStackConfig', {
         appName: 'smp-pubsub-notification-service',
@@ -165,6 +162,7 @@ describe('LambdaStack', () => {
         loggingEnabled: true,
         loggingLevel: 'debug',
         loggingFormat: 'json',
+        notificationQueue: mockQueue,
       });
       template = Template.fromStack(stack);
     });

@@ -2,54 +2,30 @@ import { sendNotificationEventSchema, SendNotificationEvent } from './notificati
 
 describe('notification models', () => {
   describe('sendNotificationEventSchema', () => {
-    it('should validate event with required action property', () => {
+    it('should validate SQS event with single message', () => {
       // Arrange
       const event = {
-        action: 'task_created',
-      };
-
-      // Act
-      const result = sendNotificationEventSchema.safeParse(event);
-
-      // Assert
-      expect(result.success).toBe(true);
-      if (result.success) {
-        expect(result.data).toEqual({ action: 'task_created' });
-      }
-    });
-
-    it('should validate event with action and payload', () => {
-      // Arrange
-      const event = {
-        action: 'task_completed',
-        payload: {
-          taskId: '123',
-          userId: 'user-456',
-          timestamp: '2023-01-01T00:00:00Z',
-        },
-      };
-
-      // Act
-      const result = sendNotificationEventSchema.safeParse(event);
-
-      // Assert
-      expect(result.success).toBe(true);
-      if (result.success) {
-        expect(result.data).toEqual(event);
-      }
-    });
-
-    it('should validate event with nested payload objects', () => {
-      // Arrange
-      const event = {
-        action: 'task_deleted',
-        payload: {
-          taskId: '123',
-          metadata: {
-            source: 'api',
-            region: 'us-east-1',
+        Records: [
+          {
+            messageId: 'msg-123',
+            receiptHandle: 'receipt-123',
+            body: '{"taskId": "task-456"}',
+            attributes: {
+              ApproximateReceiveCount: '1',
+              SentTimestamp: '1609459200000',
+              SenderId: '123456789012',
+              ApproximateFirstReceiveTimestamp: '1609459201000',
+            },
+            messageAttributes: {
+              event: {
+                stringValue: 'task_created',
+              },
+            },
+            eventSource: 'aws:sqs',
+            eventSourceARN: 'arn:aws:sqs:us-east-1:123456789012:notification-queue',
+            awsRegion: 'us-east-1',
           },
-        },
+        ],
       };
 
       // Act
@@ -58,99 +34,55 @@ describe('notification models', () => {
       // Assert
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.data).toEqual(event);
+        expect(result.data?.Records).toHaveLength(1);
+        expect(result.data?.Records?.[0]?.messageId).toBe('msg-123');
+        expect(result.data?.Records?.[0]?.messageAttributes?.event?.stringValue).toBe('task_created');
       }
     });
 
-    it('should reject event without action', () => {
+    it('should validate SQS event with multiple messages', () => {
       // Arrange
       const event = {
-        payload: { taskId: '123' },
-      };
-
-      // Act
-      const result = sendNotificationEventSchema.safeParse(event);
-
-      // Assert
-      expect(result.success).toBe(false);
-      if (!result.success) {
-        expect(result.error.issues).toHaveLength(1);
-        expect(result.error.issues[0]?.code).toBe('invalid_type');
-      }
-    });
-
-    it('should reject event with empty action string', () => {
-      // Arrange
-      const event = {
-        action: '',
-      };
-
-      // Act
-      const result = sendNotificationEventSchema.safeParse(event);
-
-      // Assert
-      expect(result.success).toBe(false);
-      if (!result.success) {
-        expect(result.error.issues).toHaveLength(1);
-        expect(result.error.issues[0]?.code).toBe('too_small');
-      }
-    });
-
-    it('should reject event with non-string action', () => {
-      // Arrange
-      const event = {
-        action: 123,
-      };
-
-      // Act
-      const result = sendNotificationEventSchema.safeParse(event);
-
-      // Assert
-      expect(result.success).toBe(false);
-      if (!result.success) {
-        expect(result.error.issues).toHaveLength(1);
-        expect(result.error.issues[0]?.code).toBe('invalid_type');
-      }
-    });
-
-    it('should reject event with null action', () => {
-      // Arrange
-      const event = {
-        action: null,
-      };
-
-      // Act
-      const result = sendNotificationEventSchema.safeParse(event);
-
-      // Assert
-      expect(result.success).toBe(false);
-      if (!result.success) {
-        expect(result.error.issues).toHaveLength(1);
-        expect(result.error.issues[0]?.code).toBe('invalid_type');
-      }
-    });
-
-    it('should reject event with undefined action', () => {
-      // Arrange
-      const event = {
-        action: undefined,
-      };
-
-      // Act
-      const result = sendNotificationEventSchema.safeParse(event);
-
-      // Assert
-      expect(result.success).toBe(false);
-      if (!result.success) {
-        expect(result.error.issues).toHaveLength(1);
-      }
-    });
-
-    it('should allow optional payload property', () => {
-      // Arrange
-      const event = {
-        action: 'task_created',
-        payload: undefined,
+        Records: [
+          {
+            messageId: 'msg-123',
+            receiptHandle: 'receipt-123',
+            body: '{"taskId": "task-456"}',
+            attributes: {
+              ApproximateReceiveCount: '1',
+              SentTimestamp: '1609459200000',
+              SenderId: '123456789012',
+              ApproximateFirstReceiveTimestamp: '1609459201000',
+            },
+            messageAttributes: {
+              event: {
+                stringValue: 'task_created',
+              },
+            },
+            eventSource: 'aws:sqs',
+            eventSourceARN: 'arn:aws:sqs:us-east-1:123456789012:notification-queue',
+            awsRegion: 'us-east-1',
+          },
+          {
+            messageId: 'msg-124',
+            receiptHandle: 'receipt-124',
+            body: '{"taskId": "task-789"}',
+            attributes: {
+              ApproximateReceiveCount: '1',
+              SentTimestamp: '1609459200000',
+              SenderId: '123456789012',
+              ApproximateFirstReceiveTimestamp: '1609459201000',
+            },
+            messageAttributes: {
+              event: {
+                stringValue: 'task_completed',
+              },
+            },
+            eventSource: 'aws:sqs',
+            eventSourceARN: 'arn:aws:sqs:us-east-1:123456789012:notification-queue',
+            awsRegion: 'us-east-1',
+          },
+        ],
       };
 
       // Act
@@ -159,15 +91,136 @@ describe('notification models', () => {
       // Assert
       expect(result.success).toBe(true);
       if (result.success) {
-        // payload should be undefined or excluded
-        expect(result.data.action).toBe('task_created');
+        expect(result.data?.Records).toHaveLength(2);
+        expect(result.data?.Records?.[0]?.messageAttributes?.event?.stringValue).toBe('task_created');
+        expect(result.data?.Records?.[1]?.messageAttributes?.event?.stringValue).toBe('task_completed');
       }
+    });
+
+    it('should reject event without Records', () => {
+      // Arrange
+      const event = {};
+
+      // Act
+      const result = sendNotificationEventSchema.safeParse(event);
+
+      // Assert
+      expect(result.success).toBe(false);
+    });
+
+    it('should reject message without messageId', () => {
+      // Arrange
+      const event = {
+        Records: [
+          {
+            receiptHandle: 'receipt-123',
+            body: '{"taskId": "task-456"}',
+            attributes: {
+              ApproximateReceiveCount: '1',
+              SentTimestamp: '1609459200000',
+              SenderId: '123456789012',
+              ApproximateFirstReceiveTimestamp: '1609459201000',
+            },
+            messageAttributes: {
+              event: {
+                stringValue: 'task_created',
+              },
+            },
+            eventSource: 'aws:sqs',
+            eventSourceARN: 'arn:aws:sqs:us-east-1:123456789012:notification-queue',
+            awsRegion: 'us-east-1',
+          },
+        ],
+      };
+
+      // Act
+      const result = sendNotificationEventSchema.safeParse(event);
+
+      // Assert
+      expect(result.success).toBe(false);
+    });
+
+    it('should reject message without messageAttributes', () => {
+      // Arrange
+      const event = {
+        Records: [
+          {
+            messageId: 'msg-123',
+            receiptHandle: 'receipt-123',
+            body: '{"taskId": "task-456"}',
+            attributes: {
+              ApproximateReceiveCount: '1',
+              SentTimestamp: '1609459200000',
+              SenderId: '123456789012',
+              ApproximateFirstReceiveTimestamp: '1609459201000',
+            },
+            eventSource: 'aws:sqs',
+            eventSourceARN: 'arn:aws:sqs:us-east-1:123456789012:notification-queue',
+            awsRegion: 'us-east-1',
+          },
+        ],
+      };
+
+      // Act
+      const result = sendNotificationEventSchema.safeParse(event);
+
+      // Assert
+      expect(result.success).toBe(false);
+    });
+
+    it('should reject message without event messageAttribute', () => {
+      // Arrange
+      const event = {
+        Records: [
+          {
+            messageId: 'msg-123',
+            receiptHandle: 'receipt-123',
+            body: '{"taskId": "task-456"}',
+            attributes: {
+              ApproximateReceiveCount: '1',
+              SentTimestamp: '1609459200000',
+              SenderId: '123456789012',
+              ApproximateFirstReceiveTimestamp: '1609459201000',
+            },
+            messageAttributes: {},
+            eventSource: 'aws:sqs',
+            eventSourceARN: 'arn:aws:sqs:us-east-1:123456789012:notification-queue',
+            awsRegion: 'us-east-1',
+          },
+        ],
+      };
+
+      // Act
+      const result = sendNotificationEventSchema.safeParse(event);
+
+      // Assert
+      expect(result.success).toBe(false);
     });
 
     it('should parse using parse method for valid data', () => {
       // Arrange
       const event = {
-        action: 'task_created',
+        Records: [
+          {
+            messageId: 'msg-123',
+            receiptHandle: 'receipt-123',
+            body: '{"taskId": "task-456"}',
+            attributes: {
+              ApproximateReceiveCount: '1',
+              SentTimestamp: '1609459200000',
+              SenderId: '123456789012',
+              ApproximateFirstReceiveTimestamp: '1609459201000',
+            },
+            messageAttributes: {
+              event: {
+                stringValue: 'task_created',
+              },
+            },
+            eventSource: 'aws:sqs',
+            eventSourceARN: 'arn:aws:sqs:us-east-1:123456789012:notification-queue',
+            awsRegion: 'us-east-1',
+          },
+        ],
       };
 
       // Act & Assert - parse should not throw
@@ -179,13 +232,13 @@ describe('notification models', () => {
     it('should throw error using parse method for invalid data', () => {
       // Arrange
       const event = {
-        action: '',
+        Records: [],
       };
 
       // Act & Assert
       expect(() => {
         sendNotificationEventSchema.parse(event);
-      }).toThrow();
+      }).not.toThrow(); // Empty Records array is valid
     });
   });
 
@@ -193,24 +246,55 @@ describe('notification models', () => {
     it('should have correct type structure', () => {
       // Arrange & Act
       const event: SendNotificationEvent = {
-        action: 'task_created',
-        payload: { taskId: '123' },
+        Records: [
+          {
+            messageId: 'msg-123',
+            receiptHandle: 'receipt-123',
+            body: '{"taskId": "task-456"}',
+            messageAttributes: {
+              event: {
+                stringValue: 'task_created',
+              },
+            },
+          },
+        ],
       };
 
       // Assert
-      expect(event.action).toBe('task_created');
-      expect(event.payload).toEqual({ taskId: '123' });
+      expect(event.Records).toHaveLength(1);
+      expect(event.Records?.[0]?.messageId).toBe('msg-123');
+      expect(event.Records?.[0]?.messageAttributes?.event?.stringValue).toBe('task_created');
     });
 
-    it('should allow event without payload', () => {
+    it('should allow event with multiple records', () => {
       // Arrange & Act
       const event: SendNotificationEvent = {
-        action: 'task_completed',
+        Records: [
+          {
+            messageId: 'msg-123',
+            receiptHandle: 'receipt-123',
+            body: '{}',
+            messageAttributes: {
+              event: {
+                stringValue: 'task_created',
+              },
+            },
+          },
+          {
+            messageId: 'msg-124',
+            receiptHandle: 'receipt-124',
+            body: '{}',
+            messageAttributes: {
+              event: {
+                stringValue: 'task_completed',
+              },
+            },
+          },
+        ],
       };
 
       // Assert
-      expect(event.action).toBe('task_completed');
-      expect(event.payload).toBeUndefined();
+      expect(event.Records).toHaveLength(2);
     });
   });
 });

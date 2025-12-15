@@ -1,56 +1,101 @@
-import { Context } from 'aws-lambda';
+import { Context, SQSEvent, SQSBatchResponse, SQSBatchItemFailure } from 'aws-lambda';
 import { z } from 'zod';
 
-import { SendNotificationEvent, sendNotificationEventSchema } from '@/models/notification';
-import { sendNotification, NotificationAction } from '@/services/notification-service';
+import { sendNotificationEventSchema } from '@/models/notification';
+import { sendNotification, NotificationEvent } from '@/services/notification-service';
 import { logger } from '@/utils/logger';
 
 /**
- * Handles sending notifications asynchronously.
+ * Handles sending notifications from SQS messages.
  *
- * This Lambda function is invoked asynchronously from another Lambda function
- * with InvokationType of 'Event'. It validates the incoming event payload and
- * delegates to the notification service to send the notification.
+ * This Lambda function is triggered by an SQS event source mapping from the
+ * Notification Queue. It processes messages in batches, validates that each
+ * message has an 'event' message attribute, and delegates to the notification
+ * service to send the notification.
  *
- * @param event - The Lambda event containing notificationEvent and optional notificationPayload
+ * @param event - The SQS event containing one or more messages
  * @param context - The Lambda context
- * @returns A promise that resolves when the notification is sent successfully
- * @throws Will log errors but not throw to allow Lambda to complete
+ * @returns A promise that resolves with batch item failures so SQS knows which messages need reprocessing
  */
-export const handler = async (event: unknown, context: Context): Promise<void> => {
+export const handler = async (event: SQSEvent, context: Context): Promise<SQSBatchResponse> => {
   logger.info('[SendNotificationHandler] > handler', { event, context });
 
+  const batchItemFailures: SQSBatchItemFailure[] = [];
+
+  // Validate the SQS event structure
   try {
-    // Validate event payload
-    const validatedEvent: SendNotificationEvent = sendNotificationEventSchema.parse(event);
-    logger.debug('[SendNotificationHandler] Event validated', {
-      validatedEvent,
-    });
-
-    // Call the notification service to send the notification
-    await sendNotification(validatedEvent.action as NotificationAction);
-
-    logger.info('[SendNotificationHandler] < handler - Notification sent successfully', {
-      action: validatedEvent.action,
-    });
+    sendNotificationEventSchema.parse(event);
   } catch (error) {
-    // Log errors and throw to allow Lambda to retry if needed
-    // If multiple retries fail, the event will go to the Dead Letter Queue (DLQ) if configured
     if (error instanceof z.ZodError) {
       const message = error.issues.map((issue) => `${issue.path.join('.')}: ${issue.message}`).join(', ');
       logger.error('[SendNotificationHandler] < handler - Event validation failed', new Error(message), {
         issues: error.issues,
         message,
       });
-      throw new Error(`Event validation failed: ${message}`);
     } else if (error instanceof Error) {
-      logger.error('[SendNotificationHandler] < handler - Failed to send notification', error);
-      throw error;
+      logger.error('[SendNotificationHandler] < handler - Unknown error validating event', error);
     } else {
-      logger.error('[SendNotificationHandler] < handler - Unknown error occurred', undefined, {
-        errorValue: String(error),
+      logger.error('[SendNotificationHandler] < handler - Unknown error validating event', new Error(String(error)));
+    }
+    // Return all messages as failures if event structure is invalid
+    return {
+      batchItemFailures: event.Records.map((record) => ({
+        itemIdentifier: record.messageId,
+      })),
+    };
+  }
+
+  // Process each message in the batch
+  for (const record of event.Records) {
+    try {
+      logger.debug('[SendNotificationHandler] Processing message', { messageId: record.messageId });
+
+      // Extract the event attribute from the message
+      const eventAttribute = record.messageAttributes?.event?.stringValue;
+
+      // Validate that the event attribute is present and is a string
+      if (!eventAttribute || typeof eventAttribute !== 'string') {
+        logger.error('[SendNotificationHandler] Event attribute is missing or invalid', undefined, {
+          messageId: record.messageId,
+          eventAttribute,
+        });
+        batchItemFailures.push({
+          itemIdentifier: record.messageId,
+        });
+        continue;
+      }
+
+      // Call the notification service to send the notification
+      await sendNotification(eventAttribute as NotificationEvent);
+
+      logger.info('[SendNotificationHandler] Notification sent successfully', {
+        messageId: record.messageId,
+        event: eventAttribute,
       });
-      throw new Error('An unknown error occurred while sending notification');
+    } catch (error) {
+      // Log the error and add to batch failures so the message will be retried
+      if (error instanceof Error) {
+        logger.error('[SendNotificationHandler] Failed to send notification', error, {
+          messageId: record.messageId,
+        });
+      } else {
+        logger.error('[SendNotificationHandler] Unknown error occurred', new Error(String(error)), {
+          messageId: record.messageId,
+          errorValue: String(error),
+        });
+      }
+      batchItemFailures.push({
+        itemIdentifier: record.messageId,
+      });
     }
   }
+
+  logger.info('[SendNotificationHandler] < handler - Returning batch response', {
+    failureCount: batchItemFailures.length,
+    totalCount: event.Records.length,
+  });
+
+  return {
+    batchItemFailures,
+  };
 };

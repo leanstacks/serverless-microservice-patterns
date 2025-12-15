@@ -17,99 +17,99 @@ describe('notification-service', () => {
   });
 
   describe('sendNotification', () => {
-    it('should resolve successfully for task_created action', async () => {
+    it('should resolve successfully for task_created event', async () => {
       // Arrange
-      const action = 'task_created';
+      const event = 'task_created';
 
       // Act
-      const promise = sendNotification(action);
+      const promise = sendNotification(event);
       jest.advanceTimersByTime(250);
       await promise;
 
       // Assert
-      expect(mockLogger.info).toHaveBeenCalledWith('[NotificationService] > sendNotification', { action });
+      expect(mockLogger.info).toHaveBeenCalledWith('[NotificationService] > sendNotification', { event });
       expect(mockLogger.info).toHaveBeenCalledWith(
-        '[NotificationService] < sendNotification - Notification with action: task_created sent successfully.',
+        '[NotificationService] < sendNotification - Notification with event: task_created sent successfully.',
       );
     });
 
-    it('should resolve successfully for task_completed action', async () => {
+    it('should resolve successfully for task_updated event', async () => {
       // Arrange
-      const action = 'task_completed';
+      const event = 'task_updated';
 
       // Act
-      const promise = sendNotification(action);
+      const promise = sendNotification(event);
       jest.advanceTimersByTime(250);
       await promise;
 
       // Assert
-      expect(mockLogger.info).toHaveBeenCalledWith('[NotificationService] > sendNotification', { action });
+      expect(mockLogger.info).toHaveBeenCalledWith('[NotificationService] > sendNotification', { event });
       expect(mockLogger.info).toHaveBeenCalledWith(
-        '[NotificationService] < sendNotification - Notification with action: task_completed sent successfully.',
+        '[NotificationService] < sendNotification - Notification with event: task_updated sent successfully.',
       );
     });
 
-    it('should resolve successfully for task_deleted action', async () => {
+    it('should resolve successfully for task_deleted event', async () => {
       // Arrange
-      const action = 'task_deleted';
+      const event = 'task_deleted';
 
       // Act
-      const promise = sendNotification(action);
+      const promise = sendNotification(event);
       jest.advanceTimersByTime(250);
       await promise;
 
       // Assert
-      expect(mockLogger.info).toHaveBeenCalledWith('[NotificationService] > sendNotification', { action });
+      expect(mockLogger.info).toHaveBeenCalledWith('[NotificationService] > sendNotification', { event });
       expect(mockLogger.info).toHaveBeenCalledWith(
-        '[NotificationService] < sendNotification - Notification with action: task_deleted sent successfully.',
+        '[NotificationService] < sendNotification - Notification with event: task_deleted sent successfully.',
       );
     });
 
-    it('should reject for unsupported action', async () => {
+    it('should reject for unsupported event', async () => {
       // Arrange
-      const action = 'unsupported_action' as any;
+      const event = 'unsupported_event' as any;
 
       // Act & Assert
-      const promise = sendNotification(action);
+      const promise = sendNotification(event);
       jest.advanceTimersByTime(250);
 
-      await expect(promise).rejects.toThrow('Unsupported notification action: unsupported_action');
+      await expect(promise).rejects.toThrow('Unsupported notification event: unsupported_event');
       expect(mockLogger.error).toHaveBeenCalledWith(
-        '[NotificationService] < sendNotification - Failed to send notification. Unsupported action: unsupported_action',
+        '[NotificationService] < sendNotification - Failed to send notification. Unsupported event: unsupported_event',
       );
     });
 
-    it('should reject for null action', async () => {
+    it('should reject for null event', async () => {
       // Arrange
-      const action = null as any;
+      const event = null as any;
 
       // Act & Assert
-      const promise = sendNotification(action);
+      const promise = sendNotification(event);
       jest.advanceTimersByTime(250);
 
-      await expect(promise).rejects.toThrow('Unsupported notification action: null');
+      await expect(promise).rejects.toThrow('Unsupported notification event: null');
     });
 
     it('should call logger entry method', async () => {
       // Arrange
-      const action = 'task_created';
+      const event = 'task_created';
 
       // Act
-      const promise = sendNotification(action);
+      const promise = sendNotification(event);
       jest.advanceTimersByTime(250);
       await promise;
 
       // Assert
-      expect(mockLogger.info).toHaveBeenCalledWith('[NotificationService] > sendNotification', { action });
+      expect(mockLogger.info).toHaveBeenCalledWith('[NotificationService] > sendNotification', { event });
     });
 
     it('should complete asynchronously after 250ms', async () => {
       // Arrange
-      const action = 'task_created';
+      const event = 'task_created';
       let resolved = false;
 
       // Act
-      const promise = sendNotification(action);
+      const promise = sendNotification(event);
       promise.then(() => {
         resolved = true;
       });

@@ -1,11 +1,33 @@
 import { z } from 'zod';
 
 /**
- * Schema for validating the Lambda event payload
+ * Schema for validating the SQS message attributes
+ */
+export const sqsMessageAttributeSchema = z.object({
+  event: z.string('event attribute must be a string').min(1, 'event attribute is required'),
+});
+
+/**
+ * Type for the validated SQS message attributes
+ */
+export type SqsMessageAttributes = z.infer<typeof sqsMessageAttributeSchema>;
+
+/**
+ * Schema for validating the full SQS message event
  */
 export const sendNotificationEventSchema = z.object({
-  action: z.string('action must be a string').min(1, 'action is required'),
-  payload: z.record(z.string(), z.any()).optional(),
+  Records: z.array(
+    z.object({
+      messageId: z.string(),
+      receiptHandle: z.string(),
+      messageAttributes: z.object({
+        event: z.object({
+          stringValue: z.string(),
+        }),
+      }),
+      body: z.string(),
+    }),
+  ),
 });
 
 /**

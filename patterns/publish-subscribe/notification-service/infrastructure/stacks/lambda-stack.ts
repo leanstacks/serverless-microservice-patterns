@@ -3,7 +3,7 @@ import * as cdk from 'aws-cdk-lib';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
 import * as logs from 'aws-cdk-lib/aws-logs';
 import * as sqs from 'aws-cdk-lib/aws-sqs';
-import * as destinations from 'aws-cdk-lib/aws-lambda-destinations';
+import * as lambdaEventSources from 'aws-cdk-lib/aws-lambda-event-sources';
 import { NodejsFunction } from 'aws-cdk-lib/aws-lambda-nodejs';
 import { Construct } from 'constructs';
 
@@ -35,6 +35,11 @@ export interface LambdaStackProps extends cdk.StackProps {
    * Application logging format (text or json).
    */
   loggingFormat: string;
+
+  /**
+   * The Notification Queue to subscribe to.
+   */
+  notificationQueue: sqs.IQueue;
 }
 
 /**
@@ -46,20 +51,8 @@ export class LambdaStack extends cdk.Stack {
    */
   public readonly sendNotificationFunction: NodejsFunction;
 
-  /**
-   * The Dead Letter Queue for failed async invocations.
-   */
-  public readonly sendNotificationFunctionDlq: sqs.Queue;
-
   constructor(scope: Construct, id: string, props: LambdaStackProps) {
     super(scope, id, props);
-
-    // Create the Dead Letter Queue for failed async invocations
-    this.sendNotificationFunctionDlq = new sqs.Queue(this, 'SendNotificationFunctionDLQ', {
-      queueName: `${props.appName}-send-notification-dlq-${props.envName}`,
-      retentionPeriod: cdk.Duration.days(14),
-      removalPolicy: props.envName === 'prd' ? cdk.RemovalPolicy.RETAIN : cdk.RemovalPolicy.DESTROY,
-    });
 
     // Create the send notification Lambda function
     this.sendNotificationFunction = new NodejsFunction(this, 'SendNotificationFunction', {
@@ -72,7 +65,7 @@ export class LambdaStack extends cdk.Stack {
         LOGGING_LEVEL: props.loggingLevel,
         LOGGING_FORMAT: props.loggingFormat,
       },
-      timeout: cdk.Duration.seconds(10),
+      timeout: cdk.Duration.seconds(15),
       memorySize: 256,
       bundling: {
         minify: true,
@@ -81,13 +74,21 @@ export class LambdaStack extends cdk.Stack {
       loggingFormat: lambda.LoggingFormat.JSON,
       applicationLogLevelV2: lambda.ApplicationLogLevel.INFO,
       systemLogLevelV2: lambda.SystemLogLevel.INFO,
-      onFailure: new destinations.SqsDestination(this.sendNotificationFunctionDlq),
       logGroup: new logs.LogGroup(this, 'SendNotificationFunctionLogGroup', {
         logGroupName: `/aws/lambda/${props.appName}-send-notification-${props.envName}`,
         retention: props.envName === 'prd' ? logs.RetentionDays.ONE_MONTH : logs.RetentionDays.ONE_WEEK,
         removalPolicy: props.envName === 'prd' ? cdk.RemovalPolicy.RETAIN : cdk.RemovalPolicy.DESTROY,
       }),
     });
+
+    // Add SQS event source to Lambda function
+    this.sendNotificationFunction.addEventSource(
+      new lambdaEventSources.SqsEventSource(props.notificationQueue, {
+        batchSize: 10,
+        maxBatchingWindow: cdk.Duration.seconds(30),
+        reportBatchItemFailures: true,
+      }),
+    );
 
     // Output the function ARN
     new cdk.CfnOutput(this, 'SendNotificationFunctionArn', {
@@ -101,20 +102,6 @@ export class LambdaStack extends cdk.Stack {
       value: this.sendNotificationFunction.functionName,
       description: 'Name of the send notification Lambda function',
       exportName: `${props.appName}-send-notification-function-name-${props.envName}`,
-    });
-
-    // Output the Dead Letter Queue ARN
-    new cdk.CfnOutput(this, 'SendNotificationDLQArn', {
-      value: this.sendNotificationFunctionDlq.queueArn,
-      description: 'ARN of the send notification Lambda Dead Letter Queue',
-      exportName: `${props.appName}-send-notification-dlq-arn-${props.envName}`,
-    });
-
-    // Output the Dead Letter Queue URL
-    new cdk.CfnOutput(this, 'SendNotificationDLQUrl', {
-      value: this.sendNotificationFunctionDlq.queueUrl,
-      description: 'URL of the send notification Lambda Dead Letter Queue',
-      exportName: `${props.appName}-send-notification-dlq-url-${props.envName}`,
     });
   }
 }
