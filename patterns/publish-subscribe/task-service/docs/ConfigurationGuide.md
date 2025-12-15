@@ -10,15 +10,15 @@ The application configuration is managed through environment variables. These va
 
 The following environment variables are available for configuring the application:
 
-| Variable                          | Type    | Description                                       | Default     | Required |
-| --------------------------------- | ------- | ------------------------------------------------- | ----------- | -------- |
-| `TASKS_TABLE`                     | string  | The name of the DynamoDB table for storing tasks  | -           | Yes      |
-| `SEND_NOTIFICATION_FUNCTION_NAME` | string  | The name of the Send Notification Lambda function | -           | Yes      |
-| `AWS_REGION`                      | string  | The AWS region where resources are deployed       | `us-east-1` | No       |
-| `LOGGING_ENABLED`                 | boolean | Enable or disable application logging             | `true`      | No       |
-| `LOGGING_LEVEL`                   | enum    | Logging level: `debug`, `info`, `warn`, `error`   | `debug`     | No       |
-| `LOGGING_FORMAT`                  | enum    | Logging format: `text`, `json`                    | `json`      | No       |
-| `CORS_ALLOW_ORIGIN`               | string  | CORS allow origin header value                    | `*`         | No       |
+| Variable            | Type    | Description                                         | Default     | Required |
+| ------------------- | ------- | --------------------------------------------------- | ----------- | -------- |
+| `TASKS_TABLE`       | string  | The name of the DynamoDB table for storing tasks    | -           | Yes      |
+| `TASK_TOPIC_ARN`    | string  | The ARN of the SNS topic for publishing task events | -           | Yes      |
+| `AWS_REGION`        | string  | The AWS region where resources are deployed         | `us-east-1` | No       |
+| `LOGGING_ENABLED`   | boolean | Enable or disable application logging               | `true`      | No       |
+| `LOGGING_LEVEL`     | enum    | Logging level: `debug`, `info`, `warn`, `error`     | `debug`     | No       |
+| `LOGGING_FORMAT`    | enum    | Logging format: `text`, `json`                      | `json`      | No       |
+| `CORS_ALLOW_ORIGIN` | string  | CORS allow origin header value                      | `*`         | No       |
 
 ### Usage
 
@@ -45,18 +45,18 @@ The infrastructure configuration is managed through environment variables prefix
 
 The following environment variables are available for configuring the infrastructure:
 
-| Variable                  | Type    | Description                                            | Default                  | Required |
-| ------------------------- | ------- | ------------------------------------------------------ | ------------------------ | -------- |
-| `CDK_APP_NAME`            | string  | The application name used in resource naming           | `smp-simple-web-service` | No       |
-| `CDK_ENV`                 | enum    | Environment: `dev`, `qat`, `prd`                       | -                        | Yes      |
-| `CDK_ACCOUNT`             | string  | AWS account ID for deployment                          | -                        | No       |
-| `CDK_REGION`              | string  | AWS region for deployment                              | -                        | No       |
-| `CDK_OU`                  | string  | Organizational Unit for resource tagging               | `leanstacks`             | No       |
-| `CDK_OWNER`               | string  | Owner tag for resource tracking                        | `unknown`                | No       |
-| `CDK_CORS_ALLOW_ORIGIN`   | string  | CORS allow origin for API Gateway and Lambda functions | `*`                      | No       |
-| `CDK_APP_LOGGING_ENABLED` | boolean | Enable logging in Lambda functions                     | `true`                   | No       |
-| `CDK_APP_LOGGING_LEVEL`   | enum    | Logging level: `debug`, `info`, `warn`, `error`        | `info`                   | No       |
-| `CDK_APP_LOGGING_FORMAT`  | enum    | Logging format: `text`, `json`                         | `json`                   | No       |
+| Variable                  | Type    | Description                                            | Default                   | Required |
+| ------------------------- | ------- | ------------------------------------------------------ | ------------------------- | -------- |
+| `CDK_APP_NAME`            | string  | The application name used in resource naming           | `smp-pubsub-task-service` | No       |
+| `CDK_ENV`                 | enum    | Environment: `dev`, `qat`, `prd`                       | -                         | Yes      |
+| `CDK_ACCOUNT`             | string  | AWS account ID for deployment                          | -                         | No       |
+| `CDK_REGION`              | string  | AWS region for deployment                              | -                         | No       |
+| `CDK_OU`                  | string  | Organizational Unit for resource tagging               | `leanstacks`              | No       |
+| `CDK_OWNER`               | string  | Owner tag for resource tracking                        | `unknown`                 | No       |
+| `CDK_CORS_ALLOW_ORIGIN`   | string  | CORS allow origin for API Gateway and Lambda functions | `*`                       | No       |
+| `CDK_APP_LOGGING_ENABLED` | boolean | Enable logging in Lambda functions                     | `true`                    | No       |
+| `CDK_APP_LOGGING_LEVEL`   | enum    | Logging level: `debug`, `info`, `warn`, `error`        | `info`                    | No       |
+| `CDK_APP_LOGGING_FORMAT`  | enum    | Logging format: `text`, `json`                         | `json`                    | No       |
 
 ### Usage
 
@@ -149,15 +149,15 @@ The configuration flow from infrastructure to application is as follows:
 
 Infrastructure configuration variables are passed to Lambda functions with modified names:
 
-| Infrastructure Variable                  | Lambda Environment Variable       |
-| ---------------------------------------- | --------------------------------- |
-| `CDK_APP_LOGGING_ENABLED`                | `LOGGING_ENABLED`                 |
-| `CDK_APP_LOGGING_LEVEL`                  | `LOGGING_LEVEL`                   |
-| `CDK_APP_LOGGING_FORMAT`                 | `LOGGING_FORMAT`                  |
-| `CDK_CORS_ALLOW_ORIGIN`                  | `CORS_ALLOW_ORIGIN`               |
-| (DynamoDB table name)                    | `TASKS_TABLE`                     |
-| (Send Notification Lambda function name) | `SEND_NOTIFICATION_FUNCTION_NAME` |
-| (AWS Region)                             | `AWS_REGION`                      |
+| Infrastructure Variable   | Lambda Environment Variable |
+| ------------------------- | --------------------------- |
+| `CDK_APP_LOGGING_ENABLED` | `LOGGING_ENABLED`           |
+| `CDK_APP_LOGGING_LEVEL`   | `LOGGING_LEVEL`             |
+| `CDK_APP_LOGGING_FORMAT`  | `LOGGING_FORMAT`            |
+| `CDK_CORS_ALLOW_ORIGIN`   | `CORS_ALLOW_ORIGIN`         |
+| (DynamoDB table name)     | `TASKS_TABLE`               |
+| (Task topic ARN)          | `TASK_TOPIC_ARN`            |
+| (AWS Region)              | `AWS_REGION`                |
 
 ---
 
