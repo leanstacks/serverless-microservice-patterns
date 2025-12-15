@@ -42,5 +42,12 @@ export class SnsStack extends cdk.Stack {
       description: 'The ARN of the Task SNS topic',
       exportName: `${props.appName}-task-topic-arn-${props.envName}`,
     });
+
+    // Output the topic URL
+    new cdk.CfnOutput(this, 'TaskTopicName', {
+      value: this.taskTopic.topicName,
+      description: 'The name of the Task SNS topic',
+      exportName: `${props.appName}-task-topic-name-${props.envName}`,
+    });
   }
 }
