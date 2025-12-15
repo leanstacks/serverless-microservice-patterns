@@ -18,6 +18,8 @@ AWS CDK infrastructure for this project.
    /stacks
       data-stack.ts           # DynamoDB tables and data resources
       data-stack.test.ts      # Unit tests for data stack
+      sns-stack.ts            # SNS topics for event publishing
+      sns-stack.test.ts       # Unit tests for SNS stack
       lambda-stack.ts         # Lambda/API Gateway resources
       lambda-stack.test.ts    # Unit tests for lambda stack
    /utils
@@ -91,7 +93,7 @@ Edit `.env` and set the required variables:
 # Required
 CDK_ENV=dev
 
-# Optional - Application name (default: smp-simple-web-service)
+# Optional - Application name (default: smp-pubsub-task-service)
 # CDK_APP_NAME=my-app
 
 # Optional - Override AWS credentials (uses CDK_DEFAULT_ACCOUNT/REGION from AWS CLI by default)
@@ -180,10 +182,10 @@ Error: CDK configuration validation failed: CDK_ENV: CDK_ENV must be one of: dev
 npm run cdk list
 
 # Show differences for a specific stack
-npm run cdk diff smp-simple-web-service-data-dev
+npm run cdk diff smp-pubsub-task-service-data-dev
 
 # Deploy a specific stack
-npm run cdk deploy smp-simple-web-service-data-dev
+npm run cdk deploy smp-pubsub-task-service-data-dev
 
 # View stack outputs
 npm run cdk list --long
