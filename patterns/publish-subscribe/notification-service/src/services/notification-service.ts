@@ -26,7 +26,7 @@ const sendNotification = (event: NotificationEvent): Promise<void> => {
         );
         reject(new Error(`Unsupported notification event: ${event}`));
       }
-    }, 250);
+    }, 100);
   });
 };
 
