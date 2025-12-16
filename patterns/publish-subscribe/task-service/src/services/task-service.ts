@@ -91,6 +91,7 @@ export const createTask = async (createTaskDto: CreateTaskDto): Promise<Task> =>
   logger.info('[TaskService] > createTask', { tableName: config.TASKS_TABLE });
 
   try {
+    // Prepare the task item to insert
     const id = randomUUID();
     const now = new Date().toISOString();
 
@@ -111,13 +112,10 @@ export const createTask = async (createTaskDto: CreateTaskDto): Promise<Task> =>
     });
     logger.debug('[TaskService] createTask - PutCommand', { command });
 
+    // Insert the new task into DynamoDB
     await dynamoDocClient.send(command);
 
     const task = toTask(taskItem);
-
-    logger.info('[TaskService] < createTask - successfully created task', {
-      id: task.id,
-    });
 
     // Publish task_created event to SNS topic
     await publishToTopic(
@@ -131,6 +129,9 @@ export const createTask = async (createTaskDto: CreateTaskDto): Promise<Task> =>
       },
     );
 
+    logger.info('[TaskService] < createTask - successfully created task', {
+      id: task.id,
+    });
     return task;
   } catch (error) {
     logger.error('[TaskService] < createTask - failed to create task in DynamoDB', error as Error, {
@@ -222,8 +223,6 @@ export const updateTask = async (id: string, updateTaskDto: UpdateTaskDto): Prom
 
     const newTask = toTask(response.Attributes as TaskItem);
 
-    logger.info('[TaskService] < updateTask - successfully updated task', { id });
-
     // Publish task_updated event to SNS topic
     await publishToTopic(
       config.TASK_TOPIC_ARN,
@@ -236,6 +235,7 @@ export const updateTask = async (id: string, updateTaskDto: UpdateTaskDto): Prom
       },
     );
 
+    logger.info('[TaskService] < updateTask - successfully updated task', { id });
     return newTask;
   } catch (error) {
     // Check if the error is a conditional check failure (task not found)
@@ -262,6 +262,7 @@ export const deleteTask = async (id: string): Promise<boolean> => {
   logger.info('[TaskService] > deleteTask', { tableName: config.TASKS_TABLE, id });
 
   try {
+    // Delete the task from DynamoDB
     // Use ReturnValues: 'ALL_OLD' to get the deleted task in a single DynamoDB call
     const command = new DeleteCommand({
       TableName: config.TASKS_TABLE,
@@ -274,8 +275,6 @@ export const deleteTask = async (id: string): Promise<boolean> => {
     logger.debug('[TaskService] deleteTask - DeleteCommand', { command });
 
     const response = await dynamoDocClient.send(command);
-
-    logger.info('[TaskService] < deleteTask - successfully deleted task', { id });
 
     // Publish task_deleted event to SNS topic with the deleted task object
     const deletedTask = response.Attributes ? toTask(response.Attributes as TaskItem) : null;
@@ -290,6 +289,7 @@ export const deleteTask = async (id: string): Promise<boolean> => {
       },
     );
 
+    logger.info('[TaskService] < deleteTask - successfully deleted task', { id });
     return true;
   } catch (error) {
     // Check if the error is a conditional check failure (task not found)
