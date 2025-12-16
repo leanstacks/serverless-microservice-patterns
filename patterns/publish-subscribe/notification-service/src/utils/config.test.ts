@@ -38,7 +38,6 @@ describe('config', () => {
       expect(config.LOGGING_ENABLED).toBe(true);
       expect(config.LOGGING_LEVEL).toBe('debug');
       expect(config.LOGGING_FORMAT).toBe('json');
-      expect(config.CORS_ALLOW_ORIGIN).toBe('*');
     });
 
     it('should use provided values instead of defaults', () => {
@@ -47,7 +46,6 @@ describe('config', () => {
       process.env.LOGGING_ENABLED = 'false';
       process.env.LOGGING_LEVEL = 'error';
       process.env.LOGGING_FORMAT = 'text';
-      process.env.CORS_ALLOW_ORIGIN = 'https://example.com';
 
       // Act
       config = require('./config').config;
@@ -57,7 +55,6 @@ describe('config', () => {
       expect(config.LOGGING_ENABLED).toBe(false);
       expect(config.LOGGING_LEVEL).toBe('error');
       expect(config.LOGGING_FORMAT).toBe('text');
-      expect(config.CORS_ALLOW_ORIGIN).toBe('https://example.com');
     });
 
     it('should transform LOGGING_ENABLED string to boolean true', () => {
@@ -231,7 +228,6 @@ describe('config', () => {
       process.env.AWS_REGION = 'us-east-1';
       process.env.LOGGING_ENABLED = 'true';
       process.env.LOGGING_LEVEL = 'info';
-      process.env.CORS_ALLOW_ORIGIN = 'https://example.com';
 
       // Act
       config = require('./config').config;
@@ -240,7 +236,6 @@ describe('config', () => {
       expect(typeof config.AWS_REGION).toBe('string');
       expect(typeof config.LOGGING_ENABLED).toBe('boolean');
       expect(['debug', 'info', 'warn', 'error']).toContain(config.LOGGING_LEVEL);
-      expect(typeof config.CORS_ALLOW_ORIGIN).toBe('string');
     });
   });
 });

@@ -108,19 +108,16 @@ Different environments may require different configuration values. Consider thes
 #### Development (dev)
 
 - `CDK_APP_LOGGING_LEVEL=debug` - Verbose logging for development
-- `CDK_CORS_ALLOW_ORIGIN=*` - Allow all origins for easier testing
 - Use minimal resource sizes to reduce costs
 
 #### QA Testing (qat)
 
 - `CDK_APP_LOGGING_LEVEL=info` - Balanced logging
-- `CDK_CORS_ALLOW_ORIGIN=https://qat.example.com` - Restrict to QA environment
 - Use production-like resource sizes
 
 #### Production (prd)
 
 - `CDK_APP_LOGGING_LEVEL=warn` or `error` - Minimal logging for performance
-- `CDK_CORS_ALLOW_ORIGIN=https://example.com` - Restrict to production domain
 - Use appropriate resource sizes and retention policies
 - Enable additional monitoring and alerting
 

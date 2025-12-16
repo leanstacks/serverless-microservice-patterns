@@ -18,9 +18,6 @@ const envSchema = z.object({
   LOGGING_LEVEL: z.enum(['debug', 'info', 'warn', 'error'] as const).default('debug'),
   LOGGING_FORMAT: z.enum(['text', 'json'] as const).default('json'),
 
-  // CORS configuration
-  CORS_ALLOW_ORIGIN: z.string().default('*'),
-
   // Add more environment variables as needed
 });
 
