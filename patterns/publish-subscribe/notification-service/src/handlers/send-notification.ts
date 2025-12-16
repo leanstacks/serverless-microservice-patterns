@@ -20,6 +20,7 @@ import { logger } from '@/utils/logger';
 export const handler = async (event: SQSEvent, context: Context): Promise<SQSBatchResponse> => {
   logger.info('[SendNotificationHandler] > handler', { event, context });
 
+  // Array to track failed message processing
   const batchItemFailures: SQSBatchItemFailure[] = [];
 
   // Validate the SQS event structure
@@ -59,6 +60,7 @@ export const handler = async (event: SQSEvent, context: Context): Promise<SQSBat
           messageId: record.messageId,
           eventAttribute,
         });
+        // Add to batch failures so the message will be retried
         batchItemFailures.push({
           itemIdentifier: record.messageId,
         });
@@ -84,6 +86,7 @@ export const handler = async (event: SQSEvent, context: Context): Promise<SQSBat
           errorValue: String(error),
         });
       }
+      // Add to batch failures so the message will be retried
       batchItemFailures.push({
         itemIdentifier: record.messageId,
       });
@@ -95,6 +98,7 @@ export const handler = async (event: SQSEvent, context: Context): Promise<SQSBat
     totalCount: event.Records.length,
   });
 
+  // Return the batch item failures to SQS for retrying only the failed messages
   return {
     batchItemFailures,
   };
