@@ -46,8 +46,8 @@ export const handler = async (event: SQSEvent, context: Context): Promise<SQSBat
     };
   }
 
-  // Process each message in the batch
-  for (const record of event.Records) {
+  // Process each message in the batch in parallel
+  const messageProcessingPromises = event.Records.map(async (record) => {
     try {
       logger.debug('[SendNotificationHandler] Processing message', { messageId: record.messageId });
 
@@ -60,11 +60,8 @@ export const handler = async (event: SQSEvent, context: Context): Promise<SQSBat
           messageId: record.messageId,
           eventAttribute,
         });
-        // Add to batch failures so the message will be retried
-        batchItemFailures.push({
-          itemIdentifier: record.messageId,
-        });
-        continue;
+        // Throw error to mark this message as failed
+        throw new Error('Event attribute is missing or invalid');
       }
 
       // Call the notification service to send the notification
@@ -74,8 +71,10 @@ export const handler = async (event: SQSEvent, context: Context): Promise<SQSBat
         messageId: record.messageId,
         event: eventAttribute,
       });
+
+      return { success: true, messageId: record.messageId };
     } catch (error) {
-      // Log the error and add to batch failures so the message will be retried
+      // Log the error and mark this message as failed
       if (error instanceof Error) {
         logger.error('[SendNotificationHandler] Failed to send notification', error, {
           messageId: record.messageId,
@@ -86,10 +85,34 @@ export const handler = async (event: SQSEvent, context: Context): Promise<SQSBat
           errorValue: String(error),
         });
       }
-      // Add to batch failures so the message will be retried
-      batchItemFailures.push({
-        itemIdentifier: record.messageId,
+      return { success: false, messageId: record.messageId };
+    }
+  });
+
+  // Wait for all message processing to complete
+  const results = await Promise.allSettled(messageProcessingPromises);
+
+  // Collect batch item failures from rejected promises and returned failures
+  for (let i = 0; i < results.length; i++) {
+    const result = results[i];
+    const record = event.Records[i];
+
+    // If the promise was rejected, or if it was fulfilled but indicated failure, add to batch failures
+    if (result && result.status === 'rejected') {
+      logger.error('[SendNotificationHandler] Message processing promise rejected', result.reason as Error, {
+        messageId: record?.messageId,
       });
+      if (record) {
+        batchItemFailures.push({
+          itemIdentifier: record.messageId,
+        });
+      }
+    } else if (result && result.status === 'fulfilled' && result.value.success === false) {
+      if (record) {
+        batchItemFailures.push({
+          itemIdentifier: record.messageId,
+        });
+      }
     }
   }
 

@@ -72,7 +72,7 @@ describe('send-notification handler', () => {
       expect(result.batchItemFailures).toHaveLength(0);
     });
 
-    it('should process multiple messages in batch', async () => {
+    it('should process multiple messages in batch concurrently', async () => {
       // Arrange
       const event: SQSEvent = {
         Records: [
@@ -86,6 +86,7 @@ describe('send-notification handler', () => {
       const result = await handler(event, mockContext);
 
       // Assert
+      expect(mockSendNotification).toHaveBeenCalledTimes(2);
       expect(mockSendNotification).toHaveBeenCalledWith('task_created');
       expect(mockSendNotification).toHaveBeenCalledWith('task_completed');
       expect(result.batchItemFailures).toHaveLength(0);
@@ -211,7 +212,7 @@ describe('send-notification handler', () => {
       );
     });
 
-    it('should handle partial batch failures', async () => {
+    it('should handle partial batch failures independently', async () => {
       // Arrange
       const event: SQSEvent = {
         Records: [
@@ -219,14 +220,15 @@ describe('send-notification handler', () => {
           createSqsRecord('msg-124', 'task_completed') as any,
         ],
       };
-      mockSendNotification.mockResolvedValueOnce(undefined); // First succeeds
-      mockSendNotification.mockRejectedValueOnce(new Error('Second failed')); // Second fails
+      // First message succeeds, second fails
+      mockSendNotification.mockResolvedValueOnce(undefined).mockRejectedValueOnce(new Error('Second failed'));
 
       // Act
       const result = await handler(event, mockContext);
 
       // Assert
-      expect(result.batchItemFailures?.length).toBe(1);
+      expect(mockSendNotification).toHaveBeenCalledTimes(2);
+      expect(result.batchItemFailures).toHaveLength(1);
       expect(result.batchItemFailures?.[0]?.itemIdentifier).toBe('msg-124');
     });
   });
