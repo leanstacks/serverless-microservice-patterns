@@ -8,7 +8,7 @@ An asynchronously invoked Lambda function will automatically retry failed invoca
 
 Some may say that calling a Lambda function from a Lambda function is an anti-pattern, but I do not share that opinion. There are many valid scenarios where one microservice needs to call another microservice. One of the _core principles of microservices_ is **single responsibility** or **high cohesion**. This means that a microservice has _one_ responsibility, _one_ business or functional domain. It does one thing and does it well. Therefore it makes perfect sense that one Lambda microservice may need to synchronously call another Lambda microservice, especially when each has a specific purpose.
 
-That said, implement this pattern carefully and on an as-needed basis. Consider if a different pattern is a better fit for the use-case such as "Notifier" or "Distributed Trigger".
+That said, implement this pattern carefully and on an as-needed basis. Consider if a different pattern is a better fit for the use-case such as "Notifier" or "Publish Subscribe".
 
 ![Design diagram](../../docs/img/diagram-internal-handoff.png "Internal Handoff")
 
