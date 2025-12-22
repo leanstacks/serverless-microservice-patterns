@@ -17,7 +17,7 @@ The infrastructure is organized into two AWS CDK stacks:
 
 ## SQS Stack
 
-**Purpose:** Manages SQS queues for consuming events from SNS topics using pub-sub pattern.
+**Purpose:** Manages SQS queues for consuming messages requesting notification service processing.
 
 **Key Resources:**
 
@@ -25,12 +25,10 @@ The infrastructure is organized into two AWS CDK stacks:
 | ------------------ | ----------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
 | Notification Queue | `{app-name}-notification-{env}`     | Standard queue, 4-day retention, 1-minute visibility timeout, Removal Policy: `RETAIN` (prd), `DESTROY` (dev/qat) |
 | Notification DLQ   | `{app-name}-notification-dlq-{env}` | Standard queue, 14-day retention, Removal Policy: `RETAIN` (prd), `DESTROY` (dev/qat), Max receive count: 3       |
-| SNS Subscription   | Auto-generated                      | Subscribes to Task SNS topic, raw message delivery enabled, filter policy for `task_created` events               |
 
 **Key Behaviors:**
 
 - Queue automatically redrives failed messages to DLQ after 3 failed receive attempts
-- SNS-to-SQS subscription filters incoming events to only `task_created` event type
 
 **SQS Stack Outputs:**
 
@@ -75,8 +73,7 @@ The infrastructure is organized into two AWS CDK stacks:
 The Lambda Stack depends on the SQS Stack to ensure proper resource creation order:
 
 1. SQS Stack creates the notification queue and DLQ
-2. SNS topic subscription is configured in the SQS Stack
-3. Lambda Stack creates the Lambda function and subscribes it to the notification queue
+2. Lambda Stack creates the Lambda function and subscribes it to the notification queue
 
 ---
 

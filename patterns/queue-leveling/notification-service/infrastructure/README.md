@@ -178,10 +178,10 @@ Error: CDK configuration validation failed: CDK_ENV: CDK_ENV must be one of: dev
 npm run cdk list
 
 # Show differences for a specific stack
-npm run cdk diff smp-simple-web-service-data-dev
+npm run cdk diff smp-queue-leveling-notification-service-lambda-dev
 
 # Deploy a specific stack
-npm run cdk deploy smp-simple-web-service-data-dev
+npm run cdk deploy smp-queue-leveling-notification-service-lambda-dev
 
 # View stack outputs
 npm run cdk list --long
