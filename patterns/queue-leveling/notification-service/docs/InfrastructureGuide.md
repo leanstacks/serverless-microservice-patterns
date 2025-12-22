@@ -84,12 +84,12 @@ The Lambda Stack depends on the SQS Stack to ensure proper resource creation ord
 
 All resources are tagged for cost allocation and management:
 
-| Tag     | Source         | Example Value                     |
-| ------- | -------------- | --------------------------------- |
-| `App`   | `CDK_APP_NAME` | `smp-pubsub-notification-service` |
-| `Env`   | `CDK_ENV`      | `dev`, `qat`, `prd`               |
-| `OU`    | `CDK_OU`       | `leanstacks`                      |
-| `Owner` | `CDK_OWNER`    | `platform-team`                   |
+| Tag     | Source         | Example Value                             |
+| ------- | -------------- | ----------------------------------------- |
+| `App`   | `CDK_APP_NAME` | `smp-queue-leveling-notification-service` |
+| `Env`   | `CDK_ENV`      | `dev`, `qat`, `prd`                       |
+| `OU`    | `CDK_OU`       | `leanstacks`                              |
+| `Owner` | `CDK_OWNER`    | `platform-team`                           |
 
 ---
 

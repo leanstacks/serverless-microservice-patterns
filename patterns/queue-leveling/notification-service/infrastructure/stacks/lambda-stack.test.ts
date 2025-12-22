@@ -35,7 +35,7 @@ describe('LambdaStack', () => {
       });
 
       const stack = new LambdaStack(testApp, 'TestLambdaStack', {
-        appName: 'smp-pubsub-notification-service',
+        appName: 'smp-queue-leveling-notification-service',
         envName: 'dev',
         loggingEnabled: true,
         loggingLevel: 'debug',
@@ -47,7 +47,7 @@ describe('LambdaStack', () => {
 
     it('should create a send notification Lambda function', () => {
       template.hasResourceProperties('AWS::Lambda::Function', {
-        FunctionName: 'smp-pubsub-notification-service-send-notification-dev',
+        FunctionName: 'smp-queue-leveling-notification-service-send-notification-dev',
         Runtime: 'nodejs24.x',
         Handler: 'handler',
         Timeout: 15,
@@ -69,7 +69,7 @@ describe('LambdaStack', () => {
 
     it('should create a CloudWatch log group', () => {
       template.hasResourceProperties('AWS::Logs::LogGroup', {
-        LogGroupName: '/aws/lambda/smp-pubsub-notification-service-send-notification-dev',
+        LogGroupName: '/aws/lambda/smp-queue-leveling-notification-service-send-notification-dev',
         RetentionInDays: 7,
       });
     });
@@ -96,7 +96,7 @@ describe('LambdaStack', () => {
     it('should export Lambda function ARN', () => {
       template.hasOutput('SendNotificationFunctionArn', {
         Export: {
-          Name: 'smp-pubsub-notification-service-send-notification-function-arn-dev',
+          Name: 'smp-queue-leveling-notification-service-send-notification-function-arn-dev',
         },
       });
     });
@@ -115,7 +115,7 @@ describe('LambdaStack', () => {
       });
 
       const stack = new LambdaStack(testApp, 'TestLambdaStackPrd', {
-        appName: 'smp-pubsub-notification-service',
+        appName: 'smp-queue-leveling-notification-service',
         envName: 'prd',
         loggingEnabled: true,
         loggingLevel: 'info',
@@ -127,7 +127,7 @@ describe('LambdaStack', () => {
 
     it('should create Lambda with prd naming', () => {
       template.hasResourceProperties('AWS::Lambda::Function', {
-        FunctionName: 'smp-pubsub-notification-service-send-notification-prd',
+        FunctionName: 'smp-queue-leveling-notification-service-send-notification-prd',
       });
     });
 
@@ -143,7 +143,7 @@ describe('LambdaStack', () => {
 
     it('should create a CloudWatch log group with ONE_MONTH retention for prd', () => {
       template.hasResourceProperties('AWS::Logs::LogGroup', {
-        LogGroupName: '/aws/lambda/smp-pubsub-notification-service-send-notification-prd',
+        LogGroupName: '/aws/lambda/smp-queue-leveling-notification-service-send-notification-prd',
         RetentionInDays: 30,
       });
     });
@@ -151,7 +151,7 @@ describe('LambdaStack', () => {
     it('should export Lambda function ARN for prd', () => {
       template.hasOutput('SendNotificationFunctionArn', {
         Export: {
-          Name: 'smp-pubsub-notification-service-send-notification-function-arn-prd',
+          Name: 'smp-queue-leveling-notification-service-send-notification-function-arn-prd',
         },
       });
     });
@@ -170,7 +170,7 @@ describe('LambdaStack', () => {
       });
 
       const stack = new LambdaStack(testApp, 'TestLambdaStackConfig', {
-        appName: 'smp-pubsub-notification-service',
+        appName: 'smp-queue-leveling-notification-service',
         envName: 'dev',
         loggingEnabled: true,
         loggingLevel: 'debug',

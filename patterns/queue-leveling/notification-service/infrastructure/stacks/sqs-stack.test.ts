@@ -10,7 +10,7 @@ describe('SqsStack', () => {
       const testApp = new cdk.App();
 
       const stack = new SqsStack(testApp, 'TestSqsStack', {
-        appName: 'smp-pubsub-notification-service',
+        appName: 'smp-queue-leveling-notification-service',
         envName: 'dev',
       });
       template = Template.fromStack(stack);
@@ -18,7 +18,7 @@ describe('SqsStack', () => {
 
     it('should create a Notification Queue', () => {
       template.hasResourceProperties('AWS::SQS::Queue', {
-        QueueName: 'smp-pubsub-notification-service-notification-dev',
+        QueueName: 'smp-queue-leveling-notification-service-notification-dev',
         MessageRetentionPeriod: 345600,
         VisibilityTimeout: 60,
       });
@@ -26,7 +26,7 @@ describe('SqsStack', () => {
 
     it('should create a Dead Letter Queue', () => {
       template.hasResourceProperties('AWS::SQS::Queue', {
-        QueueName: 'smp-pubsub-notification-service-notification-dlq-dev',
+        QueueName: 'smp-queue-leveling-notification-service-notification-dlq-dev',
         MessageRetentionPeriod: 1209600,
       });
     });
@@ -43,7 +43,7 @@ describe('SqsStack', () => {
     it('should export Notification Queue ARN', () => {
       template.hasOutput('NotificationQueueArn', {
         Export: {
-          Name: 'smp-pubsub-notification-service-notification-queue-arn-dev',
+          Name: 'smp-queue-leveling-notification-service-notification-queue-arn-dev',
         },
       });
     });
@@ -51,7 +51,7 @@ describe('SqsStack', () => {
     it('should export Notification Queue URL', () => {
       template.hasOutput('NotificationQueueUrl', {
         Export: {
-          Name: 'smp-pubsub-notification-service-notification-queue-url-dev',
+          Name: 'smp-queue-leveling-notification-service-notification-queue-url-dev',
         },
       });
     });
@@ -59,7 +59,7 @@ describe('SqsStack', () => {
     it('should export Notification Queue DLQ ARN', () => {
       template.hasOutput('NotificationQueueDLQArn', {
         Export: {
-          Name: 'smp-pubsub-notification-service-notification-dlq-arn-dev',
+          Name: 'smp-queue-leveling-notification-service-notification-dlq-arn-dev',
         },
       });
     });
@@ -67,7 +67,7 @@ describe('SqsStack', () => {
     it('should export Notification Queue DLQ URL', () => {
       template.hasOutput('NotificationQueueDLQUrl', {
         Export: {
-          Name: 'smp-pubsub-notification-service-notification-dlq-url-dev',
+          Name: 'smp-queue-leveling-notification-service-notification-dlq-url-dev',
         },
       });
     });
@@ -80,7 +80,7 @@ describe('SqsStack', () => {
       const testApp = new cdk.App();
 
       const stack = new SqsStack(testApp, 'TestSqsStackPrd', {
-        appName: 'smp-pubsub-notification-service',
+        appName: 'smp-queue-leveling-notification-service',
         envName: 'prd',
       });
       template = Template.fromStack(stack);
@@ -88,7 +88,7 @@ describe('SqsStack', () => {
 
     it('should create a Notification Queue for prd', () => {
       template.hasResourceProperties('AWS::SQS::Queue', {
-        QueueName: 'smp-pubsub-notification-service-notification-prd',
+        QueueName: 'smp-queue-leveling-notification-service-notification-prd',
         MessageRetentionPeriod: 345600,
         VisibilityTimeout: 60,
       });
@@ -96,7 +96,7 @@ describe('SqsStack', () => {
 
     it('should create a Dead Letter Queue with RETAIN policy for prd', () => {
       template.hasResourceProperties('AWS::SQS::Queue', {
-        QueueName: 'smp-pubsub-notification-service-notification-dlq-prd',
+        QueueName: 'smp-queue-leveling-notification-service-notification-dlq-prd',
         MessageRetentionPeriod: 1209600,
       });
     });

@@ -88,12 +88,12 @@ The infrastructure is organized into three main AWS CDK stacks:
 
 All resources are tagged for cost allocation and management:
 
-| Tag     | Source         | Example Value             |
-| ------- | -------------- | ------------------------- |
-| `App`   | `CDK_APP_NAME` | `smp-pubsub-task-service` |
-| `Env`   | `CDK_ENV`      | `dev`, `qat`, `prd`       |
-| `OU`    | `CDK_OU`       | `leanstacks`              |
-| `Owner` | `CDK_OWNER`    | `platform-team`           |
+| Tag     | Source         | Example Value                     |
+| ------- | -------------- | --------------------------------- |
+| `App`   | `CDK_APP_NAME` | `smp-queue-leveling-task-service` |
+| `Env`   | `CDK_ENV`      | `dev`, `qat`, `prd`               |
+| `OU`    | `CDK_OU`       | `leanstacks`                      |
+| `Owner` | `CDK_OWNER`    | `platform-team`                   |
 
 ---
 

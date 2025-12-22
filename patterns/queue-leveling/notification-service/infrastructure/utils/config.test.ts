@@ -20,7 +20,7 @@ describe('config', () => {
 
       expect(config).toBeDefined();
       expect(config.CDK_ENV).toBe('dev');
-      expect(config.CDK_APP_NAME).toBe('smp-pubsub-notification-service');
+      expect(config.CDK_APP_NAME).toBe('smp-queue-leveling-notification-service');
     });
 
     it('should return configuration with optional values', () => {
@@ -85,7 +85,7 @@ describe('config', () => {
   describe('getTags', () => {
     it('should return standard tags', () => {
       const config: Config = {
-        CDK_APP_NAME: 'smp-pubsub-notification-service',
+        CDK_APP_NAME: 'smp-queue-leveling-notification-service',
         CDK_ENV: 'dev',
         CDK_OU: 'leanstacks',
         CDK_OWNER: 'platform-team',
@@ -97,7 +97,7 @@ describe('config', () => {
       const tags = getTags(config);
 
       expect(tags).toEqual({
-        App: 'smp-pubsub-notification-service',
+        App: 'smp-queue-leveling-notification-service',
         Env: 'dev',
         OU: 'leanstacks',
         Owner: 'platform-team',
@@ -106,7 +106,7 @@ describe('config', () => {
 
     it('should use default values for OU and Owner when not provided', () => {
       const config: Config = {
-        CDK_APP_NAME: 'smp-pubsub-notification-service',
+        CDK_APP_NAME: 'smp-queue-leveling-notification-service',
         CDK_ENV: 'qat',
         CDK_APP_LOGGING_ENABLED: true,
         CDK_APP_LOGGING_LEVEL: 'info',
@@ -116,7 +116,7 @@ describe('config', () => {
       const tags = getTags(config);
 
       expect(tags).toEqual({
-        App: 'smp-pubsub-notification-service',
+        App: 'smp-queue-leveling-notification-service',
         Env: 'qat',
         OU: 'leanstacks',
         Owner: 'unknown',
@@ -149,7 +149,7 @@ describe('config', () => {
       process.env.CDK_REGION = 'us-west-2';
 
       const config: Config = {
-        CDK_APP_NAME: 'smp-pubsub-notification-service',
+        CDK_APP_NAME: 'smp-queue-leveling-notification-service',
         CDK_ENV: 'dev',
         CDK_ACCOUNT: '123456789012',
         CDK_REGION: 'us-west-2',
@@ -173,7 +173,7 @@ describe('config', () => {
       process.env.CDK_DEFAULT_REGION = 'eu-west-1';
 
       const config: Config = {
-        CDK_APP_NAME: 'smp-pubsub-notification-service',
+        CDK_APP_NAME: 'smp-queue-leveling-notification-service',
         CDK_ENV: 'dev',
         CDK_APP_LOGGING_ENABLED: true,
         CDK_APP_LOGGING_LEVEL: 'info',
@@ -193,7 +193,7 @@ describe('config', () => {
       process.env.CDK_DEFAULT_REGION = 'us-east-1';
 
       const config: Config = {
-        CDK_APP_NAME: 'smp-pubsub-notification-service',
+        CDK_APP_NAME: 'smp-queue-leveling-notification-service',
         CDK_ENV: 'prd',
         CDK_ACCOUNT: '999999999999',
         CDK_REGION: 'ap-southeast-2',
@@ -217,7 +217,7 @@ describe('config', () => {
       delete process.env.CDK_DEFAULT_REGION;
 
       const config: Config = {
-        CDK_APP_NAME: 'smp-pubsub-notification-service',
+        CDK_APP_NAME: 'smp-queue-leveling-notification-service',
         CDK_ENV: 'dev',
         CDK_APP_LOGGING_ENABLED: true,
         CDK_APP_LOGGING_LEVEL: 'info',
@@ -234,7 +234,7 @@ describe('config', () => {
       delete process.env.CDK_DEFAULT_REGION;
 
       const config: Config = {
-        CDK_APP_NAME: 'smp-pubsub-notification-service',
+        CDK_APP_NAME: 'smp-queue-leveling-notification-service',
         CDK_ENV: 'dev',
         CDK_APP_LOGGING_ENABLED: true,
         CDK_APP_LOGGING_LEVEL: 'info',
@@ -251,7 +251,7 @@ describe('config', () => {
       process.env.CDK_DEFAULT_REGION = 'us-east-1';
 
       const config: Config = {
-        CDK_APP_NAME: 'smp-pubsub-notification-service',
+        CDK_APP_NAME: 'smp-queue-leveling-notification-service',
         CDK_ENV: 'dev',
         CDK_APP_LOGGING_ENABLED: true,
         CDK_APP_LOGGING_LEVEL: 'info',

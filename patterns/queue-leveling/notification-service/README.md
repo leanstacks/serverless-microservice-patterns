@@ -115,7 +115,7 @@ This is an example AWS CLI command to test the send notification Lambda function
 
 ```sh
 aws lambda invoke \
-  --function-name smp-pubsub-notification-service-send-notification-dev \
+  --function-name smp-queue-leveling-notification-service-send-notification-dev \
   --invocation-type Event \
   --payload '{"action": "task_created", "payload": {"id": "101-011-010"}}' \
   --cli-binary-format raw-in-base64-out \
@@ -126,7 +126,7 @@ or without a `payload`.
 
 ```sh
 aws lambda invoke \
-  --function-name smp-pubsub-notification-service-send-notification-dev \
+  --function-name smp-queue-leveling-notification-service-send-notification-dev \
   --invocation-type Event \
   --payload '{"action": "task_created"}' \
   --cli-binary-format raw-in-base64-out \

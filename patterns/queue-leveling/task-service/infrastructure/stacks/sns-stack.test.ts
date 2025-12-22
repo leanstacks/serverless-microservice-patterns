@@ -10,7 +10,7 @@ describe('SnsStack', () => {
     beforeAll(() => {
       const testApp = new cdk.App();
       stack = new SnsStack(testApp, 'TestSnsStack', {
-        appName: 'smp-pubsub-task-service',
+        appName: 'smp-queue-leveling-task-service',
         envName: 'dev',
       });
       template = Template.fromStack(stack);
@@ -22,7 +22,7 @@ describe('SnsStack', () => {
 
     it('should create a Task SNS topic with correct naming', () => {
       template.hasResourceProperties('AWS::SNS::Topic', {
-        TopicName: 'smp-pubsub-task-service-task-dev',
+        TopicName: 'smp-queue-leveling-task-service-task-dev',
         DisplayName: 'Task Service Events Topic',
       });
     });
@@ -36,7 +36,7 @@ describe('SnsStack', () => {
     it('should export topic ARN', () => {
       const outputs = template.findOutputs('TaskTopicArn');
       expect(outputs).toHaveProperty('TaskTopicArn');
-      expect(outputs.TaskTopicArn.Export.Name).toBe('smp-pubsub-task-service-task-topic-arn-dev');
+      expect(outputs.TaskTopicArn.Export.Name).toBe('smp-queue-leveling-task-service-task-topic-arn-dev');
     });
 
     it('should output correct topic ARN description', () => {
@@ -58,7 +58,7 @@ describe('SnsStack', () => {
     beforeAll(() => {
       const testApp = new cdk.App();
       stack = new SnsStack(testApp, 'TestSnsStack', {
-        appName: 'smp-pubsub-task-service',
+        appName: 'smp-queue-leveling-task-service',
         envName: 'prd',
       });
       template = Template.fromStack(stack);
@@ -66,13 +66,13 @@ describe('SnsStack', () => {
 
     it('should create Task SNS topic with prd naming', () => {
       template.hasResourceProperties('AWS::SNS::Topic', {
-        TopicName: 'smp-pubsub-task-service-task-prd',
+        TopicName: 'smp-queue-leveling-task-service-task-prd',
       });
     });
 
     it('should export topic ARN with prd environment in export name', () => {
       const outputs = template.findOutputs('TaskTopicArn');
-      expect(outputs.TaskTopicArn.Export.Name).toBe('smp-pubsub-task-service-task-topic-arn-prd');
+      expect(outputs.TaskTopicArn.Export.Name).toBe('smp-queue-leveling-task-service-task-topic-arn-prd');
     });
   });
 
@@ -82,7 +82,7 @@ describe('SnsStack', () => {
     beforeAll(() => {
       const testApp = new cdk.App();
       const stack = new SnsStack(testApp, 'TestSnsStack', {
-        appName: 'smp-pubsub-task-service',
+        appName: 'smp-queue-leveling-task-service',
         envName: 'qat',
       });
       template = Template.fromStack(stack);
@@ -90,13 +90,13 @@ describe('SnsStack', () => {
 
     it('should create Task SNS topic with qat naming', () => {
       template.hasResourceProperties('AWS::SNS::Topic', {
-        TopicName: 'smp-pubsub-task-service-task-qat',
+        TopicName: 'smp-queue-leveling-task-service-task-qat',
       });
     });
 
     it('should export topic ARN with qat environment in export name', () => {
       const outputs = template.findOutputs('TaskTopicArn');
-      expect(outputs.TaskTopicArn.Export.Name).toBe('smp-pubsub-task-service-task-topic-arn-qat');
+      expect(outputs.TaskTopicArn.Export.Name).toBe('smp-queue-leveling-task-service-task-topic-arn-qat');
     });
   });
 
@@ -131,7 +131,7 @@ describe('SnsStack', () => {
     it('should support CDK StackProps configuration', () => {
       const testApp = new cdk.App();
       const stack = new SnsStack(testApp, 'TestSnsStack', {
-        appName: 'smp-pubsub-task-service',
+        appName: 'smp-queue-leveling-task-service',
         envName: 'dev',
         env: {
           region: 'us-west-2',
@@ -146,7 +146,7 @@ describe('SnsStack', () => {
     it('should create a topic that can be used for publishing', () => {
       const testApp = new cdk.App();
       const stack = new SnsStack(testApp, 'TestSnsStack', {
-        appName: 'smp-pubsub-task-service',
+        appName: 'smp-queue-leveling-task-service',
         envName: 'dev',
       });
 
