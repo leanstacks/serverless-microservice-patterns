@@ -11,7 +11,6 @@ The infrastructure is organized into three main AWS CDK stacks:
 | Stack Name Pattern        | Purpose                                    |
 | ------------------------- | ------------------------------------------ |
 | `{app-name}-data-{env}`   | Manages DynamoDB tables and data resources |
-| `{app-name}-sns-{env}`    | Manages SNS topics for event publishing    |
 | `{app-name}-lambda-{env}` | Manages Lambda functions and API Gateway   |
 
 ---
@@ -35,25 +34,6 @@ The infrastructure is organized into three main AWS CDK stacks:
 
 ---
 
-## SNS Stack
-
-**Purpose:** Manages SNS topics used for asynchronous event publishing in the Pub/Sub pattern.
-
-**Key Resources:**
-
-| Resource  | Name Pattern            | Key Properties                                                       |
-| --------- | ----------------------- | -------------------------------------------------------------------- |
-| SNS Topic | `{app-name}-task-{env}` | Display name: "Task Service Events Topic", Standard topic (not FIFO) |
-
-**Outputs:**
-
-| Output Name     | Export Name Pattern                | Description                           |
-| --------------- | ---------------------------------- | ------------------------------------- |
-| `TaskTopicArn`  | `{app-name}-task-topic-arn-{env}`  | Topic ARN (exported as stack output)  |
-| `TaskTopicName` | `{app-name}-task-topic-name-{env}` | Topic name (exported as stack output) |
-
----
-
 ## Lambda Stack
 
 **Purpose:** Manages Lambda functions, API Gateway, and application runtime resources. All Lambda functions publish task events to the SNS topic.
@@ -72,19 +52,20 @@ The infrastructure is organized into three main AWS CDK stacks:
 
 **Outputs:**
 
-| Output Name             | Export Name Pattern                         | Description                     |
-| ----------------------- | ------------------------------------------- | ------------------------------- |
-| `ApiUrl`                | `{app-name}-tasks-api-url-{env}`            | API Gateway endpoint URL        |
-| `ApiId`                 | `{app-name}-tasks-api-id-{env}`             | API Gateway ID                  |
-| `ListTasksFunctionArn`  | `{app-name}-list-tasks-function-arn-{env}`  | List Tasks Lambda function ARN  |
-| `GetTaskFunctionArn`    | `{app-name}-get-task-function-arn-{env}`    | Get Task Lambda function ARN    |
-| `CreateTaskFunctionArn` | `{app-name}-create-task-function-arn-{env}` | Create Task Lambda function ARN |
-| `UpdateTaskFunctionArn` | `{app-name}-update-task-function-arn-{env}` | Update Task Lambda function ARN |
-| `DeleteTaskFunctionArn` | `{app-name}-delete-task-function-arn-{env}` | Delete Task Lambda function ARN |
+| Output Name | Export Name Pattern              | Description              |
+| ----------- | -------------------------------- | ------------------------ | ------------------------------------------------- |
+| `ApiUrl`    | `{app-name}-tasks-api-url-{env}` | API Gateway endpoint URL |
+| `ApiId`     | `{app-name}-tasks-api-id-{env}`  | API Gateway ID           | QS queue provisioned by the Notification Service. |
 
----
+**Key Resources:**
 
-## Resource Tagging
+| Resource        | Name Pattern                   | Purpose/Notes                                                                     |
+| --------------- | ------------------------------ | --------------------------------------------------------------------------------- |
+| Lambda Function | `{app-name}-list-tasks-{env}`  | List all tasks (DynamoDB Scan)                                                    |
+| Lambda Function | `{app-name}-get-task-{env}`    | Get a task by ID (DynamoDB GetItem)                                               |
+| Lambda Function | `{app-name}-create-task-{env}` | Create a new task (DynamoDB PutItem), publishes `task_created` event to SQS queue |
+| Lambda Function | `{app-name}-update-task-{env}` | Update a task (DynamoDB UpdateItem), publishes `task_updated` event to SQS queue  |
+| Lambda Function | `{app-name}-delete-task-{env}` | Delete a task (DynamoDB DeleteItem), publishes `task_deleted` event to SQS queue  |
 
 All resources are tagged for cost allocation and management:
 

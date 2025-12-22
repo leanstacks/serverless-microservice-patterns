@@ -18,8 +18,6 @@ AWS CDK infrastructure for this project.
    /stacks
       data-stack.ts           # DynamoDB tables and data resources
       data-stack.test.ts      # Unit tests for data stack
-      sns-stack.ts            # SNS topics for event publishing
-      sns-stack.test.ts       # Unit tests for SNS stack
       lambda-stack.ts         # Lambda/API Gateway resources
       lambda-stack.test.ts    # Unit tests for lambda stack
    /utils

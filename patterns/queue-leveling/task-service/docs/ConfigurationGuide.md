@@ -10,15 +10,15 @@ The application configuration is managed through environment variables. These va
 
 The following environment variables are available for configuring the application:
 
-| Variable            | Type    | Description                                         | Default     | Required |
-| ------------------- | ------- | --------------------------------------------------- | ----------- | -------- |
-| `TASKS_TABLE`       | string  | The name of the DynamoDB table for storing tasks    | -           | Yes      |
-| `TASK_TOPIC_ARN`    | string  | The ARN of the SNS topic for publishing task events | -           | Yes      |
-| `AWS_REGION`        | string  | The AWS region where resources are deployed         | `us-east-1` | No       |
-| `LOGGING_ENABLED`   | boolean | Enable or disable application logging               | `true`      | No       |
-| `LOGGING_LEVEL`     | enum    | Logging level: `debug`, `info`, `warn`, `error`     | `debug`     | No       |
-| `LOGGING_FORMAT`    | enum    | Logging format: `text`, `json`                      | `json`      | No       |
-| `CORS_ALLOW_ORIGIN` | string  | CORS allow origin header value                      | `*`         | No       |
+| Variable                 | Type    | Description                                           | Default     | Required |
+| ------------------------ | ------- | ----------------------------------------------------- | ----------- | -------- |
+| `TASKS_TABLE`            | string  | The name of the DynamoDB table for storing tasks      | -           | Yes      |
+| `NOTIFICATION_QUEUE_URL` | string  | The URL of the SQS queue for requesting notifications | -           | Yes      |
+| `AWS_REGION`             | string  | The AWS region where resources are deployed           | `us-east-1` | No       |
+| `LOGGING_ENABLED`        | boolean | Enable or disable application logging                 | `true`      | No       |
+| `LOGGING_LEVEL`          | enum    | Logging level: `debug`, `info`, `warn`, `error`       | `debug`     | No       |
+| `LOGGING_FORMAT`         | enum    | Logging format: `text`, `json`                        | `json`      | No       |
+| `CORS_ALLOW_ORIGIN`      | string  | CORS allow origin header value                        | `*`         | No       |
 
 ### Usage
 
@@ -156,7 +156,7 @@ Infrastructure configuration variables are passed to Lambda functions with modif
 | `CDK_APP_LOGGING_FORMAT`  | `LOGGING_FORMAT`            |
 | `CDK_CORS_ALLOW_ORIGIN`   | `CORS_ALLOW_ORIGIN`         |
 | (DynamoDB table name)     | `TASKS_TABLE`               |
-| (Task topic ARN)          | `TASK_TOPIC_ARN`            |
+| (Notification queue URL)  | `NOTIFICATION_QUEUE_URL`    |
 | (AWS Region)              | `AWS_REGION`                |
 
 ---
