@@ -1,7 +1,6 @@
 import * as cdk from 'aws-cdk-lib';
 import { Match, Template } from 'aws-cdk-lib/assertions';
 import * as dynamodb from 'aws-cdk-lib/aws-dynamodb';
-import * as sns from 'aws-cdk-lib/aws-sns';
 import { LambdaStack } from './lambda-stack';
 
 // Mock NodejsFunction to avoid Docker bundling during tests
@@ -36,15 +35,13 @@ describe('LambdaStack', () => {
           type: dynamodb.AttributeType.STRING,
         },
       });
-      const testMockTopic = new sns.Topic(mockTestStack, 'MockTaskTopic', {
-        topicName: 'mock-task-topic',
-      });
 
       const stack = new LambdaStack(testApp, 'TestLambdaStack', {
         appName: 'smp-queue-leveling-task-service',
         envName: 'dev',
         taskTable: testMockTable,
-        taskTopic: testMockTopic,
+        notificationQueueArn: 'arn:aws:sqs:us-east-1:123456789012:test-notification-queue',
+        notificationQueueUrl: 'https://sqs.us-east-1.amazonaws.com/123456789012/test-notification-queue',
         loggingEnabled: true,
         loggingLevel: 'debug',
         loggingFormat: 'json',
@@ -108,7 +105,7 @@ describe('LambdaStack', () => {
         Environment: {
           Variables: {
             TASKS_TABLE: Match.anyValue(),
-            TASK_TOPIC_ARN: Match.anyValue(),
+            NOTIFICATION_QUEUE_URL: Match.anyValue(),
             LOGGING_ENABLED: 'true',
             LOGGING_LEVEL: 'debug',
             LOGGING_FORMAT: 'json',
@@ -317,15 +314,13 @@ describe('LambdaStack', () => {
           type: dynamodb.AttributeType.STRING,
         },
       });
-      const testMockTopic = new sns.Topic(mockTestStack, 'MockTaskTopic', {
-        topicName: 'mock-task-topic',
-      });
 
       const stack = new LambdaStack(testApp, 'TestLambdaStack', {
         appName: 'smp-queue-leveling-task-service',
         envName: 'prd',
         taskTable: testMockTable,
-        taskTopic: testMockTopic,
+        notificationQueueArn: 'arn:aws:sqs:us-east-1:123456789012:test-notification-queue',
+        notificationQueueUrl: 'https://sqs.us-east-1.amazonaws.com/123456789012/test-notification-queue',
         loggingEnabled: true,
         loggingLevel: 'info',
         loggingFormat: 'json',
@@ -377,15 +372,13 @@ describe('LambdaStack', () => {
           type: dynamodb.AttributeType.STRING,
         },
       });
-      const testMockTopic = new sns.Topic(mockTestStack, 'MockTaskTopic', {
-        topicName: 'mock-task-topic',
-      });
 
       const stack = new LambdaStack(testApp, 'TestLambdaStack', {
         appName: 'smp-queue-leveling-task-service',
         envName: 'dev',
         taskTable: testMockTable,
-        taskTopic: testMockTopic,
+        notificationQueueArn: 'arn:aws:sqs:us-east-1:123456789012:test-notification-queue',
+        notificationQueueUrl: 'https://sqs.us-east-1.amazonaws.com/123456789012/test-notification-queue',
         loggingEnabled: true,
         loggingLevel: 'debug',
         loggingFormat: 'json',

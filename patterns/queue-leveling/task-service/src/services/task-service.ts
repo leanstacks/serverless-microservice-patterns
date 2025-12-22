@@ -7,7 +7,7 @@ import { Task, TaskItem, TaskKeys, toTask } from '@/models/task.js';
 import { config } from '@/utils/config.js';
 import { dynamoDocClient } from '@/utils/dynamodb-client.js';
 import { logger } from '@/utils/logger.js';
-import { publishToTopic } from '@/utils/sns-client.js';
+import { sendMessage } from '@/utils/sqs-client.js';
 
 /**
  * Retrieves all tasks from the DynamoDB table
@@ -117,9 +117,9 @@ export const createTask = async (createTaskDto: CreateTaskDto): Promise<Task> =>
 
     const task = toTask(taskItem);
 
-    // Publish task_created event to SNS topic
-    await publishToTopic(
-      config.TASK_TOPIC_ARN,
+    // Send task_created event to SQS queue
+    await sendMessage(
+      config.NOTIFICATION_QUEUE_URL,
       { task },
       {
         event: {
@@ -223,9 +223,9 @@ export const updateTask = async (id: string, updateTaskDto: UpdateTaskDto): Prom
 
     const newTask = toTask(response.Attributes as TaskItem);
 
-    // Publish task_updated event to SNS topic
-    await publishToTopic(
-      config.TASK_TOPIC_ARN,
+    // Send task_updated event to SQS queue
+    await sendMessage(
+      config.NOTIFICATION_QUEUE_URL,
       { oldTask, newTask },
       {
         event: {
@@ -276,10 +276,10 @@ export const deleteTask = async (id: string): Promise<boolean> => {
 
     const response = await dynamoDocClient.send(command);
 
-    // Publish task_deleted event to SNS topic with the deleted task object
+    // Send task_deleted event to SQS queue with the deleted task object
     const deletedTask = response.Attributes ? toTask(response.Attributes as TaskItem) : null;
-    await publishToTopic(
-      config.TASK_TOPIC_ARN,
+    await sendMessage(
+      config.NOTIFICATION_QUEUE_URL,
       { task: deletedTask },
       {
         event: {

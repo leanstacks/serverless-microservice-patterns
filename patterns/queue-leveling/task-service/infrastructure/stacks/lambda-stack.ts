@@ -2,9 +2,9 @@ import * as path from 'path';
 import * as cdk from 'aws-cdk-lib';
 import * as apigateway from 'aws-cdk-lib/aws-apigateway';
 import * as dynamodb from 'aws-cdk-lib/aws-dynamodb';
+import * as iam from 'aws-cdk-lib/aws-iam';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
 import * as logs from 'aws-cdk-lib/aws-logs';
-import * as sns from 'aws-cdk-lib/aws-sns';
 import { NodejsFunction } from 'aws-cdk-lib/aws-lambda-nodejs';
 import { Construct } from 'constructs';
 
@@ -28,9 +28,14 @@ export interface LambdaStackProps extends cdk.StackProps {
   taskTable: dynamodb.ITable;
 
   /**
-   * Reference to the Task SNS topic.
+   * ARN of the Notification SQS Queue.
    */
-  taskTopic: sns.ITopic;
+  notificationQueueArn: string;
+
+  /**
+   * URL of the Notification SQS Queue.
+   */
+  notificationQueueUrl: string;
 
   /**
    * Whether to enable application logging.
@@ -98,7 +103,7 @@ export class LambdaStack extends cdk.Stack {
       entry: path.join(__dirname, '../../src/handlers/list-tasks.ts'),
       environment: {
         TASKS_TABLE: props.taskTable.tableName,
-        TASK_TOPIC_ARN: props.taskTopic.topicArn,
+        NOTIFICATION_QUEUE_URL: props.notificationQueueUrl,
         LOGGING_ENABLED: props.loggingEnabled.toString(),
         LOGGING_LEVEL: props.loggingLevel,
         LOGGING_FORMAT: props.loggingFormat,
@@ -123,8 +128,13 @@ export class LambdaStack extends cdk.Stack {
     // Grant the Lambda function read access to the DynamoDB table
     props.taskTable.grantReadData(this.listTasksFunction);
 
-    // Grant the Lambda function permission to publish to the Task SNS topic
-    props.taskTopic.grantPublish(this.listTasksFunction);
+    // Grant the Lambda function permission to send messages to the SQS queue
+    this.listTasksFunction.addToRolePolicy(
+      new iam.PolicyStatement({
+        actions: ['sqs:SendMessage'],
+        resources: [props.notificationQueueArn],
+      }),
+    );
 
     // Create the get task Lambda function
     this.getTaskFunction = new NodejsFunction(this, 'GetTaskFunction', {
@@ -134,7 +144,7 @@ export class LambdaStack extends cdk.Stack {
       entry: path.join(__dirname, '../../src/handlers/get-task.ts'),
       environment: {
         TASKS_TABLE: props.taskTable.tableName,
-        TASK_TOPIC_ARN: props.taskTopic.topicArn,
+        NOTIFICATION_QUEUE_URL: props.notificationQueueUrl,
         LOGGING_ENABLED: props.loggingEnabled.toString(),
         LOGGING_LEVEL: props.loggingLevel,
         LOGGING_FORMAT: props.loggingFormat,
@@ -159,8 +169,13 @@ export class LambdaStack extends cdk.Stack {
     // Grant the Lambda function read access to the DynamoDB table
     props.taskTable.grantReadData(this.getTaskFunction);
 
-    // Grant the Lambda function permission to publish to the Task SNS topic
-    props.taskTopic.grantPublish(this.getTaskFunction);
+    // Grant the Lambda function permission to send messages to the SQS queue
+    this.getTaskFunction.addToRolePolicy(
+      new iam.PolicyStatement({
+        actions: ['sqs:SendMessage'],
+        resources: [props.notificationQueueArn],
+      }),
+    );
 
     // Create the create task Lambda function
     this.createTaskFunction = new NodejsFunction(this, 'CreateTaskFunction', {
@@ -170,7 +185,7 @@ export class LambdaStack extends cdk.Stack {
       entry: path.join(__dirname, '../../src/handlers/create-task.ts'),
       environment: {
         TASKS_TABLE: props.taskTable.tableName,
-        TASK_TOPIC_ARN: props.taskTopic.topicArn,
+        NOTIFICATION_QUEUE_URL: props.notificationQueueUrl,
         LOGGING_ENABLED: props.loggingEnabled.toString(),
         LOGGING_LEVEL: props.loggingLevel,
         LOGGING_FORMAT: props.loggingFormat,
@@ -195,8 +210,13 @@ export class LambdaStack extends cdk.Stack {
     // Grant the Lambda function write access to the DynamoDB table
     props.taskTable.grantWriteData(this.createTaskFunction);
 
-    // Grant the Lambda function permission to publish to the Task SNS topic
-    props.taskTopic.grantPublish(this.createTaskFunction);
+    // Grant the Lambda function permission to send messages to the SQS queue
+    this.createTaskFunction.addToRolePolicy(
+      new iam.PolicyStatement({
+        actions: ['sqs:SendMessage'],
+        resources: [props.notificationQueueArn],
+      }),
+    );
 
     // Create the update task Lambda function
     this.updateTaskFunction = new NodejsFunction(this, 'UpdateTaskFunction', {
@@ -206,7 +226,7 @@ export class LambdaStack extends cdk.Stack {
       entry: path.join(__dirname, '../../src/handlers/update-task.ts'),
       environment: {
         TASKS_TABLE: props.taskTable.tableName,
-        TASK_TOPIC_ARN: props.taskTopic.topicArn,
+        NOTIFICATION_QUEUE_URL: props.notificationQueueUrl,
         LOGGING_ENABLED: props.loggingEnabled.toString(),
         LOGGING_LEVEL: props.loggingLevel,
         LOGGING_FORMAT: props.loggingFormat,
@@ -231,8 +251,13 @@ export class LambdaStack extends cdk.Stack {
     // Grant the Lambda function read and write access to the DynamoDB table
     props.taskTable.grantReadWriteData(this.updateTaskFunction);
 
-    // Grant the Lambda function permission to publish to the Task SNS topic
-    props.taskTopic.grantPublish(this.updateTaskFunction);
+    // Grant the Lambda function permission to send messages to the SQS queue
+    this.updateTaskFunction.addToRolePolicy(
+      new iam.PolicyStatement({
+        actions: ['sqs:SendMessage'],
+        resources: [props.notificationQueueArn],
+      }),
+    );
 
     // Create the delete task Lambda function
     this.deleteTaskFunction = new NodejsFunction(this, 'DeleteTaskFunction', {
@@ -242,7 +267,7 @@ export class LambdaStack extends cdk.Stack {
       entry: path.join(__dirname, '../../src/handlers/delete-task.ts'),
       environment: {
         TASKS_TABLE: props.taskTable.tableName,
-        TASK_TOPIC_ARN: props.taskTopic.topicArn,
+        NOTIFICATION_QUEUE_URL: props.notificationQueueUrl,
         LOGGING_ENABLED: props.loggingEnabled.toString(),
         LOGGING_LEVEL: props.loggingLevel,
         LOGGING_FORMAT: props.loggingFormat,
@@ -267,8 +292,13 @@ export class LambdaStack extends cdk.Stack {
     // Grant the Lambda function read and write access to the DynamoDB table
     props.taskTable.grantReadWriteData(this.deleteTaskFunction);
 
-    // Grant the Lambda function permission to publish to the Task SNS topic
-    props.taskTopic.grantPublish(this.deleteTaskFunction);
+    // Grant the Lambda function permission to send messages to the SQS queue
+    this.deleteTaskFunction.addToRolePolicy(
+      new iam.PolicyStatement({
+        actions: ['sqs:SendMessage'],
+        resources: [props.notificationQueueArn],
+      }),
+    );
 
     // Create API Gateway REST API
     this.api = new apigateway.RestApi(this, 'LambdaStarterApi', {

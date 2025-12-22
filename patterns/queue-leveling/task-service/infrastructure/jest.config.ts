@@ -7,6 +7,7 @@ const config: Config = {
   testMatch: ['**/*.test.ts'],
   collectCoverageFrom: [
     '**/*.ts',
+    '!app.ts',
     '!**/*.test.ts',
     '!**/*.spec.ts',
     '!**/node_modules/**',

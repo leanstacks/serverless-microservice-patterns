@@ -8,7 +8,7 @@ const mockLoggerDebug = jest.fn();
 const mockLoggerInfo = jest.fn();
 const mockLoggerError = jest.fn();
 const mockRandomUUID = jest.fn();
-const mockPublishToTopic = jest.fn();
+const mockSendMessage = jest.fn();
 
 jest.mock('crypto', () => ({
   randomUUID: mockRandomUUID,
@@ -31,12 +31,12 @@ jest.mock('../utils/logger.js', () => ({
 jest.mock('../utils/config.js', () => ({
   config: {
     TASKS_TABLE: 'test-tasks-table',
-    TASK_TOPIC_ARN: 'arn:aws:sns:us-east-1:123456789012:test-task-topic',
+    NOTIFICATION_QUEUE_URL: 'https://sqs.us-east-1.amazonaws.com/123456789012/test-queue',
   },
 }));
 
-jest.mock('../utils/sns-client.js', () => ({
-  publishToTopic: mockPublishToTopic,
+jest.mock('../utils/sqs-client.js', () => ({
+  sendMessage: mockSendMessage,
 }));
 
 describe('task-service', () => {
@@ -278,8 +278,8 @@ describe('task-service', () => {
       // Mock UUID generation
       mockRandomUUID.mockReturnValue('123e4567-e89b-12d3-a456-426614174000');
 
-      // Mock SNS publish
-      mockPublishToTopic.mockResolvedValue('message-id-123');
+      // Mock SQS send
+      mockSendMessage.mockResolvedValue('message-id-123');
     });
 
     afterEach(() => {
@@ -331,9 +331,9 @@ describe('task-service', () => {
       expect(mockLoggerInfo).toHaveBeenCalledWith('[TaskService] > createTask', {
         tableName: 'test-tasks-table',
       });
-      expect(mockPublishToTopic).toHaveBeenCalledTimes(1);
-      expect(mockPublishToTopic).toHaveBeenCalledWith(
-        'arn:aws:sns:us-east-1:123456789012:test-task-topic',
+      expect(mockSendMessage).toHaveBeenCalledTimes(1);
+      expect(mockSendMessage).toHaveBeenCalledWith(
+        'https://sqs.us-east-1.amazonaws.com/123456789012/test-queue',
         expect.objectContaining({
           task: expect.objectContaining({
             id: '123e4567-e89b-12d3-a456-426614174000',
@@ -373,7 +373,7 @@ describe('task-service', () => {
       expect(result).not.toHaveProperty('detail');
       expect(result).not.toHaveProperty('dueAt');
       expect(mockSend).toHaveBeenCalledTimes(1);
-      expect(mockPublishToTopic).toHaveBeenCalledTimes(1);
+      expect(mockSendMessage).toHaveBeenCalledTimes(1);
     });
 
     it('should create a task with isComplete defaulting to false when undefined', async () => {
@@ -391,7 +391,7 @@ describe('task-service', () => {
       // Assert
       expect(result.isComplete).toBe(false);
       expect(mockSend).toHaveBeenCalledTimes(1);
-      expect(mockPublishToTopic).toHaveBeenCalledTimes(1);
+      expect(mockSendMessage).toHaveBeenCalledTimes(1);
     });
 
     it('should create a task with isComplete set to true', async () => {
@@ -409,7 +409,7 @@ describe('task-service', () => {
       // Assert
       expect(result.isComplete).toBe(true);
       expect(mockSend).toHaveBeenCalledTimes(1);
-      expect(mockPublishToTopic).toHaveBeenCalledTimes(1);
+      expect(mockSendMessage).toHaveBeenCalledTimes(1);
     });
 
     it('should generate a unique UUID for each task', async () => {
@@ -426,7 +426,7 @@ describe('task-service', () => {
 
       // Assert
       expect(mockRandomUUID).toHaveBeenCalledTimes(1);
-      expect(mockPublishToTopic).toHaveBeenCalledTimes(1);
+      expect(mockSendMessage).toHaveBeenCalledTimes(1);
     });
 
     it('should set createdAt and updatedAt to the current time', async () => {
@@ -444,7 +444,7 @@ describe('task-service', () => {
       // Assert
       expect(result.createdAt).toBe('2025-12-01T10:00:00.000Z');
       expect(result.updatedAt).toBe('2025-12-01T10:00:00.000Z');
-      expect(mockPublishToTopic).toHaveBeenCalledTimes(1);
+      expect(mockSendMessage).toHaveBeenCalledTimes(1);
     });
 
     it('should handle DynamoDB errors and rethrow them', async () => {
@@ -461,7 +461,7 @@ describe('task-service', () => {
       await expect(createTask(createTaskDto)).rejects.toThrow('DynamoDB error');
       expect(mockSend).toHaveBeenCalledTimes(1);
       expect(mockLoggerError).toHaveBeenCalled();
-      expect(mockPublishToTopic).not.toHaveBeenCalled();
+      expect(mockSendMessage).not.toHaveBeenCalled();
     });
 
     it('should not include pk field in returned task', async () => {
@@ -478,7 +478,7 @@ describe('task-service', () => {
 
       // Assert
       expect(result).not.toHaveProperty('pk');
-      expect(mockPublishToTopic).toHaveBeenCalledTimes(1);
+      expect(mockSendMessage).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -551,8 +551,8 @@ describe('task-service', () => {
         tableName: 'test-tasks-table',
         id: taskId,
       });
-      expect(mockPublishToTopic).toHaveBeenCalledWith(
-        'arn:aws:sns:us-east-1:123456789012:test-task-topic',
+      expect(mockSendMessage).toHaveBeenCalledWith(
+        'https://sqs.us-east-1.amazonaws.com/123456789012/test-queue',
         expect.objectContaining({
           oldTask: expect.objectContaining({
             id: taskId,
@@ -919,8 +919,8 @@ describe('task-service', () => {
       expect(mockLoggerInfo).toHaveBeenCalledWith('[TaskService] < deleteTask - successfully deleted task', {
         id: taskId,
       });
-      expect(mockPublishToTopic).toHaveBeenCalledWith(
-        'arn:aws:sns:us-east-1:123456789012:test-task-topic',
+      expect(mockSendMessage).toHaveBeenCalledWith(
+        'https://sqs.us-east-1.amazonaws.com/123456789012/test-queue',
         expect.objectContaining({
           task: expect.objectContaining({
             id: taskId,
