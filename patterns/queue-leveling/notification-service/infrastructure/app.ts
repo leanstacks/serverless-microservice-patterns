@@ -18,16 +18,12 @@ const tags = getTags(config);
 // Get AWS environment configuration
 const environmentConfig = getEnvironmentConfig(config);
 
-// Get the Task topic ARN from the imported value
-const taskTopicArn = cdk.Fn.importValue(`smp-pubsub-task-service-task-topic-arn-${config.CDK_ENV}`);
-
 // Create SQS Stack
 const sqsStack = new SqsStack(app, `${config.CDK_APP_NAME}-sqs-stack-${config.CDK_ENV}`, {
   appName: config.CDK_APP_NAME,
   envName: config.CDK_ENV,
   stackName: `${config.CDK_APP_NAME}-sqs-${config.CDK_ENV}`,
   description: `SQS queues for ${config.CDK_APP_NAME} (${config.CDK_ENV})`,
-  taskTopicArn: taskTopicArn.toString(),
   ...(environmentConfig && { env: environmentConfig }),
 });
 

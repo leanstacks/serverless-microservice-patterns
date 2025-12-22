@@ -1,7 +1,5 @@
 import * as cdk from 'aws-cdk-lib';
 import * as sqs from 'aws-cdk-lib/aws-sqs';
-import * as sns from 'aws-cdk-lib/aws-sns';
-import * as subscriptions from 'aws-cdk-lib/aws-sns-subscriptions';
 import { Construct } from 'constructs';
 
 /**
@@ -17,11 +15,6 @@ export interface SqsStackProps extends cdk.StackProps {
    * Environment name (dev, qat, prd).
    */
   envName: string;
-
-  /**
-   * The ARN of the Task SNS topic to subscribe to.
-   */
-  taskTopicArn: string;
 }
 
 /**
@@ -59,19 +52,6 @@ export class SqsStack extends cdk.Stack {
       },
       removalPolicy: props.envName === 'prd' ? cdk.RemovalPolicy.RETAIN : cdk.RemovalPolicy.DESTROY,
     });
-
-    // Subscribe the Notification Queue to the Task SNS topic with filter policy
-    const taskTopic = sns.Topic.fromTopicArn(this, 'TaskTopic', props.taskTopicArn);
-    taskTopic.addSubscription(
-      new subscriptions.SqsSubscription(this.notificationQueue, {
-        rawMessageDelivery: true,
-        filterPolicy: {
-          event: sns.SubscriptionFilter.stringFilter({
-            allowlist: ['task_created'],
-          }),
-        },
-      }),
-    );
 
     // Output the Notification Queue ARN
     new cdk.CfnOutput(this, 'NotificationQueueArn', {

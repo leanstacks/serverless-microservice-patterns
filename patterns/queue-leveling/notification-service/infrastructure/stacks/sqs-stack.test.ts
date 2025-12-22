@@ -12,7 +12,6 @@ describe('SqsStack', () => {
       const stack = new SqsStack(testApp, 'TestSqsStack', {
         appName: 'smp-pubsub-notification-service',
         envName: 'dev',
-        taskTopicArn: 'arn:aws:sns:us-east-1:123456789012:smp-pubsub-task-service-task-dev',
       });
       template = Template.fromStack(stack);
     });
@@ -39,13 +38,6 @@ describe('SqsStack', () => {
         (q: any) => q.Properties?.QueueName?.includes('notification-') && !q.Properties?.QueueName?.includes('dlq'),
       );
       expect(notificationQueue?.Properties?.RedrivePolicy).toBeDefined();
-    });
-
-    it('should create SNS subscription from Task Topic to Notification Queue', () => {
-      template.hasResourceProperties('AWS::SNS::Subscription', {
-        Protocol: 'sqs',
-        RawMessageDelivery: true,
-      });
     });
 
     it('should export Notification Queue ARN', () => {
@@ -79,16 +71,6 @@ describe('SqsStack', () => {
         },
       });
     });
-
-    it('should create SNS subscription with filter policy for task_created events', () => {
-      template.hasResourceProperties('AWS::SNS::Subscription', {
-        Protocol: 'sqs',
-        RawMessageDelivery: true,
-        FilterPolicy: {
-          event: ['task_created'],
-        },
-      });
-    });
   });
 
   describe('prd environment', () => {
@@ -100,7 +82,6 @@ describe('SqsStack', () => {
       const stack = new SqsStack(testApp, 'TestSqsStackPrd', {
         appName: 'smp-pubsub-notification-service',
         envName: 'prd',
-        taskTopicArn: 'arn:aws:sns:us-east-1:123456789012:smp-pubsub-task-service-task-prd',
       });
       template = Template.fromStack(stack);
     });
@@ -117,16 +98,6 @@ describe('SqsStack', () => {
       template.hasResourceProperties('AWS::SQS::Queue', {
         QueueName: 'smp-pubsub-notification-service-notification-dlq-prd',
         MessageRetentionPeriod: 1209600,
-      });
-    });
-
-    it('should create SNS subscription with filter policy for task_created events in prd', () => {
-      template.hasResourceProperties('AWS::SNS::Subscription', {
-        Protocol: 'sqs',
-        RawMessageDelivery: true,
-        FilterPolicy: {
-          event: ['task_created'],
-        },
       });
     });
   });
