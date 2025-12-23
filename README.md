@@ -11,8 +11,9 @@ The following patterns are currently included in this repository:
 - [**Internal API**](patterns/internal-api/README.md): Similar to _Simple Web Service_ but without the API Gateway to allow public API consumption. Facilitates synchronous, internal microservice-to-microservice integration.
 - [**Internal Handoff**](patterns/internal-handoff/README.md): Similar to the _Internal API_ pattern, however, the calling service invokes the called service _asynchronously_ rather than synchronously.
 - [**Publish Subscribe**](patterns/publish-subscribe/README.md): Demonstrates the Pub/Sub pattern where services publish events to SNS topics and other services subscribe through SQS queues, enabling loose coupling and event-driven architecture.
+- [**Queue-Based Load Leveling**](patterns/queue-leveling/README.md): A pattern that uses a message queue as a buffer to decouple producers from consumers, smoothing out spikes in demand by allowing services to process messages at a steady, manageable rate.
 
-More patterns, such as Aggregator, Router, Notifier, Fan Out/Fan In, Circuit Breaker, and others, will be added over time.
+More patterns, such as Aggregator, Router, Fan Out/Fan In, Circuit Breaker, and others, will be added over time.
 
 ## Lambda Starter Project
 
