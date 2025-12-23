@@ -36,7 +36,7 @@ jest.mock('../utils/config.js', () => ({
 }));
 
 jest.mock('../utils/sqs-client.js', () => ({
-  sendMessage: mockSendMessage,
+  sendToQueue: mockSendMessage,
 }));
 
 describe('task-service', () => {

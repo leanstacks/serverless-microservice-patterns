@@ -35,7 +35,7 @@ jest.mock('./config.js', () => ({
 }));
 
 describe('sqs-client', () => {
-  let sendMessage: typeof import('./sqs-client').sendMessage;
+  let sendToQueue: typeof import('./sqs-client').sendToQueue;
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -47,10 +47,10 @@ describe('sqs-client', () => {
 
     // Import after mocks are set up
     const sqsClient = require('./sqs-client');
-    sendMessage = sqsClient.sendMessage;
+    sendToQueue = sqsClient.sendToQueue;
   });
 
-  describe('sendMessage', () => {
+  describe('sendToQueue', () => {
     it('should send a message to SQS queue successfully', async () => {
       // Arrange
       const queueUrl = 'https://sqs.us-east-1.amazonaws.com/123456789012/test-queue';
@@ -61,12 +61,12 @@ describe('sqs-client', () => {
       });
 
       // Act
-      const result = await sendMessage(queueUrl, message);
+      const result = await sendToQueue(queueUrl, message);
 
       // Assert
       expect(result).toBe('message-id-123');
       expect(mockSend).toHaveBeenCalledTimes(1);
-      expect(mockLoggerDebug).toHaveBeenCalledWith('[SqsClient] > sendMessage', { queueUrl });
+      expect(mockLoggerDebug).toHaveBeenCalledWith('[SqsClient] > sendToQueue', { queueUrl });
     });
 
     it('should convert message object to JSON string', async () => {
@@ -79,7 +79,7 @@ describe('sqs-client', () => {
       });
 
       // Act
-      await sendMessage(queueUrl, message);
+      await sendToQueue(queueUrl, message);
 
       // Assert
       const sendCommand = mockSend.mock.calls[0][0];
@@ -102,7 +102,7 @@ describe('sqs-client', () => {
       });
 
       // Act
-      await sendMessage(queueUrl, message, attributes);
+      await sendToQueue(queueUrl, message, attributes);
 
       // Assert
       const sendCommand = mockSend.mock.calls[0][0];
@@ -119,7 +119,7 @@ describe('sqs-client', () => {
       });
 
       // Act
-      const result = await sendMessage(queueUrl, message);
+      const result = await sendToQueue(queueUrl, message);
 
       // Assert
       expect(result).toBe('');
@@ -135,10 +135,10 @@ describe('sqs-client', () => {
       });
 
       // Act
-      await sendMessage(queueUrl, message);
+      await sendToQueue(queueUrl, message);
 
       // Assert
-      expect(mockLoggerDebug).toHaveBeenCalledWith('[SqsClient] < sendMessage - successfully sent message', {
+      expect(mockLoggerDebug).toHaveBeenCalledWith('[SqsClient] < sendToQueue - successfully sent message', {
         queueUrl,
         messageId: 'msg-delete-123',
       });
@@ -153,8 +153,8 @@ describe('sqs-client', () => {
       mockSend.mockRejectedValue(error);
 
       // Act & Assert
-      await expect(sendMessage(queueUrl, message)).rejects.toThrow('SQS service error');
-      expect(mockLoggerError).toHaveBeenCalledWith('[SqsClient] < sendMessage - failed to send message to SQS', error, {
+      await expect(sendToQueue(queueUrl, message)).rejects.toThrow('SQS service error');
+      expect(mockLoggerError).toHaveBeenCalledWith('[SqsClient] < sendToQueue - failed to send message to SQS', error, {
         queueUrl,
       });
     });
@@ -169,7 +169,7 @@ describe('sqs-client', () => {
       });
 
       // Act
-      await sendMessage(queueUrl, message);
+      await sendToQueue(queueUrl, message);
 
       // Assert
       const sendCommand = mockSend.mock.calls[0][0];

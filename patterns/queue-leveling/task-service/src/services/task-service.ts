@@ -7,7 +7,7 @@ import { Task, TaskItem, TaskKeys, toTask } from '@/models/task.js';
 import { config } from '@/utils/config.js';
 import { dynamoDocClient } from '@/utils/dynamodb-client.js';
 import { logger } from '@/utils/logger.js';
-import { sendMessage } from '@/utils/sqs-client.js';
+import { sendToQueue } from '@/utils/sqs-client.js';
 
 /**
  * Retrieves all tasks from the DynamoDB table
@@ -118,7 +118,7 @@ export const createTask = async (createTaskDto: CreateTaskDto): Promise<Task> =>
     const task = toTask(taskItem);
 
     // Send task_created event to SQS queue
-    await sendMessage(
+    await sendToQueue(
       config.NOTIFICATION_QUEUE_URL,
       { task },
       {
@@ -224,7 +224,7 @@ export const updateTask = async (id: string, updateTaskDto: UpdateTaskDto): Prom
     const newTask = toTask(response.Attributes as TaskItem);
 
     // Send task_updated event to SQS queue
-    await sendMessage(
+    await sendToQueue(
       config.NOTIFICATION_QUEUE_URL,
       { oldTask, newTask },
       {
@@ -278,7 +278,7 @@ export const deleteTask = async (id: string): Promise<boolean> => {
 
     // Send task_deleted event to SQS queue with the deleted task object
     const deletedTask = response.Attributes ? toTask(response.Attributes as TaskItem) : null;
-    await sendMessage(
+    await sendToQueue(
       config.NOTIFICATION_QUEUE_URL,
       { task: deletedTask },
       {
