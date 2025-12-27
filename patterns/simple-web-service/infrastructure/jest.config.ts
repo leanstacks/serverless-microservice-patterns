@@ -7,10 +7,12 @@ const config: Config = {
   testMatch: ['**/*.test.ts'],
   collectCoverageFrom: [
     '**/*.ts',
+    '!app.ts',
     '!**/*.test.ts',
     '!**/*.spec.ts',
     '!**/node_modules/**',
     '!**/cdk.out/**',
+    '!**/dist/**',
     '!jest.config.ts',
     '!jest.setup.ts',
   ],
