@@ -161,6 +161,128 @@ describe('logger', () => {
     });
   });
 
+  describe('logger formatting', () => {
+    it('should use StructuredLogFormatter when LOGGING_FORMAT is json', () => {
+      // Arrange
+      const mockStructuredFormatter = jest.fn();
+      const mockCloudwatchFormatter = jest.fn();
+
+      jest.doMock('pino-lambda', () => ({
+        StructuredLogFormatter: mockStructuredFormatter,
+        CloudwatchLogFormatter: mockCloudwatchFormatter,
+        pinoLambdaDestination: jest.fn(() => ({})),
+        lambdaRequestTracker: jest.fn(() => jest.fn()),
+      }));
+
+      jest.resetModules();
+      jest.doMock('./config', () => ({
+        config: {
+          LOGGING_ENABLED: true,
+          LOGGING_LEVEL: 'info',
+          LOGGING_FORMAT: 'json',
+          TASKS_TABLE: 'test-table',
+          AWS_REGION: 'us-east-1',
+          CORS_ALLOW_ORIGIN: '*',
+        },
+      }));
+
+      // Act
+      require('./logger');
+
+      // Assert
+      expect(mockStructuredFormatter).toHaveBeenCalled();
+      expect(mockCloudwatchFormatter).not.toHaveBeenCalled();
+    });
+
+    it('should use CloudwatchLogFormatter when LOGGING_FORMAT is text', () => {
+      // Arrange
+      const mockStructuredFormatter = jest.fn();
+      const mockCloudwatchFormatter = jest.fn();
+
+      jest.doMock('pino-lambda', () => ({
+        StructuredLogFormatter: mockStructuredFormatter,
+        CloudwatchLogFormatter: mockCloudwatchFormatter,
+        pinoLambdaDestination: jest.fn(() => ({})),
+        lambdaRequestTracker: jest.fn(() => jest.fn()),
+      }));
+
+      jest.resetModules();
+      jest.doMock('./config', () => ({
+        config: {
+          LOGGING_ENABLED: true,
+          LOGGING_LEVEL: 'info',
+          LOGGING_FORMAT: 'text',
+          TASKS_TABLE: 'test-table',
+          AWS_REGION: 'us-east-1',
+          CORS_ALLOW_ORIGIN: '*',
+        },
+      }));
+
+      // Act
+      require('./logger');
+
+      // Assert
+      expect(mockCloudwatchFormatter).toHaveBeenCalled();
+      expect(mockStructuredFormatter).not.toHaveBeenCalled();
+    });
+
+    it('should use CloudwatchLogFormatter for non-json LOGGING_FORMAT values', () => {
+      // Arrange
+      const mockStructuredFormatter = jest.fn();
+      const mockCloudwatchFormatter = jest.fn();
+
+      jest.doMock('pino-lambda', () => ({
+        StructuredLogFormatter: mockStructuredFormatter,
+        CloudwatchLogFormatter: mockCloudwatchFormatter,
+        pinoLambdaDestination: jest.fn(() => ({})),
+        lambdaRequestTracker: jest.fn(() => jest.fn()),
+      }));
+
+      jest.resetModules();
+      jest.doMock('./config', () => ({
+        config: {
+          LOGGING_ENABLED: true,
+          LOGGING_LEVEL: 'info',
+          LOGGING_FORMAT: 'custom',
+          TASKS_TABLE: 'test-table',
+          AWS_REGION: 'us-east-1',
+          CORS_ALLOW_ORIGIN: '*',
+        },
+      }));
+
+      // Act
+      require('./logger');
+
+      // Assert
+      expect(mockCloudwatchFormatter).toHaveBeenCalled();
+      expect(mockStructuredFormatter).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('getLogger function', () => {
+    it('should create a logger instance when module is first imported', () => {
+      // Arrange & Act
+      const { logger } = require('./logger');
+
+      // Assert
+      expect(logger).toBeDefined();
+      expect(typeof logger.info).toBe('function');
+    });
+
+    it('should return the same logger instance on subsequent imports (singleton pattern)', () => {
+      // Arrange
+      const module1 = require('./logger');
+      const firstLogger = module1.logger;
+
+      // Act
+      const module2 = require('./logger');
+      const secondLogger = module2.logger;
+
+      // Assert
+      expect(secondLogger).toBe(firstLogger);
+    });
+  });
+
   describe('resetLogger', () => {
     it('should reset the logger instance', () => {
       // Arrange

@@ -47,9 +47,7 @@ const _createLogger = (): pino.Logger => {
  * ```
  */
 const getLogger = (): pino.Logger => {
-  if (!_logger) {
-    _logger = _createLogger();
-  }
+  _logger ??= _createLogger();
   return _logger;
 };
 
