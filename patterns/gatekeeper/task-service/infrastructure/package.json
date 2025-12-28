@@ -1,6 +1,6 @@
 {
   "name": "gatekeeper-task-service-infrastructure",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "AWS CDK infrastructure for simple-web-service",
   "private": true,
   "type": "commonjs",
