@@ -6,6 +6,7 @@ import { Task } from '../models/task';
 const mockListTasks = jest.fn();
 const mockLoggerInfo = jest.fn();
 const mockLoggerError = jest.fn();
+const mockLoggerDebug = jest.fn();
 
 jest.mock('../utils/config', () => ({
   config: {
@@ -25,7 +26,9 @@ jest.mock('../utils/logger', () => ({
   logger: {
     info: mockLoggerInfo,
     error: mockLoggerError,
+    debug: mockLoggerDebug,
   },
+  withRequestTracking: jest.fn(),
 }));
 
 describe('list-tasks handler', () => {
@@ -134,10 +137,10 @@ describe('list-tasks handler', () => {
       expect(result.statusCode).toBe(200);
       expect(JSON.parse(result.body)).toEqual(mockTasks);
       expect(mockListTasks).toHaveBeenCalledTimes(1);
-      expect(mockLoggerInfo).toHaveBeenCalledWith('[ListTasks] > handler', expect.any(Object));
+      expect(mockLoggerInfo).toHaveBeenCalledWith('[ListTasksHandler] > handler');
       expect(mockLoggerInfo).toHaveBeenCalledWith(
-        '[ListTasks] < handler - successfully retrieved tasks',
-        expect.any(Object),
+        { count: 2 },
+        '[ListTasksHandler] < handler - successfully retrieved tasks',
       );
     });
 
@@ -172,7 +175,10 @@ describe('list-tasks handler', () => {
         message: 'Failed to retrieve tasks',
       });
       expect(mockListTasks).toHaveBeenCalledTimes(1);
-      expect(mockLoggerError).toHaveBeenCalledWith('[ListTasks] < handler - failed to list tasks', mockError);
+      expect(mockLoggerError).toHaveBeenCalledWith(
+        { error: mockError },
+        '[ListTasksHandler] < handler - failed to list tasks',
+      );
     });
 
     it('should include CORS headers in response', async () => {
@@ -200,9 +206,7 @@ describe('list-tasks handler', () => {
       await handler(event, context);
 
       // Assert
-      expect(mockLoggerInfo).toHaveBeenCalledWith('[ListTasks] > handler', {
-        event,
-      });
+      expect(mockLoggerInfo).toHaveBeenCalledWith('[ListTasksHandler] > handler');
     });
 
     it('should log successful response with count', async () => {
@@ -224,9 +228,10 @@ describe('list-tasks handler', () => {
       await handler(event, context);
 
       // Assert
-      expect(mockLoggerInfo).toHaveBeenCalledWith('[ListTasks] < handler - successfully retrieved tasks', {
-        count: 1,
-      });
+      expect(mockLoggerInfo).toHaveBeenCalledWith(
+        { count: 1 },
+        '[ListTasksHandler] < handler - successfully retrieved tasks',
+      );
     });
   });
 });
