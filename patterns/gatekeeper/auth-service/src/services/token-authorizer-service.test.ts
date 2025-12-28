@@ -1,13 +1,16 @@
 // Mock logger before importing service
-const mockLogger = {
-  debug: jest.fn(),
-  info: jest.fn(),
-  warn: jest.fn(),
-  error: jest.fn(),
-};
+const mockLoggerDebug = jest.fn();
+const mockLoggerInfo = jest.fn();
+const mockLoggerWarn = jest.fn();
+const mockLoggerError = jest.fn();
 
 jest.mock('@/utils/logger', () => ({
-  logger: mockLogger,
+  logger: {
+    debug: mockLoggerDebug,
+    info: mockLoggerInfo,
+    warn: mockLoggerWarn,
+    error: mockLoggerError,
+  },
 }));
 
 import { validateToken, buildPolicy } from './token-authorizer-service';
@@ -125,7 +128,7 @@ describe('TokenAuthorizerService', () => {
     });
 
     describe('Logging', () => {
-      it('should log debug message on token validation attempt', () => {
+      it('should log info message on token validation attempt', () => {
         // Arrange
         const token = 'Bearer test-token';
 
@@ -133,10 +136,7 @@ describe('TokenAuthorizerService', () => {
         validateToken(token);
 
         // Assert
-        expect(mockLogger.debug).toHaveBeenCalledWith(
-          '[TokenAuthorizerService] > validateToken',
-          expect.objectContaining({ tokenLength: expect.any(Number) }),
-        );
+        expect(mockLoggerInfo).toHaveBeenCalledWith('[TokenAuthorizerService] > validateToken');
       });
 
       it('should log warning on invalid token format', () => {
@@ -147,7 +147,18 @@ describe('TokenAuthorizerService', () => {
         validateToken(token);
 
         // Assert
-        expect(mockLogger.warn).toHaveBeenCalledWith('[TokenAuthorizerService] - validateToken - Invalid token format');
+        expect(mockLoggerWarn).toHaveBeenCalledWith('[TokenAuthorizerService] - validateToken - Invalid token format');
+      });
+
+      it('should log warning on empty token value', () => {
+        // Arrange
+        const token = 'Bearer ';
+
+        // Act
+        validateToken(token);
+
+        // Assert
+        expect(mockLoggerWarn).toHaveBeenCalledWith('[TokenAuthorizerService] - validateToken - Empty token value');
       });
 
       it('should log info on successful validation', () => {
@@ -158,9 +169,9 @@ describe('TokenAuthorizerService', () => {
         validateToken(token);
 
         // Assert
-        expect(mockLogger.info).toHaveBeenCalledWith(
+        expect(mockLoggerInfo).toHaveBeenCalledWith(
+          { principalId: 'user-valid-to' },
           '[TokenAuthorizerService] < validateToken - Token validated successfully',
-          expect.objectContaining({ principalId: expect.stringContaining('user-') }),
         );
       });
     });
@@ -227,7 +238,7 @@ describe('TokenAuthorizerService', () => {
     });
 
     describe('Logging', () => {
-      it('should log debug message on policy building', () => {
+      it('should log info on policy building start', () => {
         // Arrange
         const principalId = 'user-123';
         const resource = 'arn:aws:execute-api:us-east-1:123456789012:abc/stage';
@@ -236,25 +247,50 @@ describe('TokenAuthorizerService', () => {
         buildPolicy(principalId, 'Allow', resource);
 
         // Assert
-        expect(mockLogger.debug).toHaveBeenCalledWith(
-          '[TokenAuthorizerService] > buildPolicy',
-          expect.objectContaining({
-            principalId,
-            effect: 'Allow',
-            resource,
-          }),
+        expect(mockLoggerInfo).toHaveBeenCalledWith('[TokenAuthorizerService] > buildPolicy');
+      });
+
+      it('should log debug message with policy input parameters', () => {
+        // Arrange
+        const principalId = 'user-123';
+        const resource = 'arn:aws:execute-api:us-east-1:123456789012:abc/stage';
+        const context = { userId: 'user-123', tokenSource: 'header' };
+
+        // Act
+        buildPolicy(principalId, 'Allow', resource, context);
+
+        // Assert
+        expect(mockLoggerDebug).toHaveBeenCalledWith(
+          { principalId, effect: 'Allow', resource, context },
+          '[TokenAuthorizerService] - buildPolicy - Input parameters',
         );
       });
 
-      it('should log debug message with policy result', () => {
-        // Arrange & Act
-        buildPolicy('user-123', 'Allow', 'arn:aws:execute-api:us-east-1:123456789012:abc/stage');
+      it('should log debug message with constructed policy result', () => {
+        // Arrange
+        const principalId = 'user-123';
+        const resource = 'arn:aws:execute-api:us-east-1:123456789012:abc/stage';
+
+        // Act
+        buildPolicy(principalId, 'Allow', resource);
 
         // Assert
-        expect(mockLogger.debug).toHaveBeenCalledWith(
-          '[TokenAuthorizerService] < buildPolicy',
-          expect.objectContaining({ policy: expect.any(Object) }),
+        expect(mockLoggerDebug).toHaveBeenCalledWith(
+          expect.objectContaining({ authResult: expect.any(Object) }),
+          '[TokenAuthorizerService] - buildPolicy - Authorization result constructed',
         );
+      });
+
+      it('should log info on policy building completion', () => {
+        // Arrange
+        const principalId = 'user-123';
+        const resource = 'arn:aws:execute-api:us-east-1:123456789012:abc/stage';
+
+        // Act
+        buildPolicy(principalId, 'Allow', resource);
+
+        // Assert
+        expect(mockLoggerInfo).toHaveBeenCalledWith('[TokenAuthorizerService] < buildPolicy');
       });
     });
   });
