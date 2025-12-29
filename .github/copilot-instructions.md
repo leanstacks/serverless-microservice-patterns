@@ -113,7 +113,7 @@ Each pattern project includes comprehensive unit tests for both application and 
 - Use `expect` assertions for results.
 - Mock dependencies to isolate the component under test.
 - Mock external calls (e.g., AWS SDK, databases).
-- Do not test implementation details; focus on behavior and outcomes.
+- Do **not** assert logging output unless critical to functionality.
 - Structure your tests using the Arrange-Act-Assert pattern:
   - **Arrange:** Set up the test environment, including any necessary mocks and test data.
   - **Act:** Execute the function or service being tested.
