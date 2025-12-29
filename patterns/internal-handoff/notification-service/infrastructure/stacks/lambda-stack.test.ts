@@ -173,7 +173,7 @@ describe('LambdaStack', () => {
       template.hasResourceProperties('AWS::Lambda::Function', {
         LoggingConfig: {
           LogFormat: 'JSON',
-          ApplicationLogLevel: 'INFO',
+          ApplicationLogLevel: 'DEBUG',
           SystemLogLevel: 'INFO',
         },
       });
