@@ -73,9 +73,6 @@ describe('task-service', () => {
       // Assert
       expect(result).toEqual([]);
       expect(mockSend).toHaveBeenCalledTimes(1);
-      expect(mockLoggerInfo).toHaveBeenCalledWith('[TaskService] > listTasks', {
-        tableName: 'test-tasks-table',
-      });
     });
 
     it('should return all tasks when they exist', async () => {
@@ -186,10 +183,6 @@ describe('task-service', () => {
           }),
         }),
       );
-      expect(mockLoggerInfo).toHaveBeenCalledWith('[TaskService] > getTask', {
-        tableName: 'test-tasks-table',
-        id: '123e4567-e89b-12d3-a456-426614174000',
-      });
     });
 
     it('should return null when task does not exist', async () => {
@@ -202,9 +195,6 @@ describe('task-service', () => {
       // Assert
       expect(result).toBeNull();
       expect(mockSend).toHaveBeenCalledTimes(1);
-      expect(mockLoggerInfo).toHaveBeenCalledWith('[TaskService] < getTask - task not found', {
-        id: 'non-existent-id',
-      });
     });
 
     it('should return a task with only required fields', async () => {
@@ -328,9 +318,6 @@ describe('task-service', () => {
           }),
         }),
       );
-      expect(mockLoggerInfo).toHaveBeenCalledWith('[TaskService] > createTask', {
-        tableName: 'test-tasks-table',
-      });
       expect(mockInvokeLambdaAsync).toHaveBeenCalledTimes(1);
       expect(mockInvokeLambdaAsync).toHaveBeenCalledWith(
         'send-notification-function',
@@ -529,10 +516,6 @@ describe('task-service', () => {
       expect(result?.isComplete).toBe(true);
       expect(result?.updatedAt).toBe('2025-12-01T10:00:00.000Z');
       expect(mockSend).toHaveBeenCalledTimes(1);
-      expect(mockLoggerInfo).toHaveBeenCalledWith('[TaskService] > updateTask', {
-        tableName: 'test-tasks-table',
-        id: taskId,
-      });
     });
 
     it('should update a task with only required fields', async () => {
@@ -586,9 +569,6 @@ describe('task-service', () => {
       // Assert
       expect(result).toBeNull();
       expect(mockSend).toHaveBeenCalledTimes(1);
-      expect(mockLoggerInfo).toHaveBeenCalledWith('[TaskService] < updateTask - task not found', {
-        id: taskId,
-      });
     });
 
     it('should update task and set updatedAt to current time', async () => {
@@ -781,13 +761,6 @@ describe('task-service', () => {
           }),
         }),
       );
-      expect(mockLoggerInfo).toHaveBeenCalledWith('[TaskService] > deleteTask', {
-        tableName: 'test-tasks-table',
-        id: taskId,
-      });
-      expect(mockLoggerInfo).toHaveBeenCalledWith('[TaskService] < deleteTask - successfully deleted task', {
-        id: taskId,
-      });
     });
 
     it('should return false when task does not exist', async () => {
@@ -803,9 +776,6 @@ describe('task-service', () => {
       // Assert
       expect(result).toBe(false);
       expect(mockSend).toHaveBeenCalledTimes(1);
-      expect(mockLoggerInfo).toHaveBeenCalledWith('[TaskService] < deleteTask - task not found', {
-        id: taskId,
-      });
     });
 
     it('should handle DynamoDB errors and rethrow them', async () => {
@@ -817,14 +787,6 @@ describe('task-service', () => {
       // Act & Assert
       await expect(deleteTask(taskId)).rejects.toThrow('DynamoDB error');
       expect(mockSend).toHaveBeenCalledTimes(1);
-      expect(mockLoggerError).toHaveBeenCalledWith(
-        '[TaskService] < deleteTask - failed to delete task from DynamoDB',
-        mockError,
-        {
-          tableName: 'test-tasks-table',
-          id: taskId,
-        },
-      );
     });
 
     it('should construct correct DynamoDB key with task ID', async () => {

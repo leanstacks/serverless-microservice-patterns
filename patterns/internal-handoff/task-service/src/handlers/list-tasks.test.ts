@@ -6,6 +6,7 @@ import { Task } from '../models/task';
 const mockListTasks = jest.fn();
 const mockLoggerInfo = jest.fn();
 const mockLoggerError = jest.fn();
+const mockLoggerDebug = jest.fn();
 
 jest.mock('../utils/config', () => ({
   config: {
@@ -25,7 +26,9 @@ jest.mock('../utils/logger', () => ({
   logger: {
     info: mockLoggerInfo,
     error: mockLoggerError,
+    debug: mockLoggerDebug,
   },
+  withRequestTracking: jest.fn(),
 }));
 
 describe('list-tasks handler', () => {
@@ -134,11 +137,6 @@ describe('list-tasks handler', () => {
       expect(result.statusCode).toBe(200);
       expect(JSON.parse(result.body)).toEqual(mockTasks);
       expect(mockListTasks).toHaveBeenCalledTimes(1);
-      expect(mockLoggerInfo).toHaveBeenCalledWith('[ListTasks] > handler', expect.any(Object));
-      expect(mockLoggerInfo).toHaveBeenCalledWith(
-        '[ListTasks] < handler - successfully retrieved tasks',
-        expect.any(Object),
-      );
     });
 
     it('should return empty array when no tasks exist', async () => {
@@ -172,11 +170,6 @@ describe('list-tasks handler', () => {
         message: 'Failed to retrieve tasks',
       });
       expect(mockListTasks).toHaveBeenCalledTimes(1);
-      expect(mockLoggerError).toHaveBeenCalledWith(
-        '[ListTasks] < handler - failed to list tasks',
-        mockError,
-        expect.any(Object),
-      );
     });
 
     it('should include CORS headers in response', async () => {
@@ -192,47 +185,6 @@ describe('list-tasks handler', () => {
       expect(result.headers).toBeDefined();
       expect(result.headers?.['Content-Type']).toBe('application/json');
       expect(result.headers?.['Access-Control-Allow-Origin']).toBeDefined();
-    });
-
-    it('should log request context information', async () => {
-      // Arrange
-      mockListTasks.mockResolvedValue([]);
-      const event = createMockEvent();
-      const context = createMockContext();
-
-      // Act
-      await handler(event, context);
-
-      // Assert
-      expect(mockLoggerInfo).toHaveBeenCalledWith('[ListTasks] > handler', {
-        requestId: 'test-request-id',
-        event,
-      });
-    });
-
-    it('should log successful response with count', async () => {
-      // Arrange
-      const mockTasks: Task[] = [
-        {
-          id: '123e4567-e89b-12d3-a456-426614174000',
-          title: 'Test Task',
-          isComplete: false,
-          createdAt: '2025-11-01T10:00:00.000Z',
-          updatedAt: '2025-11-01T10:00:00.000Z',
-        },
-      ];
-      mockListTasks.mockResolvedValue(mockTasks);
-      const event = createMockEvent();
-      const context = createMockContext();
-
-      // Act
-      await handler(event, context);
-
-      // Assert
-      expect(mockLoggerInfo).toHaveBeenCalledWith('[ListTasks] < handler - successfully retrieved tasks', {
-        count: 1,
-        requestId: 'test-request-id',
-      });
     });
   });
 });

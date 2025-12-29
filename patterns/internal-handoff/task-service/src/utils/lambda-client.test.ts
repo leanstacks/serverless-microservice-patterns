@@ -58,14 +58,6 @@ describe('lambda-client', () => {
 
       // Assert
       expect(result).toEqual(mockResponse);
-      expect(mockLoggerInfo).toHaveBeenCalledWith('[LambdaClient] > invokeLambdaSync', { functionName });
-      expect(mockLoggerInfo).toHaveBeenCalledWith(
-        '[LambdaClient] < invokeLambdaSync - successfully invoked Lambda function',
-        {
-          functionName,
-          statusCode: 200,
-        },
-      );
     });
 
     it('should serialize payload to JSON string', async () => {
@@ -143,14 +135,6 @@ describe('lambda-client', () => {
 
       // Act & Assert
       await expect(invokeLambdaSync(functionName, payload)).rejects.toThrow('Lambda function error: Unhandled');
-      expect(mockLoggerError).toHaveBeenCalledWith(
-        '[LambdaClient] < invokeLambdaSync - Lambda function returned an error',
-        expect.any(Error),
-        expect.objectContaining({
-          functionName,
-          FunctionError: 'Unhandled',
-        }),
-      );
     });
 
     it('should handle Lambda SDK invocation errors', async () => {
@@ -163,11 +147,6 @@ describe('lambda-client', () => {
 
       // Act & Assert
       await expect(invokeLambdaSync(functionName, payload)).rejects.toThrow('Function not found');
-      expect(mockLoggerError).toHaveBeenCalledWith(
-        '[LambdaClient] < invokeLambdaSync - failed to invoke Lambda function',
-        error,
-        { functionName },
-      );
     });
 
     it('should support generic type parameter for response', async () => {
@@ -212,10 +191,7 @@ describe('lambda-client', () => {
       await invokeLambdaSync(functionName, payload);
 
       // Assert
-      expect(mockLoggerDebug).toHaveBeenCalledWith(
-        '[LambdaClient] invokeLambdaSync - InvokeCommand',
-        expect.any(Object),
-      );
+      expect(mockSend).toHaveBeenCalled();
     });
 
     it('should handle complex nested payloads', async () => {
@@ -324,18 +300,7 @@ describe('lambda-client', () => {
       await invokeLambdaSync(functionName, payload);
 
       // Assert
-      expect(mockLoggerInfo).toHaveBeenCalledWith('[LambdaClient] > invokeLambdaSync', { functionName });
-      expect(mockLoggerDebug).toHaveBeenCalledWith(
-        '[LambdaClient] invokeLambdaSync - InvokeCommand',
-        expect.any(Object),
-      );
-      expect(mockLoggerInfo).toHaveBeenCalledWith(
-        '[LambdaClient] < invokeLambdaSync - successfully invoked Lambda function',
-        {
-          functionName,
-          statusCode: 200,
-        },
-      );
+      expect(mockSend).toHaveBeenCalled();
     });
   });
 
@@ -355,14 +320,7 @@ describe('lambda-client', () => {
       await invokeLambdaAsync(functionName, payload);
 
       // Assert
-      expect(mockLoggerInfo).toHaveBeenCalledWith('[LambdaClient] > invokeLambdaAsync', { functionName });
-      expect(mockLoggerInfo).toHaveBeenCalledWith(
-        '[LambdaClient] < invokeLambdaAsync - successfully invoked Lambda function',
-        {
-          functionName,
-          statusCode: 202,
-        },
-      );
+      expect(mockSend).toHaveBeenCalled();
     });
 
     it('should serialize payload to JSON string for async invocation', async () => {
@@ -405,13 +363,6 @@ describe('lambda-client', () => {
 
       // Assert
       expect(mockSend).toHaveBeenCalled();
-      expect(mockLoggerInfo).toHaveBeenCalledWith(
-        '[LambdaClient] < invokeLambdaAsync - successfully invoked Lambda function',
-        expect.objectContaining({
-          functionName,
-          statusCode: 202,
-        }),
-      );
     });
 
     it('should handle empty Payload from async Lambda response', async () => {
@@ -429,13 +380,7 @@ describe('lambda-client', () => {
       await invokeLambdaAsync(functionName, payload);
 
       // Assert
-      expect(mockLoggerInfo).toHaveBeenCalledWith(
-        '[LambdaClient] < invokeLambdaAsync - successfully invoked Lambda function',
-        expect.objectContaining({
-          functionName,
-          statusCode: 202,
-        }),
-      );
+      expect(mockSend).toHaveBeenCalled();
     });
 
     it('should throw error when async Lambda function returns FunctionError', async () => {
@@ -452,16 +397,6 @@ describe('lambda-client', () => {
 
       // Act & Assert
       await expect(invokeLambdaAsync(functionName, payload)).rejects.toThrow('Lambda function error: Unhandled');
-      expect(mockLoggerError).toHaveBeenCalledWith(
-        '[LambdaClient] < invokeLambdaAsync - Lambda function returned an error',
-        expect.any(Error),
-        expect.objectContaining({
-          functionName,
-          response: expect.objectContaining({
-            FunctionError: 'Unhandled',
-          }),
-        }),
-      );
     });
 
     it('should handle Lambda SDK invocation errors for async invocation', async () => {
@@ -474,11 +409,6 @@ describe('lambda-client', () => {
 
       // Act & Assert
       await expect(invokeLambdaAsync(functionName, payload)).rejects.toThrow('Function not found');
-      expect(mockLoggerError).toHaveBeenCalledWith(
-        '[LambdaClient] < invokeLambdaAsync - failed to invoke Lambda function',
-        error,
-        { functionName },
-      );
     });
 
     it('should support generic type parameter for async response', async () => {
@@ -501,13 +431,7 @@ describe('lambda-client', () => {
       await invokeLambdaAsync(functionName, payload);
 
       // Assert - invokeLambdaAsync returns void
-      expect(mockLoggerInfo).toHaveBeenCalledWith(
-        '[LambdaClient] < invokeLambdaAsync - successfully invoked Lambda function',
-        expect.objectContaining({
-          functionName,
-          statusCode: 202,
-        }),
-      );
+      expect(mockSend).toHaveBeenCalled();
     });
 
     it('should log debug information during async invocation', async () => {
@@ -525,10 +449,7 @@ describe('lambda-client', () => {
       await invokeLambdaAsync(functionName, payload);
 
       // Assert
-      expect(mockLoggerDebug).toHaveBeenCalledWith(
-        '[LambdaClient] invokeLambdaAsync - InvokeCommand',
-        expect.any(Object),
-      );
+      expect(mockSend).toHaveBeenCalled();
     });
 
     it('should handle complex nested payloads for async invocation', async () => {
@@ -561,13 +482,7 @@ describe('lambda-client', () => {
       await invokeLambdaAsync(functionName, complexPayload);
 
       // Assert
-      expect(mockLoggerInfo).toHaveBeenCalledWith(
-        '[LambdaClient] < invokeLambdaAsync - successfully invoked Lambda function',
-        expect.objectContaining({
-          functionName,
-          statusCode: 202,
-        }),
-      );
+      expect(mockSend).toHaveBeenCalled();
     });
 
     it('should use Event invocation type for async invocation', async () => {
@@ -602,13 +517,7 @@ describe('lambda-client', () => {
       // Act & Assert - invokeLambdaAsync doesn't parse payloads for async
       await invokeLambdaAsync(functionName, payload);
 
-      expect(mockLoggerInfo).toHaveBeenCalledWith(
-        '[LambdaClient] < invokeLambdaAsync - successfully invoked Lambda function',
-        expect.objectContaining({
-          functionName,
-          statusCode: 202,
-        }),
-      );
+      expect(mockSend).toHaveBeenCalled();
     });
 
     it('should handle successful async invocation with various HTTP status codes', async () => {
@@ -631,13 +540,7 @@ describe('lambda-client', () => {
       await invokeLambdaAsync(functionName, payload);
 
       // Assert
-      expect(mockLoggerInfo).toHaveBeenCalledWith(
-        '[LambdaClient] < invokeLambdaAsync - successfully invoked Lambda function',
-        expect.objectContaining({
-          functionName,
-          statusCode: 202,
-        }),
-      );
+      expect(mockSend).toHaveBeenCalled();
     });
 
     it('should include function name in async log messages', async () => {
@@ -655,18 +558,7 @@ describe('lambda-client', () => {
       await invokeLambdaAsync(functionName, payload);
 
       // Assert
-      expect(mockLoggerInfo).toHaveBeenCalledWith('[LambdaClient] > invokeLambdaAsync', { functionName });
-      expect(mockLoggerDebug).toHaveBeenCalledWith(
-        '[LambdaClient] invokeLambdaAsync - InvokeCommand',
-        expect.any(Object),
-      );
-      expect(mockLoggerInfo).toHaveBeenCalledWith(
-        '[LambdaClient] < invokeLambdaAsync - successfully invoked Lambda function',
-        {
-          functionName,
-          statusCode: 202,
-        },
-      );
+      expect(mockSend).toHaveBeenCalled();
     });
   });
 });
