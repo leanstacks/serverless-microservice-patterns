@@ -11,7 +11,7 @@ export type NotificationAction = (typeof NOTIFICATION_ACTIONS)[number];
  */
 const sendNotification = (action: NotificationAction): Promise<void> => {
   return new Promise((resolve, reject) => {
-    logger.info('[NotificationService] > sendNotification', { action });
+    logger.info({ action }, '[NotificationService] > sendNotification');
 
     // Simulate an asynchronous operation to send a notification
     // In a real implementation, this would involve calling an external service
@@ -28,7 +28,7 @@ const sendNotification = (action: NotificationAction): Promise<void> => {
         );
         reject(new Error(`Unsupported notification action: ${action}`));
       }
-    }, 250);
+    }, 100);
   });
 };
 

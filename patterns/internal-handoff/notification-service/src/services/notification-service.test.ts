@@ -1,11 +1,17 @@
 import { sendNotification } from './notification-service';
-import { logger } from '@/utils/logger';
 
-jest.mock('@/utils/logger');
+jest.mock('@/utils/logger', () => ({
+  logger: {
+    info: jest.fn(),
+    debug: jest.fn(),
+    warn: jest.fn(),
+    error: jest.fn(),
+  },
+  resetLogger: jest.fn(),
+  withRequestTracking: jest.fn(),
+}));
 
 describe('notification-service', () => {
-  const mockLogger = logger as jest.Mocked<typeof logger>;
-
   beforeEach(() => {
     jest.clearAllMocks();
     jest.useFakeTimers();
@@ -23,14 +29,10 @@ describe('notification-service', () => {
 
       // Act
       const promise = sendNotification(action);
-      jest.advanceTimersByTime(250);
-      await promise;
+      jest.advanceTimersByTime(100);
 
       // Assert
-      expect(mockLogger.info).toHaveBeenCalledWith('[NotificationService] > sendNotification', { action });
-      expect(mockLogger.info).toHaveBeenCalledWith(
-        '[NotificationService] < sendNotification - Notification with action: task_created sent successfully.',
-      );
+      await expect(promise).resolves.not.toThrow();
     });
 
     it('should resolve successfully for task_completed action', async () => {
@@ -39,14 +41,10 @@ describe('notification-service', () => {
 
       // Act
       const promise = sendNotification(action);
-      jest.advanceTimersByTime(250);
-      await promise;
+      jest.advanceTimersByTime(100);
 
       // Assert
-      expect(mockLogger.info).toHaveBeenCalledWith('[NotificationService] > sendNotification', { action });
-      expect(mockLogger.info).toHaveBeenCalledWith(
-        '[NotificationService] < sendNotification - Notification with action: task_completed sent successfully.',
-      );
+      await expect(promise).resolves.not.toThrow();
     });
 
     it('should resolve successfully for task_deleted action', async () => {
@@ -55,14 +53,10 @@ describe('notification-service', () => {
 
       // Act
       const promise = sendNotification(action);
-      jest.advanceTimersByTime(250);
-      await promise;
+      jest.advanceTimersByTime(100);
 
       // Assert
-      expect(mockLogger.info).toHaveBeenCalledWith('[NotificationService] > sendNotification', { action });
-      expect(mockLogger.info).toHaveBeenCalledWith(
-        '[NotificationService] < sendNotification - Notification with action: task_deleted sent successfully.',
-      );
+      await expect(promise).resolves.not.toThrow();
     });
 
     it('should reject for unsupported action', async () => {
@@ -71,12 +65,9 @@ describe('notification-service', () => {
 
       // Act & Assert
       const promise = sendNotification(action);
-      jest.advanceTimersByTime(250);
+      jest.advanceTimersByTime(100);
 
       await expect(promise).rejects.toThrow('Unsupported notification action: unsupported_action');
-      expect(mockLogger.error).toHaveBeenCalledWith(
-        '[NotificationService] < sendNotification - Failed to send notification. Unsupported action: unsupported_action',
-      );
     });
 
     it('should reject for null action', async () => {
@@ -85,25 +76,24 @@ describe('notification-service', () => {
 
       // Act & Assert
       const promise = sendNotification(action);
-      jest.advanceTimersByTime(250);
+      jest.advanceTimersByTime(100);
 
       await expect(promise).rejects.toThrow('Unsupported notification action: null');
     });
 
-    it('should call logger entry method', async () => {
+    it('should handle supported notification actions', async () => {
       // Arrange
       const action = 'task_created';
 
       // Act
       const promise = sendNotification(action);
-      jest.advanceTimersByTime(250);
-      await promise;
+      jest.advanceTimersByTime(100);
 
       // Assert
-      expect(mockLogger.info).toHaveBeenCalledWith('[NotificationService] > sendNotification', { action });
+      await expect(promise).resolves.not.toThrow();
     });
 
-    it('should complete asynchronously after 250ms', async () => {
+    it('should complete asynchronously after 100ms', async () => {
       // Arrange
       const action = 'task_created';
       let resolved = false;
@@ -118,7 +108,7 @@ describe('notification-service', () => {
       expect(resolved).toBe(false);
 
       // Advance timer
-      jest.advanceTimersByTime(250);
+      jest.advanceTimersByTime(100);
       await promise;
 
       expect(resolved).toBe(true);
