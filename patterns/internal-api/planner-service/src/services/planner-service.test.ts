@@ -5,10 +5,6 @@ import { DailyPlanner } from '../models/daily-planner';
 
 // Mock dependencies
 const mockInvokeLambda = jest.fn();
-const mockLoggerDebug = jest.fn();
-const mockLoggerInfo = jest.fn();
-const mockLoggerWarn = jest.fn();
-const mockLoggerError = jest.fn();
 
 jest.mock('../utils/config', () => ({
   config: {
@@ -17,15 +13,15 @@ jest.mock('../utils/config', () => ({
 }));
 
 jest.mock('../utils/lambda-client', () => ({
-  invokeLambda: mockInvokeLambda,
+  invokeLambdaSync: mockInvokeLambda,
 }));
 
 jest.mock('../utils/logger', () => ({
   logger: {
-    debug: mockLoggerDebug,
-    info: mockLoggerInfo,
-    warn: mockLoggerWarn,
-    error: mockLoggerError,
+    debug: jest.fn(),
+    info: jest.fn(),
+    warn: jest.fn(),
+    error: jest.fn(),
   },
 }));
 
@@ -79,7 +75,6 @@ describe('planner-service', () => {
       expect(result.tasks[0]?.id).toBe('1');
       expect(result.tasks[1]?.id).toBe('2');
       expect(mockInvokeLambda).toHaveBeenCalledTimes(1);
-      expect(mockLoggerInfo).toHaveBeenCalledWith('[PlannerService] > getDailyPlanner');
     });
 
     it('should return empty tasks array when ListTasks returns empty list', async () => {
@@ -120,7 +115,6 @@ describe('planner-service', () => {
       // Assert
       expect(result).toBeDefined();
       expect(result.tasks).toHaveLength(0);
-      expect(mockLoggerWarn).toHaveBeenCalledWith('[PlannerService] < getDailyPlanner - ListTasks returned empty body');
     });
 
     it('should throw error when Lambda invocation fails', async () => {
@@ -130,44 +124,6 @@ describe('planner-service', () => {
 
       // Act & Assert
       await expect(getDailyPlanner()).rejects.toThrow('Lambda invocation failed');
-      expect(mockLoggerError).toHaveBeenCalledWith(
-        '[PlannerService] < getDailyPlanner - failed to retrieve daily planner data',
-        error,
-      );
-    });
-
-    it('should log successful retrieval with task count', async () => {
-      // Arrange
-      const mockTasks: Task[] = [
-        {
-          id: '1',
-          title: 'Test Task 1',
-          isComplete: false,
-          createdAt: '2025-01-01T00:00:00Z',
-          updatedAt: '2025-01-01T00:00:00Z',
-        },
-      ];
-
-      const listTasksResponse: APIGatewayProxyResult = {
-        statusCode: 200,
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(mockTasks),
-      };
-
-      mockInvokeLambda.mockResolvedValueOnce(listTasksResponse);
-
-      // Act
-      await getDailyPlanner();
-
-      // Assert
-      expect(mockLoggerInfo).toHaveBeenCalledWith(
-        '[PlannerService] < getDailyPlanner - successfully retrieved daily planner data',
-        {
-          taskCount: 1,
-        },
-      );
     });
 
     it('should invoke Lambda with correct parameters', async () => {

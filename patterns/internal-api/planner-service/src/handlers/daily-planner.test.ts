@@ -4,10 +4,6 @@ import { Task } from '../models/task.js';
 
 // Mock dependencies BEFORE importing handler
 const mockInvokeLambda = jest.fn();
-const mockLoggerInfo = jest.fn();
-const mockLoggerDebug = jest.fn();
-const mockLoggerWarn = jest.fn();
-const mockLoggerError = jest.fn();
 
 jest.mock('../utils/config', () => ({
   config: {
@@ -20,16 +16,17 @@ jest.mock('../utils/config', () => ({
 }));
 
 jest.mock('../utils/lambda-client', () => ({
-  invokeLambda: mockInvokeLambda,
+  invokeLambdaSync: mockInvokeLambda,
 }));
 
 jest.mock('../utils/logger', () => ({
   logger: {
-    info: mockLoggerInfo,
-    debug: mockLoggerDebug,
-    warn: mockLoggerWarn,
-    error: mockLoggerError,
+    info: jest.fn(),
+    debug: jest.fn(),
+    warn: jest.fn(),
+    error: jest.fn(),
   },
+  withRequestTracking: jest.fn(),
 }));
 
 /**
