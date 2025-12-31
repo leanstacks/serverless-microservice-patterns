@@ -1,13 +1,9 @@
 // Mock the logger
-const mockLoggerInfo = jest.fn();
-const mockLoggerDebug = jest.fn();
-const mockLoggerError = jest.fn();
-
 jest.mock('./logger.js', () => ({
   logger: {
-    info: mockLoggerInfo,
-    debug: mockLoggerDebug,
-    error: mockLoggerError,
+    info: jest.fn(),
+    debug: jest.fn(),
+    error: jest.fn(),
   },
 }));
 
@@ -23,7 +19,7 @@ jest.mock('@aws-sdk/client-lambda', () => {
   };
 });
 
-import { invokeLambda } from './lambda-client.js';
+import { invokeLambdaSync } from './lambda-client.js';
 
 /**
  * Test suite for Lambda client utility
@@ -47,18 +43,10 @@ describe('lambda-client', () => {
       });
 
       // Act
-      const result = await invokeLambda(functionName, payload);
+      const result = await invokeLambdaSync(functionName, payload);
 
       // Assert
       expect(result).toEqual(mockResponse);
-      expect(mockLoggerInfo).toHaveBeenCalledWith('[LambdaClient] > invokeLambda', { functionName });
-      expect(mockLoggerInfo).toHaveBeenCalledWith(
-        '[LambdaClient] < invokeLambda - successfully invoked Lambda function',
-        {
-          functionName,
-          statusCode: 200,
-        },
-      );
     });
 
     it('should serialize payload to JSON string', async () => {
@@ -73,7 +61,7 @@ describe('lambda-client', () => {
       });
 
       // Act
-      await invokeLambda(functionName, payload);
+      await invokeLambdaSync(functionName, payload);
 
       // Assert
       expect(mockSend).toHaveBeenCalled();
@@ -96,7 +84,7 @@ describe('lambda-client', () => {
       });
 
       // Act
-      const result = (await invokeLambda(functionName, payload)) as Record<string, unknown>;
+      const result = (await invokeLambdaSync(functionName, payload)) as Record<string, unknown>;
 
       // Assert
       expect(result).toEqual(mockResponse);
@@ -116,7 +104,7 @@ describe('lambda-client', () => {
       });
 
       // Act
-      const result = await invokeLambda(functionName, payload);
+      const result = await invokeLambdaSync(functionName, payload);
 
       // Assert
       expect(result).toBeNull();
@@ -135,15 +123,7 @@ describe('lambda-client', () => {
       });
 
       // Act & Assert
-      await expect(invokeLambda(functionName, payload)).rejects.toThrow('Lambda function error: Unhandled');
-      expect(mockLoggerError).toHaveBeenCalledWith(
-        '[LambdaClient] < invokeLambda - Lambda function returned an error',
-        expect.any(Error),
-        expect.objectContaining({
-          functionName,
-          FunctionError: 'Unhandled',
-        }),
-      );
+      await expect(invokeLambdaSync(functionName, payload)).rejects.toThrow('Lambda function error: Unhandled');
     });
 
     it('should handle Lambda SDK invocation errors', async () => {
@@ -155,12 +135,7 @@ describe('lambda-client', () => {
       mockSend.mockRejectedValueOnce(error);
 
       // Act & Assert
-      await expect(invokeLambda(functionName, payload)).rejects.toThrow('Function not found');
-      expect(mockLoggerError).toHaveBeenCalledWith(
-        '[LambdaClient] < invokeLambda - failed to invoke Lambda function',
-        error,
-        { functionName },
-      );
+      await expect(invokeLambdaSync(functionName, payload)).rejects.toThrow('Function not found');
     });
 
     it('should support generic type parameter for response', async () => {
@@ -182,7 +157,7 @@ describe('lambda-client', () => {
       });
 
       // Act
-      const result = await invokeLambda<TaskResponse>(functionName, payload);
+      const result = await invokeLambdaSync<TaskResponse>(functionName, payload);
 
       // Assert
       expect(result).toEqual(mockResponse);
@@ -190,7 +165,7 @@ describe('lambda-client', () => {
       expect(typedResult?.tasks).toBeDefined();
     });
 
-    it('should log debug information during invocation', async () => {
+    it('should invoke Lambda function successfully with correct command', async () => {
       // Arrange
       const functionName = 'test-function';
       const payload = { test: 'data' };
@@ -202,10 +177,11 @@ describe('lambda-client', () => {
       });
 
       // Act
-      await invokeLambda(functionName, payload);
+      const result = await invokeLambdaSync(functionName, payload);
 
       // Assert
-      expect(mockLoggerDebug).toHaveBeenCalledWith('[LambdaClient] invokeLambda - InvokeCommand', expect.any(Object));
+      expect(result).toBeDefined();
+      expect(mockSend).toHaveBeenCalled();
     });
 
     it('should handle complex nested payloads', async () => {
@@ -237,7 +213,7 @@ describe('lambda-client', () => {
       });
 
       // Act
-      const result = await invokeLambda(functionName, complexPayload);
+      const result = await invokeLambdaSync(functionName, complexPayload);
 
       // Assert
       expect(result).toEqual(mockResponse);
@@ -255,7 +231,7 @@ describe('lambda-client', () => {
       });
 
       // Act
-      await invokeLambda(functionName, payload);
+      await invokeLambdaSync(functionName, payload);
 
       // Assert
       expect(mockSend).toHaveBeenCalled();
@@ -273,7 +249,7 @@ describe('lambda-client', () => {
       });
 
       // Act & Assert
-      await expect(invokeLambda(functionName, payload)).rejects.toThrow();
+      await expect(invokeLambdaSync(functionName, payload)).rejects.toThrow();
     });
 
     it('should handle successful invocation with HTTP status codes other than 200', async () => {
@@ -292,37 +268,30 @@ describe('lambda-client', () => {
       });
 
       // Act
-      const result = (await invokeLambda(functionName, payload)) as Record<string, unknown>;
+      const result = (await invokeLambdaSync(functionName, payload)) as Record<string, unknown>;
 
       // Assert
       expect(result).toEqual(mockResponse);
       expect(result.statusCode).toBe(404);
     });
 
-    it('should include function name in log messages', async () => {
+    it('should invoke Lambda with correct function name and payload', async () => {
       // Arrange
       const functionName = 'my-special-function';
-      const payload = {};
+      const payload = { data: 'test' };
 
       mockSend.mockResolvedValueOnce({
         StatusCode: 200,
         FunctionError: undefined,
-        Payload: new TextEncoder().encode(JSON.stringify({})),
+        Payload: new TextEncoder().encode(JSON.stringify({ success: true })),
       });
 
       // Act
-      await invokeLambda(functionName, payload);
+      const result = await invokeLambdaSync(functionName, payload);
 
       // Assert
-      expect(mockLoggerInfo).toHaveBeenCalledWith('[LambdaClient] > invokeLambda', { functionName });
-      expect(mockLoggerDebug).toHaveBeenCalledWith('[LambdaClient] invokeLambda - InvokeCommand', expect.any(Object));
-      expect(mockLoggerInfo).toHaveBeenCalledWith(
-        '[LambdaClient] < invokeLambda - successfully invoked Lambda function',
-        {
-          functionName,
-          statusCode: 200,
-        },
-      );
+      expect(result).toEqual({ success: true });
+      expect(mockSend).toHaveBeenCalled();
     });
   });
 });

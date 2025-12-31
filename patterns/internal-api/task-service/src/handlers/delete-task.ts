@@ -1,15 +1,8 @@
 import { APIGatewayProxyEvent, APIGatewayProxyResult, Context } from 'aws-lambda';
-import { lambdaRequestTracker } from 'pino-lambda';
 
 import { deleteTask } from '../services/task-service.js';
 import { internalServerError, noContent, notFound } from '../utils/apigateway-response.js';
-import { logger } from '../utils/logger.js';
-
-/**
- * Lambda request tracker middleware for logging.
- * @see https://www.npmjs.com/package/pino-lambda#best-practices
- */
-const withRequestTracking = lambdaRequestTracker();
+import { logger, withRequestTracking } from '../utils/logger.js';
 
 /**
  * Lambda handler for deleting a task by ID
@@ -20,35 +13,28 @@ const withRequestTracking = lambdaRequestTracker();
  */
 export const handler = async (event: APIGatewayProxyEvent, context: Context): Promise<APIGatewayProxyResult> => {
   withRequestTracking(event, context);
-  logger.info('[DeleteTask] > handler', {
-    event,
-  });
+  logger.info('[DeleteTaskHandler] > handler');
+  logger.debug({ event, context }, '[DeleteTaskHandler] - event');
 
   try {
     const taskId = event.pathParameters?.taskId;
 
     if (!taskId) {
-      logger.warn('[DeleteTask] < handler - missing taskId path parameter');
+      logger.warn('[DeleteTaskHandler] < handler - missing taskId path parameter');
       return notFound('Task not found');
     }
 
     const deleted = await deleteTask(taskId);
 
     if (!deleted) {
-      logger.info('[DeleteTask] < handler - task not found', {
-        taskId,
-      });
+      logger.info({ taskId }, '[DeleteTaskHandler] < handler - task not found');
       return notFound('Task not found');
     }
 
-    logger.info('[DeleteTask] < handler - successfully deleted task', {
-      taskId,
-    });
-
+    logger.info({ taskId }, '[DeleteTaskHandler] < handler - successfully deleted task');
     return noContent();
   } catch (error) {
-    logger.error('[DeleteTask] < handler - failed to delete task', error as Error);
-
+    logger.error({ error }, '[DeleteTaskHandler] < handler - failed to delete task');
     return internalServerError('Failed to delete task');
   }
 };

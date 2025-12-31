@@ -109,7 +109,7 @@ export class LambdaStack extends cdk.Stack {
         sourceMap: true,
       },
       loggingFormat: lambda.LoggingFormat.JSON,
-      applicationLogLevelV2: lambda.ApplicationLogLevel.INFO,
+      applicationLogLevelV2: lambda.ApplicationLogLevel.DEBUG,
       systemLogLevelV2: lambda.SystemLogLevel.INFO,
       logGroup: new logs.LogGroup(this, 'ListTasksFunctionLogGroup', {
         logGroupName: `/aws/lambda/${props.appName}-list-tasks-${props.envName}`,
@@ -141,7 +141,7 @@ export class LambdaStack extends cdk.Stack {
         sourceMap: true,
       },
       loggingFormat: lambda.LoggingFormat.JSON,
-      applicationLogLevelV2: lambda.ApplicationLogLevel.INFO,
+      applicationLogLevelV2: lambda.ApplicationLogLevel.DEBUG,
       systemLogLevelV2: lambda.SystemLogLevel.INFO,
       logGroup: new logs.LogGroup(this, 'GetTaskFunctionLogGroup', {
         logGroupName: `/aws/lambda/${props.appName}-get-task-${props.envName}`,
@@ -173,7 +173,7 @@ export class LambdaStack extends cdk.Stack {
         sourceMap: true,
       },
       loggingFormat: lambda.LoggingFormat.JSON,
-      applicationLogLevelV2: lambda.ApplicationLogLevel.INFO,
+      applicationLogLevelV2: lambda.ApplicationLogLevel.DEBUG,
       systemLogLevelV2: lambda.SystemLogLevel.INFO,
       logGroup: new logs.LogGroup(this, 'CreateTaskFunctionLogGroup', {
         logGroupName: `/aws/lambda/${props.appName}-create-task-${props.envName}`,
@@ -205,7 +205,7 @@ export class LambdaStack extends cdk.Stack {
         sourceMap: true,
       },
       loggingFormat: lambda.LoggingFormat.JSON,
-      applicationLogLevelV2: lambda.ApplicationLogLevel.INFO,
+      applicationLogLevelV2: lambda.ApplicationLogLevel.DEBUG,
       systemLogLevelV2: lambda.SystemLogLevel.INFO,
       logGroup: new logs.LogGroup(this, 'UpdateTaskFunctionLogGroup', {
         logGroupName: `/aws/lambda/${props.appName}-update-task-${props.envName}`,
@@ -237,7 +237,7 @@ export class LambdaStack extends cdk.Stack {
         sourceMap: true,
       },
       loggingFormat: lambda.LoggingFormat.JSON,
-      applicationLogLevelV2: lambda.ApplicationLogLevel.INFO,
+      applicationLogLevelV2: lambda.ApplicationLogLevel.DEBUG,
       systemLogLevelV2: lambda.SystemLogLevel.INFO,
       logGroup: new logs.LogGroup(this, 'DeleteTaskFunctionLogGroup', {
         logGroupName: `/aws/lambda/${props.appName}-delete-task-${props.envName}`,

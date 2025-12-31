@@ -25,7 +25,9 @@ jest.mock('../utils/logger', () => ({
   logger: {
     info: mockLoggerInfo,
     error: mockLoggerError,
+    debug: jest.fn(),
   },
+  withRequestTracking: jest.fn(),
 }));
 
 describe('list-tasks handler', () => {
@@ -134,10 +136,10 @@ describe('list-tasks handler', () => {
       expect(result.statusCode).toBe(200);
       expect(JSON.parse(result.body)).toEqual(mockTasks);
       expect(mockListTasks).toHaveBeenCalledTimes(1);
-      expect(mockLoggerInfo).toHaveBeenCalledWith('[ListTasks] > handler', expect.any(Object));
+      expect(mockLoggerInfo).toHaveBeenCalledWith('[ListTasksHandler] > handler');
       expect(mockLoggerInfo).toHaveBeenCalledWith(
-        '[ListTasks] < handler - successfully retrieved tasks',
-        expect.any(Object),
+        { count: 2 },
+        '[ListTasksHandler] < handler - successfully retrieved tasks',
       );
     });
 
@@ -173,9 +175,8 @@ describe('list-tasks handler', () => {
       });
       expect(mockListTasks).toHaveBeenCalledTimes(1);
       expect(mockLoggerError).toHaveBeenCalledWith(
-        '[ListTasks] < handler - failed to list tasks',
-        mockError,
-        expect.any(Object),
+        { error: mockError },
+        '[ListTasksHandler] < handler - failed to list tasks',
       );
     });
 
@@ -204,10 +205,7 @@ describe('list-tasks handler', () => {
       await handler(event, context);
 
       // Assert
-      expect(mockLoggerInfo).toHaveBeenCalledWith('[ListTasks] > handler', {
-        requestId: 'test-request-id',
-        event,
-      });
+      expect(mockLoggerInfo).toHaveBeenCalledWith('[ListTasksHandler] > handler');
     });
 
     it('should log successful response with count', async () => {
@@ -229,10 +227,10 @@ describe('list-tasks handler', () => {
       await handler(event, context);
 
       // Assert
-      expect(mockLoggerInfo).toHaveBeenCalledWith('[ListTasks] < handler - successfully retrieved tasks', {
-        count: 1,
-        requestId: 'test-request-id',
-      });
+      expect(mockLoggerInfo).toHaveBeenCalledWith(
+        { count: 1 },
+        '[ListTasksHandler] < handler - successfully retrieved tasks',
+      );
     });
   });
 });

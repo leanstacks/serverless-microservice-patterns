@@ -18,38 +18,39 @@ import { logger } from '@/utils/logger';
  * @throws Will log errors but not throw to allow Lambda to complete
  */
 export const handler = async (event: unknown, context: Context): Promise<void> => {
-  logger.info('[SendNotificationHandler] > handler', { event, context });
+  logger.info('[SendNotificationHandler] > handler');
+  logger.debug({ event, context }, '[SendNotificationHandler] - event');
 
   try {
     // Validate event payload
     const validatedEvent: SendNotificationEvent = sendNotificationEventSchema.parse(event);
-    logger.debug('[SendNotificationHandler] Event validated', {
-      validatedEvent,
-    });
+    logger.debug({ validatedEvent }, '[SendNotificationHandler] Event validated');
 
     // Call the notification service to send the notification
     await sendNotification(validatedEvent.action as NotificationAction);
 
-    logger.info('[SendNotificationHandler] < handler - Notification sent successfully', {
-      action: validatedEvent.action,
-    });
+    logger.info(
+      { action: validatedEvent.action },
+      '[SendNotificationHandler] < handler - Notification sent successfully',
+    );
   } catch (error) {
     // Log errors and throw to allow Lambda to retry if needed
     // If multiple retries fail, the event will go to the Dead Letter Queue (DLQ) if configured
     if (error instanceof z.ZodError) {
-      const message = error.issues.map((issue) => `${issue.path.join('.')}: ${issue.message}`).join(', ');
-      logger.error('[SendNotificationHandler] < handler - Event validation failed', new Error(message), {
-        issues: error.issues,
-        message,
-      });
-      throw new Error(`Event validation failed: ${message}`);
+      const validationMessages = error.issues.map((issue) => `${issue.path.join('.')}: ${issue.message}`).join(', ');
+      logger.error(
+        {
+          error,
+          validationMessages,
+        },
+        '[SendNotificationHandler] < handler - Event validation failed',
+      );
+      throw new Error(`Event validation failed: ${validationMessages}`);
     } else if (error instanceof Error) {
-      logger.error('[SendNotificationHandler] < handler - Failed to send notification', error);
+      logger.error({ error }, '[SendNotificationHandler] < handler - Failed to send notification');
       throw error;
     } else {
-      logger.error('[SendNotificationHandler] < handler - Unknown error occurred', undefined, {
-        errorValue: String(error),
-      });
+      logger.error({ error: String(error) }, '[SendNotificationHandler] < handler - Unknown error occurred');
       throw new Error('An unknown error occurred while sending notification');
     }
   }

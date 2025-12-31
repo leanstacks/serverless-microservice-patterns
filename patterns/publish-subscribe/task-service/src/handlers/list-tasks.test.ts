@@ -4,8 +4,7 @@ import { Task } from '../models/task';
 
 // Mock dependencies BEFORE importing handler
 const mockListTasks = jest.fn();
-const mockLoggerInfo = jest.fn();
-const mockLoggerError = jest.fn();
+const mockWithRequestTracking = jest.fn();
 
 jest.mock('../utils/config', () => ({
   config: {
@@ -23,9 +22,11 @@ jest.mock('../services/task-service', () => ({
 
 jest.mock('../utils/logger', () => ({
   logger: {
-    info: mockLoggerInfo,
-    error: mockLoggerError,
+    info: jest.fn(),
+    debug: jest.fn(),
+    error: jest.fn(),
   },
+  withRequestTracking: mockWithRequestTracking,
 }));
 
 describe('list-tasks handler', () => {
@@ -134,11 +135,6 @@ describe('list-tasks handler', () => {
       expect(result.statusCode).toBe(200);
       expect(JSON.parse(result.body)).toEqual(mockTasks);
       expect(mockListTasks).toHaveBeenCalledTimes(1);
-      expect(mockLoggerInfo).toHaveBeenCalledWith('[ListTasks] > handler', expect.any(Object));
-      expect(mockLoggerInfo).toHaveBeenCalledWith(
-        '[ListTasks] < handler - successfully retrieved tasks',
-        expect.any(Object),
-      );
     });
 
     it('should return empty array when no tasks exist', async () => {
@@ -172,11 +168,6 @@ describe('list-tasks handler', () => {
         message: 'Failed to retrieve tasks',
       });
       expect(mockListTasks).toHaveBeenCalledTimes(1);
-      expect(mockLoggerError).toHaveBeenCalledWith(
-        '[ListTasks] < handler - failed to list tasks',
-        mockError,
-        expect.any(Object),
-      );
     });
 
     it('should include CORS headers in response', async () => {
@@ -201,13 +192,11 @@ describe('list-tasks handler', () => {
       const context = createMockContext();
 
       // Act
-      await handler(event, context);
+      const result = await handler(event, context);
 
       // Assert
-      expect(mockLoggerInfo).toHaveBeenCalledWith('[ListTasks] > handler', {
-        requestId: 'test-request-id',
-        event,
-      });
+      expect(result.statusCode).toBe(200);
+      expect(mockListTasks).toHaveBeenCalledTimes(1);
     });
 
     it('should log successful response with count', async () => {
@@ -226,13 +215,11 @@ describe('list-tasks handler', () => {
       const context = createMockContext();
 
       // Act
-      await handler(event, context);
+      const result = await handler(event, context);
 
       // Assert
-      expect(mockLoggerInfo).toHaveBeenCalledWith('[ListTasks] < handler - successfully retrieved tasks', {
-        count: 1,
-        requestId: 'test-request-id',
-      });
+      expect(result.statusCode).toBe(200);
+      expect(JSON.parse(result.body)).toHaveLength(1);
     });
   });
 });

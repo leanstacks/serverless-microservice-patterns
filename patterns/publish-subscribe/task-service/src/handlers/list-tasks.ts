@@ -1,44 +1,38 @@
 import { APIGatewayProxyEvent, APIGatewayProxyResult, Context } from 'aws-lambda';
-import { lambdaRequestTracker } from 'pino-lambda';
 
 import { listTasks } from '../services/task-service.js';
 import { internalServerError, ok } from '../utils/apigateway-response.js';
-import { logger } from '../utils/logger.js';
-
-/**
- * Lambda request tracker middleware for logging.
- * @see https://www.npmjs.com/package/pino-lambda#best-practices
- */
-const withRequestTracking = lambdaRequestTracker();
+import { logger, withRequestTracking } from '../utils/logger.js';
 
 /**
  * Lambda handler for listing all tasks
  * Handles GET requests from API Gateway to retrieve all tasks from DynamoDB
  *
  * @param event - API Gateway proxy event
+ * @param context - Lambda execution context
  * @returns API Gateway proxy result with list of tasks or error message
  */
 export const handler = async (event: APIGatewayProxyEvent, context: Context): Promise<APIGatewayProxyResult> => {
   withRequestTracking(event, context);
-  logger.info('[ListTasks] > handler', {
-    requestId: event.requestContext.requestId,
-    event,
-  });
+  logger.info('[ListTasksHandler] > handler');
+  logger.debug({ event, context }, '[ListTasksHandler] - event');
 
   try {
+    // Retrieve the list of tasks
     const tasks = await listTasks();
 
-    logger.info('[ListTasks] < handler - successfully retrieved tasks', {
-      count: tasks.length,
-      requestId: event.requestContext.requestId,
-    });
-
+    // Return success response
+    logger.info(
+      {
+        count: tasks.length,
+        requestId: event.requestContext.requestId,
+      },
+      '[ListTasksHandler] < handler - successfully retrieved tasks',
+    );
     return ok(tasks);
   } catch (error) {
-    logger.error('[ListTasks] < handler - failed to list tasks', error as Error, {
-      requestId: event.requestContext.requestId,
-    });
-
+    // Handle unexpected errors
+    logger.error({ error }, '[ListTasksHandler] < handler - failed to list tasks');
     return internalServerError('Failed to retrieve tasks');
   }
 };

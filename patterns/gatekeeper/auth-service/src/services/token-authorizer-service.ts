@@ -12,7 +12,7 @@ import { TokenValidationResult } from '@/models/token-validation';
  * @returns Token validation result
  */
 export const validateToken = (token: string): TokenValidationResult => {
-  logger.debug('[TokenAuthorizerService] > validateToken', { tokenLength: token.length });
+  logger.info('[TokenAuthorizerService] > validateToken');
 
   // For demonstration, we accept any token that starts with 'Bearer '
   // In production, you would:
@@ -44,10 +44,7 @@ export const validateToken = (token: string): TokenValidationResult => {
   // Extract a principal ID from the token (in real scenarios, decode JWT)
   const principalId = `user-${tokenValue.substring(0, 8)}`;
 
-  logger.info('[TokenAuthorizerService] < validateToken - Token validated successfully', {
-    principalId,
-  });
-
+  logger.info({ principalId }, '[TokenAuthorizerService] < validateToken - Token validated successfully');
   return {
     isValid: true,
     principalId,
@@ -73,12 +70,8 @@ export const buildPolicy = (
   resource: string,
   context?: Record<string, string>,
 ): APIGatewayAuthorizerResult => {
-  logger.debug('[TokenAuthorizerService] > buildPolicy', {
-    principalId,
-    effect,
-    resource,
-    context,
-  });
+  logger.info('[TokenAuthorizerService] > buildPolicy');
+  logger.debug({ principalId, effect, resource, context }, '[TokenAuthorizerService] - buildPolicy - Input parameters');
 
   const authResult: APIGatewayAuthorizerResult = {
     principalId,
@@ -98,6 +91,7 @@ export const buildPolicy = (
     authResult.context = context;
   }
 
-  logger.debug('[TokenAuthorizerService] < buildPolicy', { policy: authResult });
+  logger.debug({ authResult }, '[TokenAuthorizerService] - buildPolicy - Authorization result constructed');
+  logger.info('[TokenAuthorizerService] < buildPolicy');
   return authResult;
 };

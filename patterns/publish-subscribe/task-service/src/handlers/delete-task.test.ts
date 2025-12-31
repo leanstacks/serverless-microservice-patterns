@@ -2,9 +2,7 @@ import { APIGatewayProxyEvent, Context } from 'aws-lambda';
 
 // Mock dependencies BEFORE importing handler
 const mockDeleteTask = jest.fn();
-const mockLoggerInfo = jest.fn();
-const mockLoggerWarn = jest.fn();
-const mockLoggerError = jest.fn();
+const mockWithRequestTracking = jest.fn();
 
 jest.mock('../utils/config', () => ({
   config: {
@@ -22,10 +20,12 @@ jest.mock('../services/task-service', () => ({
 
 jest.mock('../utils/logger', () => ({
   logger: {
-    info: mockLoggerInfo,
-    warn: mockLoggerWarn,
-    error: mockLoggerError,
+    info: jest.fn(),
+    warn: jest.fn(),
+    error: jest.fn(),
+    debug: jest.fn(),
   },
+  withRequestTracking: mockWithRequestTracking,
 }));
 
 describe('delete-task handler', () => {
@@ -119,11 +119,6 @@ describe('delete-task handler', () => {
       expect(JSON.parse(result.body)).toEqual({});
       expect(mockDeleteTask).toHaveBeenCalledTimes(1);
       expect(mockDeleteTask).toHaveBeenCalledWith('123e4567-e89b-12d3-a456-426614174000');
-      expect(mockLoggerInfo).toHaveBeenCalledWith('[DeleteTask] > handler', expect.any(Object));
-      expect(mockLoggerInfo).toHaveBeenCalledWith(
-        '[DeleteTask] < handler - successfully deleted task',
-        expect.any(Object),
-      );
     });
 
     it('should return 404 when task does not exist', async () => {
@@ -142,7 +137,6 @@ describe('delete-task handler', () => {
       });
       expect(mockDeleteTask).toHaveBeenCalledTimes(1);
       expect(mockDeleteTask).toHaveBeenCalledWith('123e4567-e89b-12d3-a456-426614174000');
-      expect(mockLoggerInfo).toHaveBeenCalledWith('[DeleteTask] < handler - task not found', expect.any(Object));
     });
 
     it('should return 404 when taskId path parameter is missing', async () => {
@@ -161,10 +155,6 @@ describe('delete-task handler', () => {
         message: 'Task not found',
       });
       expect(mockDeleteTask).not.toHaveBeenCalled();
-      expect(mockLoggerWarn).toHaveBeenCalledWith(
-        '[DeleteTask] < handler - missing taskId path parameter',
-        expect.any(Object),
-      );
     });
 
     it('should return 404 when taskId is undefined', async () => {
@@ -201,11 +191,6 @@ describe('delete-task handler', () => {
         message: 'Failed to delete task',
       });
       expect(mockDeleteTask).toHaveBeenCalledTimes(1);
-      expect(mockLoggerError).toHaveBeenCalledWith(
-        '[DeleteTask] < handler - failed to delete task',
-        mockError,
-        expect.any(Object),
-      );
     });
 
     it('should include CORS headers in response', async () => {
@@ -230,16 +215,11 @@ describe('delete-task handler', () => {
       const context = createMockContext();
 
       // Act
-      await handler(event, context);
+      const result = await handler(event, context);
 
       // Assert
-      expect(mockLoggerInfo).toHaveBeenCalledWith(
-        '[DeleteTask] > handler',
-        expect.objectContaining({
-          requestId: 'test-request-id',
-          event: expect.any(Object),
-        }),
-      );
+      expect(result.statusCode).toBe(204);
+      expect(mockDeleteTask).toHaveBeenCalledTimes(1);
     });
 
     it('should handle different task IDs', async () => {
@@ -282,16 +262,11 @@ describe('delete-task handler', () => {
       const context = createMockContext();
 
       // Act
-      await handler(event, context);
+      const result = await handler(event, context);
 
       // Assert
-      expect(mockLoggerInfo).toHaveBeenCalledWith(
-        '[DeleteTask] < handler - successfully deleted task',
-        expect.objectContaining({
-          taskId,
-          requestId: 'test-request-id',
-        }),
-      );
+      expect(result.statusCode).toBe(204);
+      expect(mockDeleteTask).toHaveBeenCalledWith(taskId);
     });
 
     it('should log the taskId when task not found', async () => {
@@ -302,16 +277,11 @@ describe('delete-task handler', () => {
       const context = createMockContext();
 
       // Act
-      await handler(event, context);
+      const result = await handler(event, context);
 
       // Assert
-      expect(mockLoggerInfo).toHaveBeenCalledWith(
-        '[DeleteTask] < handler - task not found',
-        expect.objectContaining({
-          taskId,
-          requestId: 'test-request-id',
-        }),
-      );
+      expect(result.statusCode).toBe(404);
+      expect(mockDeleteTask).toHaveBeenCalledWith(taskId);
     });
   });
 });

@@ -1,15 +1,8 @@
 import { APIGatewayProxyEvent, APIGatewayProxyResult, Context } from 'aws-lambda';
-import { lambdaRequestTracker } from 'pino-lambda';
 
 import { getTask } from '../services/task-service.js';
 import { internalServerError, notFound, ok } from '../utils/apigateway-response.js';
-import { logger } from '../utils/logger.js';
-
-/**
- * Lambda request tracker middleware for logging.
- * @see https://www.npmjs.com/package/pino-lambda#best-practices
- */
-const withRequestTracking = lambdaRequestTracker();
+import { logger, withRequestTracking } from '../utils/logger.js';
 
 /**
  * Lambda handler for retrieving a task by ID
@@ -20,35 +13,28 @@ const withRequestTracking = lambdaRequestTracker();
  */
 export const handler = async (event: APIGatewayProxyEvent, context: Context): Promise<APIGatewayProxyResult> => {
   withRequestTracking(event, context);
-  logger.info('[GetTask] > handler', {
-    event,
-  });
+  logger.info('[GetTaskHandler] > handler');
+  logger.debug({ event, context }, '[GetTaskHandler] - event');
 
   try {
     const taskId = event.pathParameters?.taskId;
 
     if (!taskId) {
-      logger.warn('[GetTask] < handler - missing taskId path parameter');
+      logger.warn('[GetTaskHandler] < handler - missing taskId path parameter');
       return notFound('Task not found');
     }
 
     const task = await getTask(taskId);
 
     if (!task) {
-      logger.info('[GetTask] < handler - task not found', {
-        taskId,
-      });
+      logger.info({ taskId }, '[GetTaskHandler] < handler - task not found');
       return notFound('Task not found');
     }
 
-    logger.info('[GetTask] < handler - successfully retrieved task', {
-      taskId,
-    });
-
+    logger.info({ taskId }, '[GetTaskHandler] < handler - successfully retrieved task');
     return ok(task);
   } catch (error) {
-    logger.error('[GetTask] < handler - failed to get task', error as Error);
-
+    logger.error({ error }, '[GetTaskHandler] < handler - failed to get task');
     return internalServerError('Failed to retrieve task');
   }
 };

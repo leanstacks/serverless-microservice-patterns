@@ -72,7 +72,7 @@ export class LambdaStack extends cdk.Stack {
         sourceMap: true,
       },
       loggingFormat: lambda.LoggingFormat.JSON,
-      applicationLogLevelV2: lambda.ApplicationLogLevel.INFO,
+      applicationLogLevelV2: lambda.ApplicationLogLevel.DEBUG,
       systemLogLevelV2: lambda.SystemLogLevel.INFO,
       logGroup: new logs.LogGroup(this, 'SendNotificationFunctionLogGroup', {
         logGroupName: `/aws/lambda/${props.appName}-send-notification-${props.envName}`,

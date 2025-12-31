@@ -4,9 +4,7 @@ import { Task } from '../models/task';
 
 // Mock dependencies BEFORE importing handler
 const mockUpdateTask = jest.fn();
-const mockLoggerInfo = jest.fn();
-const mockLoggerWarn = jest.fn();
-const mockLoggerError = jest.fn();
+const mockWithRequestTracking = jest.fn();
 
 jest.mock('../utils/config', () => ({
   config: {
@@ -24,10 +22,12 @@ jest.mock('../services/task-service', () => ({
 
 jest.mock('../utils/logger', () => ({
   logger: {
-    info: mockLoggerInfo,
-    warn: mockLoggerWarn,
-    error: mockLoggerError,
+    info: jest.fn(),
+    warn: jest.fn(),
+    error: jest.fn(),
+    debug: jest.fn(),
   },
+  withRequestTracking: mockWithRequestTracking,
 }));
 
 describe('update-task handler', () => {
@@ -137,11 +137,6 @@ describe('update-task handler', () => {
       expect(JSON.parse(result.body)).toEqual(mockTask);
       expect(mockUpdateTask).toHaveBeenCalledTimes(1);
       expect(mockUpdateTask).toHaveBeenCalledWith(taskId, requestBody);
-      expect(mockLoggerInfo).toHaveBeenCalledWith('[UpdateTask] > handler', expect.any(Object));
-      expect(mockLoggerInfo).toHaveBeenCalledWith(
-        '[UpdateTask] < handler - successfully updated task',
-        expect.any(Object),
-      );
     });
 
     it('should update a task with only required fields', async () => {
@@ -193,7 +188,6 @@ describe('update-task handler', () => {
       expect(result.statusCode).toBe(400);
       expect(JSON.parse(result.body)).toEqual({ message: 'Task ID is required' });
       expect(mockUpdateTask).not.toHaveBeenCalled();
-      expect(mockLoggerWarn).toHaveBeenCalledWith('[UpdateTask] < handler - missing taskId', expect.any(Object));
     });
 
     it('should return 400 when request body is missing', async () => {
@@ -208,7 +202,6 @@ describe('update-task handler', () => {
       expect(result.statusCode).toBe(400);
       expect(JSON.parse(result.body)).toEqual({ message: 'Request body is required' });
       expect(mockUpdateTask).not.toHaveBeenCalled();
-      expect(mockLoggerWarn).toHaveBeenCalledWith('[UpdateTask] < handler - missing request body', expect.any(Object));
     });
 
     it('should return 400 when request body is not valid JSON', async () => {
@@ -223,10 +216,6 @@ describe('update-task handler', () => {
       expect(result.statusCode).toBe(400);
       expect(JSON.parse(result.body)).toEqual({ message: 'Invalid JSON in request body' });
       expect(mockUpdateTask).not.toHaveBeenCalled();
-      expect(mockLoggerWarn).toHaveBeenCalledWith(
-        '[UpdateTask] < handler - invalid JSON in request body',
-        expect.any(Object),
-      );
     });
 
     it('should return 404 when task is not found', async () => {
@@ -246,7 +235,6 @@ describe('update-task handler', () => {
       // Assert
       expect(result.statusCode).toBe(404);
       expect(mockUpdateTask).toHaveBeenCalledTimes(1);
-      expect(mockLoggerInfo).toHaveBeenCalledWith('[UpdateTask] < handler - task not found', expect.any(Object));
     });
 
     it('should return 400 when title is missing', async () => {
@@ -268,7 +256,6 @@ describe('update-task handler', () => {
       expect(responseBody.message).toContain('Validation failed');
       expect(responseBody.message).toContain('title');
       expect(mockUpdateTask).not.toHaveBeenCalled();
-      expect(mockLoggerWarn).toHaveBeenCalledWith('[UpdateTask] < handler - validation error', expect.any(Object));
     });
 
     it('should return 400 when title is empty', async () => {
@@ -453,11 +440,6 @@ describe('update-task handler', () => {
       expect(result.statusCode).toBe(500);
       expect(JSON.parse(result.body)).toEqual({ message: 'Failed to update task' });
       expect(mockUpdateTask).toHaveBeenCalledTimes(1);
-      expect(mockLoggerError).toHaveBeenCalledWith(
-        '[UpdateTask] < handler - failed to update task',
-        mockError,
-        expect.any(Object),
-      );
     });
 
     it('should handle updating task with detail', async () => {

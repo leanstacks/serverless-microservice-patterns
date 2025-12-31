@@ -21,4 +21,4 @@ export const dynamoClient = new DynamoDBClient(clientConfig);
  */
 export const dynamoDocClient = DynamoDBDocumentClient.from(dynamoClient);
 
-logger.info('[DynamoDBClient] - Initialized AWS DynamoDB client', { config: clientConfig });
+logger.info({ dynamoDBClientConfig: clientConfig }, '[DynamoDBClient] - Initialized AWS DynamoDB client');

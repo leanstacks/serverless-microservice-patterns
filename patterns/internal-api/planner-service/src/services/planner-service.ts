@@ -2,7 +2,7 @@ import { APIGatewayProxyResult } from 'aws-lambda';
 
 import { DailyPlanner } from '../models/daily-planner.js';
 import { Task } from '../models/task.js';
-import { invokeLambda } from '../utils/lambda-client.js';
+import { invokeLambdaSync } from '../utils/lambda-client.js';
 import { config } from '../utils/config.js';
 import { logger } from '../utils/logger.js';
 
@@ -18,11 +18,14 @@ export const getDailyPlanner = async (): Promise<DailyPlanner> => {
 
   try {
     // Invoke the ListTasks Lambda function synchronously
-    logger.debug('[PlannerService] getDailyPlanner - invoking ListTasks function', {
-      functionName: config.LIST_TASKS_FUNCTION_NAME,
-    });
+    logger.debug(
+      {
+        functionName: config.LIST_TASKS_FUNCTION_NAME,
+      },
+      '[PlannerService] getDailyPlanner - invoking ListTasks function',
+    );
 
-    const listTasksResponse = await invokeLambda<APIGatewayProxyResult>(config.LIST_TASKS_FUNCTION_NAME, {});
+    const listTasksResponse = await invokeLambdaSync<APIGatewayProxyResult>(config.LIST_TASKS_FUNCTION_NAME, {});
 
     // Parse the tasks from the ListTasks response
     if (!listTasksResponse.body) {
@@ -36,13 +39,15 @@ export const getDailyPlanner = async (): Promise<DailyPlanner> => {
       tasks,
     };
 
-    logger.info('[PlannerService] < getDailyPlanner - successfully retrieved daily planner data', {
-      taskCount: tasks.length,
-    });
-
+    logger.info(
+      {
+        taskCount: tasks.length,
+      },
+      '[PlannerService] < getDailyPlanner - successfully retrieved daily planner data',
+    );
     return dailyPlanner;
   } catch (error) {
-    logger.error('[PlannerService] < getDailyPlanner - failed to retrieve daily planner data', error as Error);
+    logger.error({ error }, '[PlannerService] < getDailyPlanner - failed to retrieve daily planner data');
     throw error;
   }
 };

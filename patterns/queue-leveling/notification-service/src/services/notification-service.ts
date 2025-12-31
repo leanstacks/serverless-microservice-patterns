@@ -11,7 +11,7 @@ export type NotificationEvent = (typeof NOTIFICATION_EVENTS)[number];
  */
 const sendNotification = (event: NotificationEvent): Promise<void> => {
   return new Promise((resolve, reject) => {
-    logger.info('[NotificationService] > sendNotification', { event });
+    logger.info({ event }, '[NotificationService] > sendNotification');
 
     // Simulate an asynchronous operation to send a notification
     // In a real implementation, this would involve calling an external service

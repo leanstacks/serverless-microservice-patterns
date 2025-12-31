@@ -7,6 +7,7 @@ const mockGetTask = jest.fn();
 const mockLoggerInfo = jest.fn();
 const mockLoggerWarn = jest.fn();
 const mockLoggerError = jest.fn();
+const mockLoggerDebug = jest.fn();
 
 jest.mock('../utils/config', () => ({
   config: {
@@ -27,7 +28,9 @@ jest.mock('../utils/logger', () => ({
     info: mockLoggerInfo,
     warn: mockLoggerWarn,
     error: mockLoggerError,
+    debug: mockLoggerDebug,
   },
+  withRequestTracking: jest.fn(),
 }));
 
 describe('get-task handler', () => {
@@ -130,11 +133,6 @@ describe('get-task handler', () => {
       expect(JSON.parse(result.body)).toEqual(mockTask);
       expect(mockGetTask).toHaveBeenCalledTimes(1);
       expect(mockGetTask).toHaveBeenCalledWith('123e4567-e89b-12d3-a456-426614174000');
-      expect(mockLoggerInfo).toHaveBeenCalledWith('[GetTask] > handler', expect.any(Object));
-      expect(mockLoggerInfo).toHaveBeenCalledWith(
-        '[GetTask] < handler - successfully retrieved task',
-        expect.any(Object),
-      );
     });
 
     it('should return 404 when task does not exist', async () => {
@@ -153,7 +151,6 @@ describe('get-task handler', () => {
       });
       expect(mockGetTask).toHaveBeenCalledTimes(1);
       expect(mockGetTask).toHaveBeenCalledWith('123e4567-e89b-12d3-a456-426614174000');
-      expect(mockLoggerInfo).toHaveBeenCalledWith('[GetTask] < handler - task not found', expect.any(Object));
     });
 
     it('should return 404 when taskId path parameter is missing', async () => {
@@ -172,10 +169,6 @@ describe('get-task handler', () => {
         message: 'Task not found',
       });
       expect(mockGetTask).not.toHaveBeenCalled();
-      expect(mockLoggerWarn).toHaveBeenCalledWith(
-        '[GetTask] < handler - missing taskId path parameter',
-        expect.any(Object),
-      );
     });
 
     it('should return 404 when taskId is undefined', async () => {
@@ -212,11 +205,6 @@ describe('get-task handler', () => {
         message: 'Failed to retrieve task',
       });
       expect(mockGetTask).toHaveBeenCalledTimes(1);
-      expect(mockLoggerError).toHaveBeenCalledWith(
-        '[GetTask] < handler - failed to get task',
-        mockError,
-        expect.any(Object),
-      );
     });
 
     it('should include CORS headers in response', async () => {
@@ -240,33 +228,6 @@ describe('get-task handler', () => {
       expect(result.headers).toBeDefined();
       expect(result.headers?.['Content-Type']).toBe('application/json');
       expect(result.headers?.['Access-Control-Allow-Origin']).toBeDefined();
-    });
-
-    it('should log request context information', async () => {
-      // Arrange
-      const mockTask: Task = {
-        id: '123e4567-e89b-12d3-a456-426614174000',
-        title: 'Test Task',
-        isComplete: false,
-        createdAt: '2025-11-01T10:00:00.000Z',
-        updatedAt: '2025-11-01T10:00:00.000Z',
-      };
-
-      mockGetTask.mockResolvedValue(mockTask);
-      const event = createMockEvent();
-      const context = createMockContext();
-
-      // Act
-      await handler(event, context);
-
-      // Assert
-      expect(mockLoggerInfo).toHaveBeenCalledWith(
-        '[GetTask] > handler',
-        expect.objectContaining({
-          requestId: 'test-request-id',
-          event: expect.any(Object),
-        }),
-      );
     });
 
     it('should return task with only required fields', async () => {

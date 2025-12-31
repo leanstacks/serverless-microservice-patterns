@@ -1,15 +1,8 @@
 import { APIGatewayProxyEvent, APIGatewayProxyResult, Context } from 'aws-lambda';
-import { lambdaRequestTracker } from 'pino-lambda';
 
 import { getDailyPlanner } from '../services/planner-service.js';
 import { internalServerError, ok } from '../utils/apigateway-response.js';
-import { logger } from '../utils/logger.js';
-
-/**
- * Lambda request tracker middleware for logging.
- * @see https://www.npmjs.com/package/pino-lambda#best-practices
- */
-const withRequestTracking = lambdaRequestTracker();
+import { logger, withRequestTracking } from '../utils/logger.js';
 
 /**
  * Lambda handler for the Daily Planner function
@@ -20,21 +13,25 @@ const withRequestTracking = lambdaRequestTracker();
  */
 export const handler = async (event: APIGatewayProxyEvent, context: Context): Promise<APIGatewayProxyResult> => {
   withRequestTracking(event, context);
-  logger.info('[DailyPlanner] > handler', {
-    event,
-  });
+  logger.info('[DailyPlannerHandler] > handler');
+  logger.debug({ event, context }, '[DailyPlannerHandler] > event');
 
   try {
+    // Retrieve daily planner data
     const dailyPlanner = await getDailyPlanner();
 
-    logger.info('[DailyPlanner] < handler - successfully retrieved daily planner data', {
-      taskCount: dailyPlanner.tasks.length,
-    });
+    logger.info(
+      {
+        taskCount: dailyPlanner.tasks.length,
+      },
+      '[DailyPlannerHandler] < handler - successfully retrieved daily planner data',
+    );
 
+    // Return successful response with daily planner data
     return ok(dailyPlanner);
   } catch (error) {
-    logger.error('[DailyPlanner] < handler - failed to retrieve daily planner data', error as Error);
-
+    logger.error({ error }, '[DailyPlannerHandler] < handler - failed to retrieve daily planner data');
+    // Return internal server error response
     return internalServerError('Failed to retrieve daily planner data');
   }
 };

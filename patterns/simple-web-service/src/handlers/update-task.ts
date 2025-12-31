@@ -1,17 +1,10 @@
 import { APIGatewayProxyEvent, APIGatewayProxyResult, Context } from 'aws-lambda';
-import { lambdaRequestTracker } from 'pino-lambda';
 import { ZodError } from 'zod';
 
 import { UpdateTaskDtoSchema } from '../models/update-task-dto.js';
 import { updateTask } from '../services/task-service.js';
 import { badRequest, internalServerError, notFound, ok } from '../utils/apigateway-response.js';
-import { logger } from '../utils/logger.js';
-
-/**
- * Lambda request tracker middleware for logging.
- * @see https://www.npmjs.com/package/pino-lambda#best-practices
- */
-const withRequestTracking = lambdaRequestTracker();
+import { logger, withRequestTracking } from '../utils/logger.js';
 
 /**
  * Lambda handler for updating an existing task
@@ -22,26 +15,20 @@ const withRequestTracking = lambdaRequestTracker();
  */
 export const handler = async (event: APIGatewayProxyEvent, context: Context): Promise<APIGatewayProxyResult> => {
   withRequestTracking(event, context);
-  logger.info('[UpdateTask] > handler', {
-    requestId: event.requestContext.requestId,
-    event,
-  });
+  logger.info('[UpdateTaskHandler] > handler');
+  logger.debug({ event, context }, '[UpdateTaskHandler] handler - APIGatewayProxyEvent');
 
   try {
     // Extract taskId from path parameters
     const taskId = event.pathParameters?.taskId;
     if (!taskId) {
-      logger.warn('[UpdateTask] < handler - missing taskId', {
-        requestId: event.requestContext.requestId,
-      });
+      logger.warn('[UpdateTaskHandler] < handler - missing taskId');
       return badRequest('Task ID is required');
     }
 
     // Parse and validate request body
     if (!event.body) {
-      logger.warn('[UpdateTask] < handler - missing request body', {
-        requestId: event.requestContext.requestId,
-      });
+      logger.warn('[UpdateTaskHandler] < handler - missing request body');
       return badRequest('Request body is required');
     }
 
@@ -49,9 +36,7 @@ export const handler = async (event: APIGatewayProxyEvent, context: Context): Pr
     try {
       requestBody = JSON.parse(event.body);
     } catch (_error) {
-      logger.warn('[UpdateTask] < handler - invalid JSON in request body', {
-        requestId: event.requestContext.requestId,
-      });
+      logger.warn('[UpdateTaskHandler] < handler - invalid JSON in request body');
       return badRequest('Invalid JSON in request body');
     }
 
@@ -62,33 +47,20 @@ export const handler = async (event: APIGatewayProxyEvent, context: Context): Pr
     const task = await updateTask(taskId, validatedDto);
 
     if (!task) {
-      logger.info('[UpdateTask] < handler - task not found', {
-        taskId,
-        requestId: event.requestContext.requestId,
-      });
+      logger.info({ taskId }, '[UpdateTaskHandler] < handler - task not found');
       return notFound();
     }
 
-    logger.info('[UpdateTask] < handler - successfully updated task', {
-      id: task.id,
-      requestId: event.requestContext.requestId,
-    });
-
+    logger.info({ id: task.id }, '[UpdateTaskHandler] < handler - successfully updated task');
     return ok(task);
   } catch (error) {
     if (error instanceof ZodError) {
       const errorMessages = error.issues.map((err) => `${err.path.join('.')}: ${err.message}`).join(', ');
-      logger.warn('[UpdateTask] < handler - validation error', {
-        errors: error.issues,
-        requestId: event.requestContext.requestId,
-      });
+      logger.warn({ error, validationMessages: errorMessages }, '[UpdateTaskHandler] < handler - validation error');
       return badRequest(`Validation failed: ${errorMessages}`);
     }
 
-    logger.error('[UpdateTask] < handler - failed to update task', error as Error, {
-      requestId: event.requestContext.requestId,
-    });
-
+    logger.error({ error }, '[UpdateTaskHandler] < handler - failed to update task');
     return internalServerError('Failed to update task');
   }
 };

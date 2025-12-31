@@ -79,7 +79,7 @@ export class LambdaStack extends cdk.Stack {
         sourceMap: true,
       },
       loggingFormat: lambda.LoggingFormat.JSON,
-      applicationLogLevelV2: lambda.ApplicationLogLevel.INFO,
+      applicationLogLevelV2: lambda.ApplicationLogLevel.DEBUG,
       systemLogLevelV2: lambda.SystemLogLevel.INFO,
       onFailure: new destinations.SqsDestination(this.sendNotificationFunctionDlq),
       logGroup: new logs.LogGroup(this, 'SendNotificationFunctionLogGroup', {

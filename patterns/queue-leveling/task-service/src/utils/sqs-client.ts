@@ -34,29 +34,32 @@ export const sendToQueue = async (
   message: Record<string, unknown>,
   attributes?: MessageAttributes,
 ): Promise<string> => {
-  logger.debug('[SqsClient] > sendToQueue', { queueUrl });
+  logger.info({ queueUrl }, '[SqsClient] > sendToQueue');
 
   try {
+    // Create the SendMessageCommand with the provided parameters
     const command = new SendMessageCommand({
       QueueUrl: queueUrl,
       MessageBody: JSON.stringify(message),
       MessageAttributes: attributes,
     });
+    logger.debug({ command }, '[SqsClient] sendToQueue - SendMessageCommand');
 
-    logger.debug('[SqsClient] sendToQueue - SendMessageCommand', { command });
-
+    // Send the message using the SQS client
     const response = await sqsClient.send(command);
 
-    logger.debug('[SqsClient] < sendToQueue - successfully sent message', {
-      queueUrl,
-      messageId: response.MessageId,
-    });
-
+    // Return the message ID from the response
+    logger.info(
+      {
+        queueUrl,
+        messageId: response.MessageId,
+      },
+      '[SqsClient] < sendToQueue - successfully sent message',
+    );
     return response.MessageId ?? '';
   } catch (error) {
-    logger.error('[SqsClient] < sendToQueue - failed to send message to SQS', error as Error, {
-      queueUrl,
-    });
+    // Handle any errors that occur during the send operation
+    logger.error({ error, queueUrl }, '[SqsClient] < sendToQueue - failed to send message to SQS');
     throw error;
   }
 };

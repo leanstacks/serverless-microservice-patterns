@@ -18,7 +18,8 @@ import { logger } from '@/utils/logger';
  * @returns A promise that resolves with batch item failures so SQS knows which messages need reprocessing
  */
 export const handler = async (event: SQSEvent, context: Context): Promise<SQSBatchResponse> => {
-  logger.info('[SendNotificationHandler] > handler', { event, context });
+  logger.info('[SendNotificationHandler] > handler');
+  logger.debug({ event, context }, '[SendNotificationHandler] - event');
 
   // Array to track failed message processing
   const batchItemFailures: SQSBatchItemFailure[] = [];
@@ -28,17 +29,17 @@ export const handler = async (event: SQSEvent, context: Context): Promise<SQSBat
     sendNotificationEventSchema.parse(event);
   } catch (error) {
     if (error instanceof z.ZodError) {
-      const message = error.issues.map((issue) => `${issue.path.join('.')}: ${issue.message}`).join(', ');
-      logger.error('[SendNotificationHandler] < handler - Event validation failed', new Error(message), {
-        issues: error.issues,
-        message,
-      });
+      // Handle validation errors
+      const validationMessages = error.issues.map((issue) => `${issue.path.join('.')}: ${issue.message}`).join(', ');
+      logger.error({ error, validationMessages }, '[SendNotificationHandler] < handler - Event validation failed');
     } else if (error instanceof Error) {
-      logger.error('[SendNotificationHandler] < handler - Unknown error validating event', error);
+      // Handle other errors of type Error
+      logger.error({ error }, '[SendNotificationHandler] < handler - Unknown error validating event');
     } else {
-      logger.error('[SendNotificationHandler] < handler - Unknown error validating event', new Error(String(error)));
+      // Handle non-Error type errors
+      logger.error({ error: String(error) }, '[SendNotificationHandler] < handler - Unknown error validating event');
     }
-    // Return all messages as failures if event structure is invalid
+    // Return ALL messages as failures if event structure is invalid
     return {
       batchItemFailures: event.Records.map((record) => ({
         itemIdentifier: record.messageId,
@@ -49,17 +50,17 @@ export const handler = async (event: SQSEvent, context: Context): Promise<SQSBat
   // Process each message in the batch in parallel
   const messageProcessingPromises = event.Records.map(async (record) => {
     try {
-      logger.debug('[SendNotificationHandler] Processing message', { messageId: record.messageId });
+      logger.debug({ messageId: record.messageId }, '[SendNotificationHandler] Processing message');
 
       // Extract the event attribute from the message
       const eventAttribute = record.messageAttributes?.event?.stringValue;
 
       // Validate that the event attribute is present and is a string
       if (!eventAttribute || typeof eventAttribute !== 'string') {
-        logger.error('[SendNotificationHandler] Event attribute is missing or invalid', undefined, {
-          messageId: record.messageId,
-          eventAttribute,
-        });
+        logger.error(
+          { messageId: record.messageId, eventAttribute },
+          '[SendNotificationHandler] Event attribute is missing or invalid',
+        );
         // Throw error to mark this message as failed
         throw new Error('Event attribute is missing or invalid');
       }
@@ -67,24 +68,31 @@ export const handler = async (event: SQSEvent, context: Context): Promise<SQSBat
       // Call the notification service to send the notification
       await sendNotification(eventAttribute as NotificationEvent);
 
-      logger.info('[SendNotificationHandler] Notification sent successfully', {
-        messageId: record.messageId,
-        event: eventAttribute,
-      });
-
+      // Return success for THIS message
+      logger.info(
+        {
+          messageId: record.messageId,
+          event: eventAttribute,
+        },
+        '[SendNotificationHandler] Notification sent successfully',
+      );
       return { success: true, messageId: record.messageId };
     } catch (error) {
       // Log the error and mark this message as failed
       if (error instanceof Error) {
-        logger.error('[SendNotificationHandler] Failed to send notification', error, {
-          messageId: record.messageId,
-        });
+        // Handle errors of type Error
+        logger.error({ error, messageId: record.messageId }, '[SendNotificationHandler] Failed to send notification');
       } else {
-        logger.error('[SendNotificationHandler] Unknown error occurred', new Error(String(error)), {
-          messageId: record.messageId,
-          errorValue: String(error),
-        });
+        // Handle non-Error type errors
+        logger.error(
+          {
+            messageId: record.messageId,
+            errorValue: String(error),
+          },
+          '[SendNotificationHandler] Unknown error occurred',
+        );
       }
+      // Return failure for THIS message
       return { success: false, messageId: record.messageId };
     }
   });
@@ -99,9 +107,13 @@ export const handler = async (event: SQSEvent, context: Context): Promise<SQSBat
 
     // If the promise was rejected, or if it was fulfilled but indicated failure, add to batch failures
     if (result && result.status === 'rejected') {
-      logger.error('[SendNotificationHandler] Message processing promise rejected', result.reason as Error, {
-        messageId: record?.messageId,
-      });
+      logger.error(
+        {
+          error: result.reason,
+          messageId: record?.messageId,
+        },
+        '[SendNotificationHandler] Message processing promise rejected',
+      );
       if (record) {
         batchItemFailures.push({
           itemIdentifier: record.messageId,
@@ -116,10 +128,13 @@ export const handler = async (event: SQSEvent, context: Context): Promise<SQSBat
     }
   }
 
-  logger.info('[SendNotificationHandler] < handler - Returning batch response', {
-    failureCount: batchItemFailures.length,
-    totalCount: event.Records.length,
-  });
+  logger.info(
+    {
+      failureCount: batchItemFailures.length,
+      totalCount: event.Records.length,
+    },
+    '[SendNotificationHandler] < handler - Returning batch response',
+  );
 
   // Return the batch item failures to SQS for retrying only the failed messages
   return {
