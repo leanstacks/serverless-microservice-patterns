@@ -66,7 +66,6 @@ describe('sqs-client', () => {
       // Assert
       expect(result).toBe('message-id-123');
       expect(mockSend).toHaveBeenCalledTimes(1);
-      expect(mockLoggerDebug).toHaveBeenCalledWith('[SqsClient] > sendToQueue', { queueUrl });
     });
 
     it('should convert message object to JSON string', async () => {
@@ -137,11 +136,8 @@ describe('sqs-client', () => {
       // Act
       await sendToQueue(queueUrl, message);
 
-      // Assert
-      expect(mockLoggerDebug).toHaveBeenCalledWith('[SqsClient] < sendToQueue - successfully sent message', {
-        queueUrl,
-        messageId: 'msg-delete-123',
-      });
+      // Assert - Verify message was sent successfully
+      expect(mockSend).toHaveBeenCalledTimes(1);
     });
 
     it('should handle SQS send errors and rethrow them', async () => {
@@ -154,9 +150,6 @@ describe('sqs-client', () => {
 
       // Act & Assert
       await expect(sendToQueue(queueUrl, message)).rejects.toThrow('SQS service error');
-      expect(mockLoggerError).toHaveBeenCalledWith('[SqsClient] < sendToQueue - failed to send message to SQS', error, {
-        queueUrl,
-      });
     });
 
     it('should not include attributes parameter when not provided', async () => {

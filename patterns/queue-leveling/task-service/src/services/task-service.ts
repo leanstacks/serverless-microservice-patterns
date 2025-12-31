@@ -15,29 +15,33 @@ import { sendToQueue } from '@/utils/sqs-client.js';
  * @throws Error if the DynamoDB scan operation fails
  */
 export const listTasks = async (): Promise<Task[]> => {
-  logger.info('[TaskService] > listTasks', { tableName: config.TASKS_TABLE });
+  logger.info('[TaskService] > listTasks');
 
   try {
+    // Create the ScanCommand to fetch all tasks
     const command = new ScanCommand({
       TableName: config.TASKS_TABLE,
     });
-    logger.debug('[TaskService] listTasks - ScanCommand', { command });
+    logger.debug({ input: command.input }, '[TaskService] listTasks - ScanCommandInput');
 
+    // Scan the DynamoDB table for all tasks
     const response = await dynamoDocClient.send(command);
 
     const taskItems = (response.Items as TaskItem[]) ?? [];
     const tasks = taskItems.map(toTask);
 
-    logger.info('[TaskService] < listTasks - successfully retrieved tasks', {
-      count: tasks.length,
-      scannedCount: response.ScannedCount,
-    });
-
+    // Return the list of tasks
+    logger.info(
+      {
+        count: tasks.length,
+        scannedCount: response.ScannedCount,
+      },
+      '[TaskService] < listTasks - successfully retrieved tasks',
+    );
     return tasks;
   } catch (error) {
-    logger.error('[TaskService] < listTasks - failed to fetch tasks from DynamoDB', error as Error, {
-      tableName: config.TASKS_TABLE,
-    });
+    // Handle unexpected errors
+    logger.error({ error }, '[TaskService] < listTasks - failed to fetch tasks from DynamoDB');
     throw error;
   }
 };
@@ -49,34 +53,35 @@ export const listTasks = async (): Promise<Task[]> => {
  * @throws Error if the DynamoDB get operation fails
  */
 export const getTask = async (id: string): Promise<Task | null> => {
-  logger.info('[TaskService] > getTask', { tableName: config.TASKS_TABLE, id });
+  logger.info('[TaskService] > getTask');
 
   try {
+    // Create the GetCommand to fetch the task by ID
     const command = new GetCommand({
       TableName: config.TASKS_TABLE,
       Key: {
         pk: TaskKeys.pk(id),
       },
     });
-    logger.debug('[TaskService] getTask - GetCommand', { command });
+    logger.debug({ input: command.input }, '[TaskService] getTask - GetCommandInput');
 
+    // Get the task from DynamoDB
     const response = await dynamoDocClient.send(command);
 
+    // If task not found, return null
     if (!response.Item) {
-      logger.info('[TaskService] < getTask - task not found', { id });
+      logger.info({ taskId: id }, '[TaskService] < getTask - task not found');
       return null;
     }
 
     const task = toTask(response.Item as TaskItem);
 
-    logger.info('[TaskService] < getTask - successfully retrieved task', { id });
-
+    // Return the retrieved task
+    logger.info({ taskId: task.id }, '[TaskService] < getTask - successfully retrieved task');
     return task;
   } catch (error) {
-    logger.error('[TaskService] < getTask - failed to fetch task from DynamoDB', error as Error, {
-      tableName: config.TASKS_TABLE,
-      id,
-    });
+    // Handle unexpected errors
+    logger.error({ error }, '[TaskService] < getTask - failed to fetch task from DynamoDB');
     throw error;
   }
 };
@@ -88,7 +93,7 @@ export const getTask = async (id: string): Promise<Task | null> => {
  * @throws Error if the DynamoDB put operation fails
  */
 export const createTask = async (createTaskDto: CreateTaskDto): Promise<Task> => {
-  logger.info('[TaskService] > createTask', { tableName: config.TASKS_TABLE });
+  logger.info('[TaskService] > createTask');
 
   try {
     // Prepare the task item to insert
@@ -110,7 +115,7 @@ export const createTask = async (createTaskDto: CreateTaskDto): Promise<Task> =>
       TableName: config.TASKS_TABLE,
       Item: taskItem,
     });
-    logger.debug('[TaskService] createTask - PutCommand', { command });
+    logger.debug({ input: command.input }, '[TaskService] createTask - PutCommandInput');
 
     // Insert the new task into DynamoDB
     await dynamoDocClient.send(command);
@@ -129,14 +134,12 @@ export const createTask = async (createTaskDto: CreateTaskDto): Promise<Task> =>
       },
     );
 
-    logger.info('[TaskService] < createTask - successfully created task', {
-      id: task.id,
-    });
+    // Return the created task
+    logger.info({ taskId: task.id }, '[TaskService] < createTask - successfully created task');
     return task;
   } catch (error) {
-    logger.error('[TaskService] < createTask - failed to create task in DynamoDB', error as Error, {
-      tableName: config.TASKS_TABLE,
-    });
+    // Handle unexpected errors
+    logger.error({ error }, '[TaskService] < createTask - failed to create task in DynamoDB');
     throw error;
   }
 };
@@ -149,7 +152,7 @@ export const createTask = async (createTaskDto: CreateTaskDto): Promise<Task> =>
  * @throws Error if the DynamoDB update operation fails
  */
 export const updateTask = async (id: string, updateTaskDto: UpdateTaskDto): Promise<Task | null> => {
-  logger.info('[TaskService] > updateTask', { tableName: config.TASKS_TABLE, id });
+  logger.info('[TaskService] > updateTask');
 
   try {
     // Fetch the existing task before updating to include in event
@@ -157,7 +160,7 @@ export const updateTask = async (id: string, updateTaskDto: UpdateTaskDto): Prom
 
     // If task doesn't exist, return null
     if (!oldTask) {
-      logger.info('[TaskService] < updateTask - task not found', { id });
+      logger.info({ taskId: id }, '[TaskService] < updateTask - task not found');
       return null;
     }
 
@@ -211,13 +214,14 @@ export const updateTask = async (id: string, updateTaskDto: UpdateTaskDto): Prom
       ConditionExpression: 'attribute_exists(pk)',
       ReturnValues: 'ALL_NEW',
     });
-    logger.debug('[TaskService] updateTask - UpdateCommand', { command });
+    logger.debug({ input: command.input }, '[TaskService] updateTask - UpdateCommandInput');
 
     // Update the task in DynamoDB and retrieve the new attributes
     const response = await dynamoDocClient.send(command);
 
+    // If task not found, return null
     if (!response.Attributes) {
-      logger.info('[TaskService] < updateTask - task not found', { id });
+      logger.info({ taskId: id }, '[TaskService] < updateTask - task not found');
       return null;
     }
 
@@ -235,19 +239,18 @@ export const updateTask = async (id: string, updateTaskDto: UpdateTaskDto): Prom
       },
     );
 
-    logger.info('[TaskService] < updateTask - successfully updated task', { id });
+    // Return the updated task
+    logger.info({ taskId: newTask.id }, '[TaskService] < updateTask - successfully updated task');
     return newTask;
   } catch (error) {
     // Check if the error is a conditional check failure (task not found)
     if (error instanceof Error && error.name === 'ConditionalCheckFailedException') {
-      logger.info('[TaskService] < updateTask - task not found', { id });
+      logger.info({ taskId: id }, '[TaskService] < updateTask - task not found');
       return null;
     }
 
-    logger.error('[TaskService] < updateTask - failed to update task in DynamoDB', error as Error, {
-      tableName: config.TASKS_TABLE,
-      id,
-    });
+    // Handle unexpected errors
+    logger.error({ error, taskId: id }, '[TaskService] < updateTask - failed to update task in DynamoDB');
     throw error;
   }
 };
@@ -259,10 +262,10 @@ export const updateTask = async (id: string, updateTaskDto: UpdateTaskDto): Prom
  * @throws Error if the DynamoDB delete operation fails
  */
 export const deleteTask = async (id: string): Promise<boolean> => {
-  logger.info('[TaskService] > deleteTask', { tableName: config.TASKS_TABLE, id });
+  logger.info('[TaskService] > deleteTask');
 
   try {
-    // Delete the task from DynamoDB
+    // Create the DeleteCommand to delete the task by ID
     // Use ReturnValues: 'ALL_OLD' to get the deleted task in a single DynamoDB call
     const command = new DeleteCommand({
       TableName: config.TASKS_TABLE,
@@ -272,12 +275,14 @@ export const deleteTask = async (id: string): Promise<boolean> => {
       ConditionExpression: 'attribute_exists(pk)',
       ReturnValues: 'ALL_OLD',
     });
-    logger.debug('[TaskService] deleteTask - DeleteCommand', { command });
+    logger.debug({ input: command.input }, '[TaskService] deleteTask - DeleteCommandInput');
 
+    // Send the delete command to DynamoDB
     const response = await dynamoDocClient.send(command);
 
-    // Send task_deleted event to SQS queue with the deleted task object
     const deletedTask = response.Attributes ? toTask(response.Attributes as TaskItem) : null;
+
+    // Send task_deleted event to SQS queue with the deleted task object
     await sendToQueue(
       config.NOTIFICATION_QUEUE_URL,
       { task: deletedTask },
@@ -289,19 +294,17 @@ export const deleteTask = async (id: string): Promise<boolean> => {
       },
     );
 
-    logger.info('[TaskService] < deleteTask - successfully deleted task', { id });
+    // Return true indicating successful deletion
+    logger.info({ taskId: id }, '[TaskService] < deleteTask - successfully deleted task');
     return true;
   } catch (error) {
     // Check if the error is a conditional check failure (task not found)
     if (error instanceof Error && error.name === 'ConditionalCheckFailedException') {
-      logger.info('[TaskService] < deleteTask - task not found', { id });
+      logger.info({ taskId: id }, '[TaskService] < deleteTask - task not found');
       return false;
     }
 
-    logger.error('[TaskService] < deleteTask - failed to delete task from DynamoDB', error as Error, {
-      tableName: config.TASKS_TABLE,
-      id,
-    });
+    logger.error({ error, taskId: id }, '[TaskService] < deleteTask - failed to delete task from DynamoDB');
     throw error;
   }
 };
