@@ -1,6 +1,6 @@
 {
   "name": "queue-leveling-notification-service-infrastructure",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "AWS CDK infrastructure for the Notification Service microservice.",
   "private": true,
   "type": "commonjs",
@@ -35,6 +35,6 @@
     "constructs": "10.4.4",
     "dotenv": "17.2.3",
     "source-map-support": "0.5.21",
-    "zod": "4.2.1"
+    "zod": "4.3.2"
   }
 }
