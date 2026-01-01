@@ -98,6 +98,16 @@ describe('LambdaStack', () => {
       });
     });
 
+    it('should create an upload CSV Lambda function', () => {
+      template.hasResourceProperties('AWS::Lambda::Function', {
+        FunctionName: 'smp-fan-out-task-service-upload-csv-dev',
+        Runtime: 'nodejs24.x',
+        Handler: 'handler',
+        Timeout: 30,
+        MemorySize: 512,
+      });
+    });
+
     it('should configure Lambda environment variables', () => {
       template.hasResourceProperties('AWS::Lambda::Function', {
         Environment: {
@@ -120,9 +130,15 @@ describe('LambdaStack', () => {
     });
 
     it('should create a /tasks resource', () => {
-      template.resourceCountIs('AWS::ApiGateway::Resource', 2);
+      template.resourceCountIs('AWS::ApiGateway::Resource', 3);
       template.hasResourceProperties('AWS::ApiGateway::Resource', {
         PathPart: 'tasks',
+      });
+    });
+
+    it('should create a /tasks/upload resource', () => {
+      template.hasResourceProperties('AWS::ApiGateway::Resource', {
+        PathPart: 'upload',
       });
     });
 
@@ -277,6 +293,14 @@ describe('LambdaStack', () => {
       template.hasOutput('DeleteTaskFunctionArn', {
         Export: {
           Name: 'smp-fan-out-task-service-delete-task-function-arn-dev',
+        },
+      });
+    });
+
+    it('should export upload CSV function ARN', () => {
+      template.hasOutput('UploadCsvFunctionArn', {
+        Export: {
+          Name: 'smp-fan-out-task-service-upload-csv-function-arn-dev',
         },
       });
     });
