@@ -4,6 +4,7 @@ import { CreateTaskDto } from '../models/create-task-dto';
 
 // Mock dependencies BEFORE importing handler
 const mockParseCsv = jest.fn();
+const mockFanOutCreateTasks = jest.fn();
 const mockLoggerInfo = jest.fn();
 const mockLoggerWarn = jest.fn();
 const mockLoggerError = jest.fn();
@@ -20,6 +21,10 @@ jest.mock('../utils/config', () => ({
 
 jest.mock('../services/csv-service', () => ({
   parseCsv: mockParseCsv,
+}));
+
+jest.mock('../services/task-service', () => ({
+  fanOutCreateTasks: mockFanOutCreateTasks,
 }));
 
 jest.mock('../utils/logger', () => ({
@@ -129,6 +134,7 @@ Task 2,Detail 2,2026-01-15T12:00:00Z,true`;
       ];
 
       mockParseCsv.mockReturnValue(mockTasks);
+      mockFanOutCreateTasks.mockResolvedValue(['msg-1', 'msg-2']);
 
       const event = createMockEvent({ body: csvContent });
       const context = createMockContext();
@@ -139,10 +145,11 @@ Task 2,Detail 2,2026-01-15T12:00:00Z,true`;
       // Assert
       expect(result.statusCode).toBe(200);
       expect(JSON.parse(result.body)).toEqual({
-        message: 'CSV file validated successfully',
+        message: 'CSV file uploaded successfully',
         taskCount: 2,
       });
       expect(mockParseCsv).toHaveBeenCalledWith(csvContent);
+      expect(mockFanOutCreateTasks).toHaveBeenCalledWith(mockTasks);
     });
 
     it('should return 400 when request body is missing', async () => {
@@ -193,6 +200,7 @@ Task 1,Detail 1,2026-12-31T23:59:59Z,false`;
       ];
 
       mockParseCsv.mockReturnValue(mockTasks);
+      mockFanOutCreateTasks.mockResolvedValue(['msg-1']);
 
       const event = createMockEvent({ body: base64Content, isBase64Encoded: true });
       const context = createMockContext();
@@ -203,6 +211,7 @@ Task 1,Detail 1,2026-12-31T23:59:59Z,false`;
       // Assert
       expect(result.statusCode).toBe(200);
       expect(mockParseCsv).toHaveBeenCalledWith(csvContent);
+      expect(mockFanOutCreateTasks).toHaveBeenCalledWith(mockTasks);
     });
 
     it('should return 400 when base64 decoding fails', async () => {
@@ -300,6 +309,7 @@ Task 1,Detail 1,2026-12-31T23:59:59Z,false`;
       }));
 
       mockParseCsv.mockReturnValue(mockTasks);
+      mockFanOutCreateTasks.mockResolvedValue(Array.from({ length: 10 }, (_, i) => `msg-${i + 1}`));
 
       const event = createMockEvent({ body: csvContent });
       const context = createMockContext();
@@ -310,9 +320,10 @@ Task 1,Detail 1,2026-12-31T23:59:59Z,false`;
       // Assert
       expect(result.statusCode).toBe(200);
       expect(JSON.parse(result.body)).toEqual({
-        message: 'CSV file validated successfully',
+        message: 'CSV file uploaded successfully',
         taskCount: 10,
       });
+      expect(mockFanOutCreateTasks).toHaveBeenCalledWith(mockTasks);
     });
   });
 });

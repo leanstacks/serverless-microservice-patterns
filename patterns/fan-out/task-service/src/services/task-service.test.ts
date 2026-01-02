@@ -8,6 +8,7 @@ const mockLoggerDebug = jest.fn();
 const mockLoggerInfo = jest.fn();
 const mockLoggerError = jest.fn();
 const mockRandomUUID = jest.fn();
+const mockSendToQueue = jest.fn();
 
 jest.mock('crypto', () => ({
   randomUUID: mockRandomUUID,
@@ -17,6 +18,10 @@ jest.mock('../utils/dynamodb-client', () => ({
   dynamoDocClient: {
     send: mockSend,
   },
+}));
+
+jest.mock('../utils/sqs-client', () => ({
+  sendToQueue: mockSendToQueue,
 }));
 
 jest.mock('../utils/logger', () => ({
@@ -30,6 +35,7 @@ jest.mock('../utils/logger', () => ({
 jest.mock('../utils/config', () => ({
   config: {
     TASKS_TABLE: 'test-tasks-table',
+    CREATE_TASK_QUEUE_URL: 'https://sqs.us-east-1.amazonaws.com/123456789012/test-queue',
   },
 }));
 
@@ -39,6 +45,7 @@ describe('task-service', () => {
   let createTask: typeof import('./task-service').createTask;
   let updateTask: typeof import('./task-service').updateTask;
   let deleteTask: typeof import('./task-service').deleteTask;
+  let fanOutCreateTasks: typeof import('./task-service').fanOutCreateTasks;
 
   beforeEach(() => {
     // Clear all mocks
@@ -51,6 +58,7 @@ describe('task-service', () => {
     createTask = taskService.createTask;
     updateTask = taskService.updateTask;
     deleteTask = taskService.deleteTask;
+    fanOutCreateTasks = taskService.fanOutCreateTasks;
   });
 
   describe('listTasks', () => {
@@ -786,6 +794,94 @@ describe('task-service', () => {
       // Assert
       const command = mockSend.mock.calls[0][0];
       expect(command.input.ConditionExpression).toBe('attribute_exists(pk)');
+    });
+  });
+
+  describe('fanOutCreateTasks', () => {
+    it('should publish each CreateTaskDto to the SQS queue in parallel', async () => {
+      // Arrange
+      const createTaskDtos: CreateTaskDto[] = [
+        { title: 'Task 1', isComplete: false },
+        { title: 'Task 2', detail: 'Details for task 2', isComplete: true },
+        { title: 'Task 3', dueAt: '2026-01-15T10:00:00Z', isComplete: false },
+      ];
+      mockSendToQueue.mockResolvedValueOnce('msg-id-1');
+      mockSendToQueue.mockResolvedValueOnce('msg-id-2');
+      mockSendToQueue.mockResolvedValueOnce('msg-id-3');
+
+      // Act
+      const messageIds = await fanOutCreateTasks(createTaskDtos);
+
+      // Assert
+      expect(messageIds).toEqual(['msg-id-1', 'msg-id-2', 'msg-id-3']);
+      expect(mockSendToQueue).toHaveBeenCalledTimes(3);
+      expect(mockSendToQueue).toHaveBeenCalledWith(
+        'https://sqs.us-east-1.amazonaws.com/123456789012/test-queue',
+        createTaskDtos[0],
+      );
+      expect(mockSendToQueue).toHaveBeenCalledWith(
+        'https://sqs.us-east-1.amazonaws.com/123456789012/test-queue',
+        createTaskDtos[1],
+      );
+      expect(mockSendToQueue).toHaveBeenCalledWith(
+        'https://sqs.us-east-1.amazonaws.com/123456789012/test-queue',
+        createTaskDtos[2],
+      );
+    });
+
+    it('should handle empty array of CreateTaskDtos', async () => {
+      // Arrange
+      const createTaskDtos: CreateTaskDto[] = [];
+
+      // Act
+      const messageIds = await fanOutCreateTasks(createTaskDtos);
+
+      // Assert
+      expect(messageIds).toEqual([]);
+      expect(mockSendToQueue).not.toHaveBeenCalled();
+    });
+
+    it('should handle SQS errors and rethrow them', async () => {
+      // Arrange
+      const createTaskDtos: CreateTaskDto[] = [{ title: 'Task 1', isComplete: false }];
+      const mockError = new Error('SQS send error');
+      mockSendToQueue.mockRejectedValue(mockError);
+
+      // Act & Assert
+      await expect(fanOutCreateTasks(createTaskDtos)).rejects.toThrow('SQS send error');
+      expect(mockSendToQueue).toHaveBeenCalledTimes(1);
+    });
+
+    it('should publish all messages even if some fail (Promise.all behavior)', async () => {
+      // Arrange
+      const createTaskDtos: CreateTaskDto[] = [
+        { title: 'Task 1', isComplete: false },
+        { title: 'Task 2', isComplete: false },
+      ];
+      mockSendToQueue.mockResolvedValueOnce('msg-id-1');
+      mockSendToQueue.mockRejectedValueOnce(new Error('SQS error'));
+
+      // Act & Assert
+      await expect(fanOutCreateTasks(createTaskDtos)).rejects.toThrow('SQS error');
+      expect(mockSendToQueue).toHaveBeenCalledTimes(2);
+    });
+
+    it('should return message IDs in the same order as input DTOs', async () => {
+      // Arrange
+      const createTaskDtos: CreateTaskDto[] = [
+        { title: 'First Task', isComplete: false },
+        { title: 'Second Task', isComplete: false },
+        { title: 'Third Task', isComplete: false },
+      ];
+      mockSendToQueue.mockResolvedValueOnce('msg-alpha');
+      mockSendToQueue.mockResolvedValueOnce('msg-beta');
+      mockSendToQueue.mockResolvedValueOnce('msg-gamma');
+
+      // Act
+      const messageIds = await fanOutCreateTasks(createTaskDtos);
+
+      // Assert
+      expect(messageIds).toEqual(['msg-alpha', 'msg-beta', 'msg-gamma']);
     });
   });
 });

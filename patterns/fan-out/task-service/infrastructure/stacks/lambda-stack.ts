@@ -4,6 +4,8 @@ import * as apigateway from 'aws-cdk-lib/aws-apigateway';
 import * as dynamodb from 'aws-cdk-lib/aws-dynamodb';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
 import * as logs from 'aws-cdk-lib/aws-logs';
+import * as sqs from 'aws-cdk-lib/aws-sqs';
+import { SqsEventSource } from 'aws-cdk-lib/aws-lambda-event-sources';
 import { NodejsFunction } from 'aws-cdk-lib/aws-lambda-nodejs';
 import { Construct } from 'constructs';
 
@@ -25,6 +27,11 @@ export interface LambdaStackProps extends cdk.StackProps {
    * Reference to the Task DynamoDB table.
    */
   taskTable: dynamodb.ITable;
+
+  /**
+   * Reference to the Create Task SQS queue.
+   */
+  createTaskQueue: sqs.IQueue;
 
   /**
    * Whether to enable application logging.
@@ -91,6 +98,11 @@ export class LambdaStack extends cdk.Stack {
    */
   public readonly uploadCsvFunction: NodejsFunction;
 
+  /**
+   * The create task subscriber Lambda function.
+   */
+  public readonly createTaskSubscriberFunction: NodejsFunction;
+
   constructor(scope: Construct, id: string, props: LambdaStackProps) {
     super(scope, id, props);
 
@@ -102,6 +114,7 @@ export class LambdaStack extends cdk.Stack {
       entry: path.join(__dirname, '../../src/handlers/list-tasks.ts'),
       environment: {
         TASKS_TABLE: props.taskTable.tableName,
+        CREATE_TASK_QUEUE_URL: props.createTaskQueue.queueUrl,
         LOGGING_ENABLED: props.loggingEnabled.toString(),
         LOGGING_LEVEL: props.loggingLevel,
         LOGGING_FORMAT: props.loggingFormat,
@@ -134,6 +147,7 @@ export class LambdaStack extends cdk.Stack {
       entry: path.join(__dirname, '../../src/handlers/get-task.ts'),
       environment: {
         TASKS_TABLE: props.taskTable.tableName,
+        CREATE_TASK_QUEUE_URL: props.createTaskQueue.queueUrl,
         LOGGING_ENABLED: props.loggingEnabled.toString(),
         LOGGING_LEVEL: props.loggingLevel,
         LOGGING_FORMAT: props.loggingFormat,
@@ -166,6 +180,7 @@ export class LambdaStack extends cdk.Stack {
       entry: path.join(__dirname, '../../src/handlers/create-task.ts'),
       environment: {
         TASKS_TABLE: props.taskTable.tableName,
+        CREATE_TASK_QUEUE_URL: props.createTaskQueue.queueUrl,
         LOGGING_ENABLED: props.loggingEnabled.toString(),
         LOGGING_LEVEL: props.loggingLevel,
         LOGGING_FORMAT: props.loggingFormat,
@@ -198,6 +213,7 @@ export class LambdaStack extends cdk.Stack {
       entry: path.join(__dirname, '../../src/handlers/update-task.ts'),
       environment: {
         TASKS_TABLE: props.taskTable.tableName,
+        CREATE_TASK_QUEUE_URL: props.createTaskQueue.queueUrl,
         LOGGING_ENABLED: props.loggingEnabled.toString(),
         LOGGING_LEVEL: props.loggingLevel,
         LOGGING_FORMAT: props.loggingFormat,
@@ -230,6 +246,7 @@ export class LambdaStack extends cdk.Stack {
       entry: path.join(__dirname, '../../src/handlers/delete-task.ts'),
       environment: {
         TASKS_TABLE: props.taskTable.tableName,
+        CREATE_TASK_QUEUE_URL: props.createTaskQueue.queueUrl,
         LOGGING_ENABLED: props.loggingEnabled.toString(),
         LOGGING_LEVEL: props.loggingLevel,
         LOGGING_FORMAT: props.loggingFormat,
@@ -262,6 +279,7 @@ export class LambdaStack extends cdk.Stack {
       entry: path.join(__dirname, '../../src/handlers/upload-csv.ts'),
       environment: {
         TASKS_TABLE: props.taskTable.tableName,
+        CREATE_TASK_QUEUE_URL: props.createTaskQueue.queueUrl,
         LOGGING_ENABLED: props.loggingEnabled.toString(),
         LOGGING_LEVEL: props.loggingLevel,
         LOGGING_FORMAT: props.loggingFormat,
@@ -285,6 +303,51 @@ export class LambdaStack extends cdk.Stack {
 
     // Grant the Lambda function read access to the DynamoDB table
     props.taskTable.grantReadData(this.uploadCsvFunction);
+
+    // Grant the Lambda function send message access to the SQS queue
+    props.createTaskQueue.grantSendMessages(this.uploadCsvFunction);
+
+    // Create the create task subscriber Lambda function
+    this.createTaskSubscriberFunction = new NodejsFunction(this, 'CreateTaskSubscriberFunction', {
+      functionName: `${props.appName}-create-task-subscriber-${props.envName}`,
+      runtime: lambda.Runtime.NODEJS_24_X,
+      handler: 'handler',
+      entry: path.join(__dirname, '../../src/handlers/create-task-subscriber.ts'),
+      environment: {
+        TASKS_TABLE: props.taskTable.tableName,
+        CREATE_TASK_QUEUE_URL: props.createTaskQueue.queueUrl,
+        LOGGING_ENABLED: props.loggingEnabled.toString(),
+        LOGGING_LEVEL: props.loggingLevel,
+        LOGGING_FORMAT: props.loggingFormat,
+        CORS_ALLOW_ORIGIN: props.corsAllowOrigin,
+      },
+      timeout: cdk.Duration.seconds(30),
+      memorySize: 256,
+      bundling: {
+        minify: true,
+        sourceMap: true,
+      },
+      loggingFormat: lambda.LoggingFormat.JSON,
+      applicationLogLevelV2: lambda.ApplicationLogLevel.DEBUG,
+      systemLogLevelV2: lambda.SystemLogLevel.INFO,
+      logGroup: new logs.LogGroup(this, 'CreateTaskSubscriberFunctionLogGroup', {
+        logGroupName: `/aws/lambda/${props.appName}-create-task-subscriber-${props.envName}`,
+        retention: props.envName === 'prd' ? logs.RetentionDays.ONE_MONTH : logs.RetentionDays.ONE_WEEK,
+        removalPolicy: props.envName === 'prd' ? cdk.RemovalPolicy.RETAIN : cdk.RemovalPolicy.DESTROY,
+      }),
+    });
+
+    // Grant the Lambda function read and write access to the DynamoDB table
+    props.taskTable.grantReadWriteData(this.createTaskSubscriberFunction);
+
+    // Add SQS event source to the Lambda function
+    this.createTaskSubscriberFunction.addEventSource(
+      new SqsEventSource(props.createTaskQueue, {
+        maxConcurrency: 5,
+        batchSize: 10,
+        reportBatchItemFailures: true,
+      }),
+    );
 
     // Create API Gateway REST API
     this.api = new apigateway.RestApi(this, 'LambdaStarterApi', {
@@ -383,6 +446,13 @@ export class LambdaStack extends cdk.Stack {
       value: this.uploadCsvFunction.functionArn,
       description: 'ARN of the upload CSV Lambda function',
       exportName: `${props.appName}-upload-csv-function-arn-${props.envName}`,
+    });
+
+    // Output the create task subscriber function ARN
+    new cdk.CfnOutput(this, 'CreateTaskSubscriberFunctionArn', {
+      value: this.createTaskSubscriberFunction.functionArn,
+      description: 'ARN of the create task subscriber Lambda function',
+      exportName: `${props.appName}-create-task-subscriber-function-arn-${props.envName}`,
     });
   }
 }

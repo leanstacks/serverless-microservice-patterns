@@ -1,6 +1,7 @@
 import { APIGatewayProxyEvent, APIGatewayProxyResult, Context } from 'aws-lambda';
 
 import { parseCsv } from '../services/csv-service.js';
+import { fanOutCreateTasks } from '../services/task-service.js';
 import { badRequest, internalServerError, ok } from '../utils/apigateway-response.js';
 import { logger, withRequestTracking } from '../utils/logger.js';
 
@@ -46,9 +47,12 @@ export const handler = async (event: APIGatewayProxyEvent, context: Context): Pr
     // Parse and validate CSV
     const tasks = parseCsv(csvContent);
 
-    logger.info({ taskCount: tasks.length }, '[UploadCsvHandler] < handler - successfully validated CSV');
+    // Fan out create task DTOs to SQS queue
+    await fanOutCreateTasks(tasks);
+
+    logger.info({ taskCount: tasks.length }, '[UploadCsvHandler] < handler');
     return ok({
-      message: 'CSV file validated successfully',
+      message: 'CSV file uploaded successfully',
       taskCount: tasks.length,
     });
   } catch (error) {

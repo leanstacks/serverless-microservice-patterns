@@ -1,6 +1,7 @@
 import * as cdk from 'aws-cdk-lib';
 import { Match, Template } from 'aws-cdk-lib/assertions';
 import * as dynamodb from 'aws-cdk-lib/aws-dynamodb';
+import * as sqs from 'aws-cdk-lib/aws-sqs';
 import { LambdaStack } from './lambda-stack';
 
 // Mock NodejsFunction to avoid Docker bundling during tests
@@ -35,11 +36,15 @@ describe('LambdaStack', () => {
           type: dynamodb.AttributeType.STRING,
         },
       });
+      const testMockQueue = new sqs.Queue(mockTestStack, 'MockQueue', {
+        queueName: 'mock-create-task-queue',
+      });
 
       const stack = new LambdaStack(testApp, 'TestLambdaStack', {
         appName: 'smp-fan-out-task-service',
         envName: 'dev',
         taskTable: testMockTable,
+        createTaskQueue: testMockQueue,
         loggingEnabled: true,
         loggingLevel: 'debug',
         loggingFormat: 'json',
@@ -342,11 +347,15 @@ describe('LambdaStack', () => {
           type: dynamodb.AttributeType.STRING,
         },
       });
+      const testMockQueue = new sqs.Queue(mockTestStack, 'MockQueue', {
+        queueName: 'mock-create-task-queue',
+      });
 
       const stack = new LambdaStack(testApp, 'TestLambdaStack', {
         appName: 'smp-fan-out-task-service',
         envName: 'prd',
         taskTable: testMockTable,
+        createTaskQueue: testMockQueue,
         loggingEnabled: true,
         loggingLevel: 'info',
         loggingFormat: 'json',
@@ -398,11 +407,15 @@ describe('LambdaStack', () => {
           type: dynamodb.AttributeType.STRING,
         },
       });
+      const testMockQueue = new sqs.Queue(mockTestStack, 'MockQueue', {
+        queueName: 'mock-create-task-queue',
+      });
 
       const stack = new LambdaStack(testApp, 'TestLambdaStack', {
         appName: 'smp-fan-out-task-service',
         envName: 'dev',
         taskTable: testMockTable,
+        createTaskQueue: testMockQueue,
         loggingEnabled: true,
         loggingLevel: 'debug',
         loggingFormat: 'json',

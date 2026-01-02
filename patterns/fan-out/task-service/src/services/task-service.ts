@@ -7,6 +7,7 @@ import { Task, TaskItem, TaskKeys, toTask } from '../models/task.js';
 import { config } from '../utils/config.js';
 import { dynamoDocClient } from '../utils/dynamodb-client.js';
 import { logger } from '../utils/logger.js';
+import { sendToQueue } from '../utils/sqs-client.js';
 
 /**
  * Retrieves all tasks from the DynamoDB table
@@ -235,6 +236,35 @@ export const deleteTask = async (id: string): Promise<boolean> => {
     }
 
     logger.error({ error }, '[TaskService] < deleteTask - failed to delete task from DynamoDB');
+    throw error;
+  }
+};
+
+/**
+ * Fans out create task DTOs by publishing each as a message to the Create Task SQS queue
+ * @param createTaskDtos - Array of CreateTaskDto objects to fan out
+ * @returns Promise that resolves to an array of message IDs for successfully published messages
+ * @throws Error if the SQS send operations fail
+ */
+export const fanOutCreateTasks = async (createTaskDtos: CreateTaskDto[]): Promise<string[]> => {
+  logger.info({ count: createTaskDtos.length }, '[TaskService] > fanOutCreateTasks');
+
+  try {
+    // Publish each CreateTaskDto to the queue in parallel
+    const publishPromises = createTaskDtos.map(async (dto) => {
+      return sendToQueue(config.CREATE_TASK_QUEUE_URL!, dto as unknown as Record<string, unknown>);
+    });
+
+    const messageIds = await Promise.all(publishPromises);
+    logger.debug({ messageIds }, '[TaskService] fanOutCreateTasks - published message IDs');
+
+    logger.info(
+      { count: messageIds.length },
+      '[TaskService] < fanOutCreateTasks - successfully published messages to queue',
+    );
+    return messageIds;
+  } catch (error) {
+    logger.error({ error }, '[TaskService] < fanOutCreateTasks - failed to publish messages to queue');
     throw error;
   }
 };
