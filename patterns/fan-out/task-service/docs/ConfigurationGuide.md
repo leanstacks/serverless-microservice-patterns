@@ -10,14 +10,15 @@ The application configuration is managed through environment variables. These va
 
 The following environment variables are available for configuring the application:
 
-| Variable            | Type    | Description                                      | Default     | Required |
-| ------------------- | ------- | ------------------------------------------------ | ----------- | -------- |
-| `TASKS_TABLE`       | string  | The name of the DynamoDB table for storing tasks | -           | Yes      |
-| `AWS_REGION`        | string  | The AWS region where resources are deployed      | `us-east-1` | No       |
-| `LOGGING_ENABLED`   | boolean | Enable or disable application logging            | `true`      | No       |
-| `LOGGING_LEVEL`     | enum    | Logging level: `debug`, `info`, `warn`, `error`  | `debug`     | No       |
-| `LOGGING_FORMAT`    | enum    | Logging format: `text`, `json`                   | `json`      | No       |
-| `CORS_ALLOW_ORIGIN` | string  | CORS allow origin header value                   | `*`         | No       |
+| Variable                | Type    | Description                                      | Default     | Required |
+| ----------------------- | ------- | ------------------------------------------------ | ----------- | -------- |
+| `TASKS_TABLE`           | string  | The name of the DynamoDB table for storing tasks | -           | Yes      |
+| `CREATE_TASK_QUEUE_URL` | string  | The URL of the SQS queue for creating tasks      | -           | Yes      |
+| `AWS_REGION`            | string  | The AWS region where resources are deployed      | `us-east-1` | No       |
+| `LOGGING_ENABLED`       | boolean | Enable or disable application logging            | `true`      | No       |
+| `LOGGING_LEVEL`         | enum    | Logging level: `debug`, `info`, `warn`, `error`  | `debug`     | No       |
+| `LOGGING_FORMAT`        | enum    | Logging format: `text`, `json`                   | `json`      | No       |
+| `CORS_ALLOW_ORIGIN`     | string  | CORS allow origin header value                   | `*`         | No       |
 
 ### Usage
 
@@ -27,6 +28,7 @@ Application configuration is accessed through the `config` object exported from 
 import { config } from './utils/config';
 
 console.log(`Tasks table: ${config.TASKS_TABLE}`);
+console.log(`Create task queue URL: ${config.CREATE_TASK_QUEUE_URL}`);
 console.log(`Logging enabled: ${config.LOGGING_ENABLED}`);
 ```
 
@@ -44,18 +46,18 @@ The infrastructure configuration is managed through environment variables prefix
 
 The following environment variables are available for configuring the infrastructure:
 
-| Variable                  | Type    | Description                                            | Default            | Required |
-| ------------------------- | ------- | ------------------------------------------------------ | ------------------ | -------- |
-| `CDK_APP_NAME`            | string  | The application name used in resource naming           | `smp-internal-api` | No       |
-| `CDK_ENV`                 | enum    | Environment: `dev`, `qat`, `prd`                       | -                  | Yes      |
-| `CDK_ACCOUNT`             | string  | AWS account ID for deployment                          | -                  | No       |
-| `CDK_REGION`              | string  | AWS region for deployment                              | -                  | No       |
-| `CDK_OU`                  | string  | Organizational Unit for resource tagging               | `leanstacks`       | No       |
-| `CDK_OWNER`               | string  | Owner tag for resource tracking                        | `unknown`          | No       |
-| `CDK_CORS_ALLOW_ORIGIN`   | string  | CORS allow origin for API Gateway and Lambda functions | `*`                | No       |
-| `CDK_APP_LOGGING_ENABLED` | boolean | Enable logging in Lambda functions                     | `true`             | No       |
-| `CDK_APP_LOGGING_LEVEL`   | enum    | Logging level: `debug`, `info`, `warn`, `error`        | `info`             | No       |
-| `CDK_APP_LOGGING_FORMAT`  | enum    | Logging format: `text`, `json`                         | `json`             | No       |
+| Variable                  | Type    | Description                                            | Default                    | Required |
+| ------------------------- | ------- | ------------------------------------------------------ | -------------------------- | -------- |
+| `CDK_APP_NAME`            | string  | The application name used in resource naming           | `smp-fan-out-task-service` | No       |
+| `CDK_ENV`                 | enum    | Environment: `dev`, `qat`, `prd`                       | -                          | Yes      |
+| `CDK_ACCOUNT`             | string  | AWS account ID for deployment                          | -                          | No       |
+| `CDK_REGION`              | string  | AWS region for deployment                              | -                          | No       |
+| `CDK_OU`                  | string  | Organizational Unit for resource tagging               | `leanstacks`               | No       |
+| `CDK_OWNER`               | string  | Owner tag for resource tracking                        | `unknown`                  | No       |
+| `CDK_CORS_ALLOW_ORIGIN`   | string  | CORS allow origin for API Gateway and Lambda functions | `*`                        | No       |
+| `CDK_APP_LOGGING_ENABLED` | boolean | Enable logging in Lambda functions                     | `true`                     | No       |
+| `CDK_APP_LOGGING_LEVEL`   | enum    | Logging level: `debug`, `info`, `warn`, `error`        | `info`                     | No       |
+| `CDK_APP_LOGGING_FORMAT`  | enum    | Logging format: `text`, `json`                         | `json`                     | No       |
 
 ### Usage
 
@@ -155,6 +157,7 @@ Infrastructure configuration variables are passed to Lambda functions with modif
 | `CDK_APP_LOGGING_FORMAT`  | `LOGGING_FORMAT`            |
 | `CDK_CORS_ALLOW_ORIGIN`   | `CORS_ALLOW_ORIGIN`         |
 | (DynamoDB table name)     | `TASKS_TABLE`               |
+| (SQS queue URL)           | `CREATE_TASK_QUEUE_URL`     |
 | (AWS Region)              | `AWS_REGION`                |
 
 ---

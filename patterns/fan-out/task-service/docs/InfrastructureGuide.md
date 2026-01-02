@@ -6,12 +6,13 @@ This guide provides a concise overview of the AWS CDK infrastructure for the pro
 
 ## Stacks Overview
 
-The infrastructure is organized into two main AWS CDK stacks:
+The infrastructure is organized into three main AWS CDK stacks:
 
 | Stack Name Pattern        | Purpose                                    |
 | ------------------------- | ------------------------------------------ |
 | `{app-name}-data-{env}`   | Manages DynamoDB tables and data resources |
-| `{app-name}-lambda-{env}` | Manages Lambda functions and API Gateway   |
+| `{app-name}-lambda-{env}` | Manages Lambda functions and resources     |
+| `{app-name}-sqs-{env}`    | Manages SQS queues for the fan-out pattern |
 
 ---
 
@@ -36,30 +37,51 @@ The infrastructure is organized into two main AWS CDK stacks:
 
 ## Lambda Stack
 
-**Purpose:** Manages Lambda functions, API Gateway, and application runtime resources.
+**Purpose:** Manages Lambda functions and application runtime resources.
 
 **Key Resources:**
 
-| Resource        | Name Pattern                   | Purpose/Notes                        |
-| --------------- | ------------------------------ | ------------------------------------ |
-| Lambda Function | `{app-name}-list-tasks-{env}`  | List all tasks (DynamoDB Scan)       |
-| Lambda Function | `{app-name}-get-task-{env}`    | Get a task by ID (DynamoDB GetItem)  |
-| Lambda Function | `{app-name}-create-task-{env}` | Create a new task (DynamoDB PutItem) |
-| Lambda Function | `{app-name}-update-task-{env}` | Update a task (DynamoDB UpdateItem)  |
-| Lambda Function | `{app-name}-delete-task-{env}` | Delete a task (DynamoDB DeleteItem)  |
-| API Gateway     | `{app-name}-api-{env}`         | REST API for Lambda functions        |
+| Resource        | Name Pattern                        | Purpose/Notes                                              |
+| --------------- | ----------------------------------- | ---------------------------------------------------------- |
+| Lambda Function | `{app-name}-list-tasks-{env}`       | List all tasks (DynamoDB Scan)                             |
+| Lambda Function | `{app-name}-get-task-{env}`         | Get a task by ID (DynamoDB GetItem)                        |
+| Lambda Function | `{app-name}-create-task-{env}`      | Create a new task and publish to SQS queue                 |
+| Lambda Function | `{app-name}-update-task-{env}`      | Update a task (DynamoDB UpdateItem)                        |
+| Lambda Function | `{app-name}-delete-task-{env}`      | Delete a task (DynamoDB DeleteItem)                        |
+| Lambda Function | `{app-name}-upload-csv-{env}`       | Upload CSV file and create tasks from records              |
+| Lambda Function | `{app-name}-create-task-subscriber` | Subscribe to SQS messages and process task creation events |
+| IAM Role        | `{app-name}-lambda-role-{env}`      | Execution role for Lambda functions with SQS permissions   |
 
 **Outputs:**
 
-| Output Name             | Export Name Pattern                | Description                     |
-| ----------------------- | ---------------------------------- | ------------------------------- |
-| `ApiUrl`                | `{app-name}-api-url-{env}`         | API Gateway endpoint URL        |
-| `ApiId`                 | `{app-name}-api-id-{env}`          | API Gateway ID                  |
-| `ListTasksFunctionArn`  | `{app-name}-list-tasks-arn-{env}`  | List Tasks Lambda function ARN  |
-| `GetTaskFunctionArn`    | `{app-name}-get-task-arn-{env}`    | Get Task Lambda function ARN    |
-| `CreateTaskFunctionArn` | `{app-name}-create-task-arn-{env}` | Create Task Lambda function ARN |
-| `UpdateTaskFunctionArn` | `{app-name}-update-task-arn-{env}` | Update Task Lambda function ARN |
-| `DeleteTaskFunctionArn` | `{app-name}-delete-task-arn-{env}` | Delete Task Lambda function ARN |
+| Output Name               | Export Name Pattern                     | Description                                |
+| ------------------------- | --------------------------------------- | ------------------------------------------ |
+| `ListTasksFunctionArn`    | `{app-name}-list-tasks-arn-{env}`       | List Tasks Lambda function ARN             |
+| `GetTaskFunctionArn`      | `{app-name}-get-task-arn-{env}`         | Get Task Lambda function ARN               |
+| `CreateTaskFunctionArn`   | `{app-name}-create-task-arn-{env}`      | Create Task Lambda function ARN            |
+| `UpdateTaskFunctionArn`   | `{app-name}-update-task-arn-{env}`      | Update Task Lambda function ARN            |
+| `DeleteTaskFunctionArn`   | `{app-name}-delete-task-arn-{env}`      | Delete Task Lambda function ARN            |
+| `UploadCsvFunctionArn`    | `{app-name}-upload-csv-arn-{env}`       | Upload CSV Lambda function ARN             |
+| `CreateTaskSubscriberArn` | `{app-name}-create-task-subscriber-arn` | Create Task Subscriber Lambda function ARN |
+
+---
+
+## SQS Stack
+
+**Purpose:** Manages SQS queues for implementing the fan-out pattern for task creation events.
+
+**Key Resources:**
+
+| Resource  | Name Pattern                         | Key Properties                                    |
+| --------- | ------------------------------------ | ------------------------------------------------- |
+| SQS Queue | `{app-name}-create-task-queue-{env}` | FIFO or Standard queue, Message retention: 4 days |
+
+**Outputs:**
+
+| Output Name          | Export Name Pattern                      | Description   |
+| -------------------- | ---------------------------------------- | ------------- |
+| `CreateTaskQueueUrl` | `{app-name}-create-task-queue-url-{env}` | SQS queue URL |
+| `CreateTaskQueueArn` | `{app-name}-create-task-queue-arn-{env}` | SQS queue ARN |
 
 ---
 
@@ -67,12 +89,12 @@ The infrastructure is organized into two main AWS CDK stacks:
 
 All resources are tagged for cost allocation and management:
 
-| Tag     | Source         | Example Value       |
-| ------- | -------------- | ------------------- |
-| `App`   | `CDK_APP_NAME` | `smp-internal-api`  |
-| `Env`   | `CDK_ENV`      | `dev`, `qat`, `prd` |
-| `OU`    | `CDK_OU`       | `leanstacks`        |
-| `Owner` | `CDK_OWNER`    | `platform-team`     |
+| Tag     | Source         | Example Value              |
+| ------- | -------------- | -------------------------- |
+| `App`   | `CDK_APP_NAME` | `smp-fan-out-task-service` |
+| `Env`   | `CDK_ENV`      | `dev`, `qat`, `prd`        |
+| `OU`    | `CDK_OU`       | `leanstacks`               |
+| `Owner` | `CDK_OWNER`    | `platform-team`            |
 
 ---
 

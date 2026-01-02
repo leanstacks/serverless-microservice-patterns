@@ -18,8 +18,10 @@ AWS CDK infrastructure for this project.
    /stacks
       data-stack.ts           # DynamoDB tables and data resources
       data-stack.test.ts      # Unit tests for data stack
-      lambda-stack.ts         # Lambda/API Gateway resources
+      lambda-stack.ts         # Lambda functions and resources
       lambda-stack.test.ts    # Unit tests for lambda stack
+      sqs-stack.ts            # SQS queues and resources
+      sqs-stack.test.ts       # Unit tests for SQS stack
    /utils
       config.ts               # Configuration management with Zod validation
       config.test.ts          # Unit tests for config
@@ -92,7 +94,7 @@ Edit `.env` and set the required variables:
 CDK_ENV=dev
 
 # Optional - Application name (default: smp-fan-out-task-service)
-# CDK_APP_NAME=my-app
+CDK_APP_NAME=smp-fan-out-task-service
 
 # Optional - Override AWS credentials (uses CDK_DEFAULT_ACCOUNT/REGION from AWS CLI by default)
 # CDK_ACCOUNT=123456789012
