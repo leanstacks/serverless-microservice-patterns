@@ -285,7 +285,7 @@ export class LambdaStack extends cdk.Stack {
         LOGGING_FORMAT: props.loggingFormat,
         CORS_ALLOW_ORIGIN: props.corsAllowOrigin,
       },
-      timeout: cdk.Duration.seconds(30),
+      timeout: cdk.Duration.seconds(120),
       memorySize: 512,
       bundling: {
         minify: true,
