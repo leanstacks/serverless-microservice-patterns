@@ -252,7 +252,7 @@ export const fanOutCreateTasks = async (createTaskDtos: CreateTaskDto[]): Promis
   try {
     // Publish each CreateTaskDto to the queue in parallel
     const publishPromises = createTaskDtos.map(async (dto) => {
-      return sendToQueue(config.CREATE_TASK_QUEUE_URL!, dto as unknown as Record<string, unknown>);
+      return sendToQueue(config.CREATE_TASK_QUEUE_URL, dto as Record<string, unknown>);
     });
 
     const messageIds = await Promise.all(publishPromises);
