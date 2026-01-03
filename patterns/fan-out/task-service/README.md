@@ -129,6 +129,8 @@ npm run test:watch
 
 - **[@aws-sdk/client-dynamodb](https://www.npmjs.com/package/@aws-sdk/client-dynamodb)** - AWS SDK v3 DynamoDB client
 - **[@aws-sdk/lib-dynamodb](https://www.npmjs.com/package/@aws-sdk/lib-dynamodb)** - DynamoDB document client utilities
+- **[@aws-sdk/client-sqs](https://www.npmjs.com/package/@aws-sdk/client-sqs)** - AWS SDK v3 SQS client
+- **[csv-parse](https://www.npmjs.com/package/csv-parse)** - A parser converting CSV text input into JSON arrays or objects.
 - **[zod](https://www.npmjs.com/package/zod)** - TypeScript-first schema validation
 - **[pino](https://getpino.io/)** - Low overhead, fast logger for JavaScript
 

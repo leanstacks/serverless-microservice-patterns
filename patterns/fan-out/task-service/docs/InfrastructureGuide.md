@@ -41,28 +41,28 @@ The infrastructure is organized into three main AWS CDK stacks:
 
 **Key Resources:**
 
-| Resource        | Name Pattern                        | Purpose/Notes                                              |
-| --------------- | ----------------------------------- | ---------------------------------------------------------- |
-| Lambda Function | `{app-name}-list-tasks-{env}`       | List all tasks (DynamoDB Scan)                             |
-| Lambda Function | `{app-name}-get-task-{env}`         | Get a task by ID (DynamoDB GetItem)                        |
-| Lambda Function | `{app-name}-create-task-{env}`      | Create a new task and publish to SQS queue                 |
-| Lambda Function | `{app-name}-update-task-{env}`      | Update a task (DynamoDB UpdateItem)                        |
-| Lambda Function | `{app-name}-delete-task-{env}`      | Delete a task (DynamoDB DeleteItem)                        |
-| Lambda Function | `{app-name}-upload-csv-{env}`       | Upload CSV file and create tasks from records              |
-| Lambda Function | `{app-name}-create-task-subscriber` | Subscribe to SQS messages and process task creation events |
-| IAM Role        | `{app-name}-lambda-role-{env}`      | Execution role for Lambda functions with SQS permissions   |
+| Resource        | Name Pattern                              | Purpose/Notes                                              |
+| --------------- | ----------------------------------------- | ---------------------------------------------------------- |
+| Lambda Function | `{app-name}-list-tasks-{env}`             | List all tasks (DynamoDB Scan)                             |
+| Lambda Function | `{app-name}-get-task-{env}`               | Get a task by ID (DynamoDB GetItem)                        |
+| Lambda Function | `{app-name}-create-task-{env}`            | Create a new task and publish to SQS queue                 |
+| Lambda Function | `{app-name}-update-task-{env}`            | Update a task (DynamoDB UpdateItem)                        |
+| Lambda Function | `{app-name}-delete-task-{env}`            | Delete a task (DynamoDB DeleteItem)                        |
+| Lambda Function | `{app-name}-upload-csv-{env}`             | Upload CSV file and create tasks from records              |
+| Lambda Function | `{app-name}-create-task-subscriber-{env}` | Subscribe to SQS messages and process task creation events |
+| IAM Role        | `{app-name}-lambda-role-{env}`            | Execution role for Lambda functions with SQS permissions   |
 
 **Outputs:**
 
-| Output Name               | Export Name Pattern                     | Description                                |
-| ------------------------- | --------------------------------------- | ------------------------------------------ |
-| `ListTasksFunctionArn`    | `{app-name}-list-tasks-arn-{env}`       | List Tasks Lambda function ARN             |
-| `GetTaskFunctionArn`      | `{app-name}-get-task-arn-{env}`         | Get Task Lambda function ARN               |
-| `CreateTaskFunctionArn`   | `{app-name}-create-task-arn-{env}`      | Create Task Lambda function ARN            |
-| `UpdateTaskFunctionArn`   | `{app-name}-update-task-arn-{env}`      | Update Task Lambda function ARN            |
-| `DeleteTaskFunctionArn`   | `{app-name}-delete-task-arn-{env}`      | Delete Task Lambda function ARN            |
-| `UploadCsvFunctionArn`    | `{app-name}-upload-csv-arn-{env}`       | Upload CSV Lambda function ARN             |
-| `CreateTaskSubscriberArn` | `{app-name}-create-task-subscriber-arn` | Create Task Subscriber Lambda function ARN |
+| Output Name               | Export Name Pattern                           | Description                                |
+| ------------------------- | --------------------------------------------- | ------------------------------------------ |
+| `ListTasksFunctionArn`    | `{app-name}-list-tasks-arn-{env}`             | List Tasks Lambda function ARN             |
+| `GetTaskFunctionArn`      | `{app-name}-get-task-arn-{env}`               | Get Task Lambda function ARN               |
+| `CreateTaskFunctionArn`   | `{app-name}-create-task-arn-{env}`            | Create Task Lambda function ARN            |
+| `UpdateTaskFunctionArn`   | `{app-name}-update-task-arn-{env}`            | Update Task Lambda function ARN            |
+| `DeleteTaskFunctionArn`   | `{app-name}-delete-task-arn-{env}`            | Delete Task Lambda function ARN            |
+| `UploadCsvFunctionArn`    | `{app-name}-upload-csv-arn-{env}`             | Upload CSV Lambda function ARN             |
+| `CreateTaskSubscriberArn` | `{app-name}-create-task-subscriber-arn-{env}` | Create Task Subscriber Lambda function ARN |
 
 ---
 
