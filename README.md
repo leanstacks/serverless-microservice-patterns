@@ -12,6 +12,7 @@ The following patterns are currently included in this repository:
 - [**Internal Handoff**](patterns/internal-handoff/README.md): Similar to the _Internal API_ pattern, however, the calling service invokes the called service _asynchronously_ rather than synchronously.
 - [**Publish Subscribe**](patterns/publish-subscribe/README.md): Demonstrates the Pub/Sub pattern where services publish events to SNS topics and other services subscribe through SQS queues, enabling loose coupling and event-driven architecture.
 - [**Queue-Based Load Leveling**](patterns/queue-leveling/README.md): A pattern that uses a message queue as a buffer to decouple producers from consumers, smoothing out spikes in demand by allowing services to process messages at a steady, manageable rate.
+- [**Fan Out**](patterns/fan-out/README.md): A pattern breaks a large workload into a collection of smaller tasks. This is particularly useful for batch processing.
 
 More patterns, such as Aggregator, Router, Fan Out/Fan In, Circuit Breaker, and others, will be added over time.
 
