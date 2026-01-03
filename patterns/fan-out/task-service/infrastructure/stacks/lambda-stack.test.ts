@@ -108,7 +108,7 @@ describe('LambdaStack', () => {
         FunctionName: 'smp-fan-out-task-service-upload-csv-dev',
         Runtime: 'nodejs24.x',
         Handler: 'handler',
-        Timeout: 30,
+        Timeout: 120,
         MemorySize: 512,
       });
     });
