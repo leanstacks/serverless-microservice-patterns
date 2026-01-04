@@ -2,13 +2,49 @@
 
 This project provides a solid foundation for implementing Serverless Microservice Patterns with AWS Lambda functions using Node.js and TypeScript. The project uses the AWS CDK for infrastructure as code, Jest for testing, and modern development tooling.
 
-There are many Serverless Microservice Patterns which may be implemented with AWS Lambda functions. This project illustrates the "Internal API" pattern. The Internal API is basically the same as the "Simple Web Service", but there is no API Gateway to expose the service to the Internet. The "Internal API" is one or more Lambda functions which, together, comprise a serverless microservice. The Lambda functions are invoked synchronously via the AWS SDK via Lambda-to-Lambda invocations using an `InvocationType` of `RequestResponse`.
+![Design diagram](../../docs/img/diagram-internal-api.png "Simple Web Service")
+
+## Internal API Pattern
+
+The Internal API pattern extends the simple microservice architecture by enabling synchronous, service-to-service communication within a serverless ecosystem using Lambda-to-Lambda invocations via the AWS SDK.
+
+There are many Serverless Microservice Patterns which may be implemented with AWS Lambda functions. This project illustrates the "Internal API" pattern. The Internal API is similar to the "Simple Web Service", but there is no API Gateway to expose the service to the Internet. The "Internal API" consists of one or more Lambda functions which, together, comprise a serverless microservice. The Lambda functions use an `InvocationType` of `RequestResponse` enabling synchronous, service-to-service communication within a serverless ecosystem using Lambda-to-Lambda invocations via the AWS SDK.
 
 Some may say that calling a Lambda function from a Lambda function is an anti-pattern, but I do not share that opinion. There are many valid scenarios where one microservice needs to call another microservice synchronously. One of the _core principles of microservices_ is **single responsibility** or **high cohesion**. This means that a microservice has _one_ responsibility, _one_ business or functional domain. It does one thing and does it well. Therefore it makes perfect sense that one Lambda microservice may need to synchronously call another Lambda microservice, especially when each has a specific purpose.
 
-That said, implement this pattern carefully and on an as-needed basis. It is important to remember that the calling service will block and wait for the called service to return. This increases the exeuction time of the calling service and therefore the cost. Consider if an event-driven, asynchronous pattern is a better fit for the use-case.
+That said, implement this pattern carefully and on an as-needed basis. It is important to remember that the calling service will block and wait for the called service to return. This increases the execution time of the calling service and therefore the cost. Consider if an event-driven, asynchronous pattern is a better fit for the use-case.
 
-![Design diagram](../../docs/img/diagram-internal-api.png "Simple Web Service")
+### Key Characteristics
+
+The Internal API pattern is characterized by:
+
+- **Synchronous Service-to-Service Communication**: Lambda functions directly invoke other Lambda functions using the AWS SDK with `InvocationType` set to `RequestResponse`
+- **No API Gateway**: Services are not exposed through API Gateway; they are only accessible internally via AWS SDK calls
+- **Direct Dependency**: Calling services have direct knowledge of and dependency on called services
+- **Blocking Calls**: Invoking services wait for called services to complete, increasing execution time and cost
+- **Microservice Composition**: Multiple Lambda functions work together to provide business capabilities while maintaining service boundaries
+
+### When to Use
+
+The Internal API pattern is ideal for scenarios such as:
+
+- **Microservice Orchestration**: One microservice needs to coordinate calls to multiple other microservices
+- **Data Enrichment**: A service needs to fetch supplementary data from another service
+- **Cross-Domain Lookups**: Services require synchronous access to data or operations from other business domains
+- **Shared Functionality**: Services need to leverage common operations provided by a shared utility service
+- **Operational Workflows**: Multi-step workflows that require sequential, synchronous execution across services
+- **Admin Tools**: Internal administrative functions that coordinate multiple services
+- **Reporting and Analytics**: Services that aggregate or consolidate data from multiple domains
+
+### Key Benefits
+
+1. **Service Separation**: Maintains microservice principles of single responsibility and high cohesion
+2. **Code Reusability**: Consuming services can leverage logic from provider services without duplication
+3. **Loose Coupling**: Services are independent and can be deployed separately
+4. **Direct Invocation**: No message queues or event infrastructure required for synchronous operations
+5. **Type Safety**: Direct invocation with AWS SDK provides better IDE support and type safety
+6. **Simplified Testing**: Easier to test service interactions directly compared to event-driven patterns
+7. **Operational Clarity**: Clear, explicit dependencies between services are visible in code
 
 ## What's inside
 
