@@ -6,6 +6,8 @@ This project provides a solid foundation for implementing Serverless Microservic
 
 There are many Serverless Microservice Patterns which may be implemented with AWS Lambda functions. This project illustrates the "Fan Out" pattern. The Fan Out pattern breaks a large job into a collection of smaller jobs. This is particularly useful for batch processing. Lambda functions are limited to 15 minutes of total execution time and the Fan Out pattern allows applications to overcome this limitation by decomposing work into smaller units.
 
+![Design diagram](../../docs/img/diagram-fan-out.png "Fan Out")
+
 ### Key Characteristics
 
 The Fan Out pattern is characterized by:
@@ -15,7 +17,7 @@ The Fan Out pattern is characterized by:
 - **Parallel Execution**: Multiple worker Lambda functions processing tasks concurrently from the message queue
 - **Asynchronous Processing**: The initial upload function returns quickly after queuing work, rather than waiting for completion
 
-### Applications
+### When to Use
 
 The Fan Out pattern is ideal for scenarios such as:
 
@@ -36,8 +38,6 @@ The Fan Out pattern is ideal for scenarios such as:
 5. **Decoupling**: Producer and consumer functions are independent, enabling flexible scaling and failure handling
 6. **Observable**: Monitor queue depth, worker performance, and failure rates independently
 7. **Flexible Rate Control**: SQS allows you to control the rate of task processing through concurrency settings
-
-![Design diagram](../../docs/img/diagram-fan-out.png "Fan Out")
 
 ## What's inside
 

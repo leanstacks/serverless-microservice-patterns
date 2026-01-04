@@ -2,11 +2,44 @@
 
 This project provides a solid foundation for implementing Serverless Microservice Patterns with AWS Lambda functions using Node.js and TypeScript. The project uses the AWS CDK for infrastructure as code, Jest for testing, and modern development tooling.
 
-There are many Serverless Microservice Patterns which may be implemented with AWS Lambda functions. This project illustrates the "Gatekeeper" pattern. The Gatekeeper builds on the "Simple Web Service", adding an Authorization microservice to authenticate and authorize API requests. In the Gatekeeper pattern, an API Gateway Token Authorizer intercepts all incoming requests and delegates the authorization decision to the Auth Service. Only requests with valid authorization tokens are permitted to reach the Task Service endpoints.
+## Gatekeeper Pattern
 
-This pattern demonstrates how to implement a centralized authorization layer that protects multiple backend services. The Token Authorizer acts as a gatekeeper, validating tokens and determining which requests are allowed to proceed to the protected resources.
+There are many Serverless Microservice Patterns which may be implemented with AWS Lambda functions. This project illustrates the "Gatekeeper" pattern. The Gatekeeper builds on the "Simple Web Service", adding a centralized authorization layer that protects multiple backend microservices. Using an API Gateway Token Authorizer, all incoming requests are validated before they reach protected resources, ensuring that only authenticated and authorized requests proceed.
 
 ![Design diagram](../../docs/img/diagram-gatekeeper.png "The Gatekeeper Pattern")
+
+### Key Characteristics
+
+The Gatekeeper pattern is characterized by:
+
+- **Centralized Authorization Layer**: A single Auth Service validates all requests before they reach backend services
+- **Token-Based Authentication**: Requests are authenticated using tokens (e.g., JWTs, API keys, bearer tokens) provided in request headers
+- **API Gateway Token Authorizer**: API Gateway intercepts and delegates authorization decisions to a Lambda-based authorizer function
+- **IAM Policy Generation**: The authorizer generates AWS IAM policies to allow or deny access to protected resources
+- **Request Interception**: All requests are intercepted and validated before reaching the backend services
+- **Context Propagation**: Validated user information is passed to downstream services for request processing
+
+### When to Use
+
+The Gatekeeper pattern is ideal for scenarios such as:
+
+- **Multi-Service Protection**: Protecting multiple backend services with a single authorization layer
+- **Token-Based APIs**: APIs that use bearer tokens, JWTs, or other token-based authentication schemes
+- **Third-Party Integration**: Validating tokens from external identity providers (e.g., Cognito, Auth0, Identity Platform)
+- **Role-Based Access Control**: Implementing authorization rules based on user roles or claims
+- **Legacy Service Protection**: Adding authorization to existing services without modifying their code
+- **Compliance Requirements**: Meeting security and audit requirements for regulated industries
+- **API Rate Limiting**: Implementing per-user or per-token rate limiting at the API Gateway level
+
+### Key Benefits
+
+1. **Centralized Security**: Single location to implement and maintain authorization logic
+2. **Consistent Protection**: All requests go through the same authorization checks regardless of backend service
+3. **Reduced Duplication**: Eliminates the need to implement authorization logic in every backend service
+4. **Easy Maintenance**: Update authorization rules in one place; changes apply to all protected services
+5. **Performance**: Authorization decisions cached by API Gateway reduce repeated evaluations
+6. **Audit Trail**: Centralized logging provides complete visibility into authorization decisions
+7. **Fine-Grained Control**: Granular authorization rules based on tokens, scopes, and custom claims
 
 ## What's inside
 
