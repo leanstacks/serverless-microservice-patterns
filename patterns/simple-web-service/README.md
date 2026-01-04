@@ -2,7 +2,43 @@
 
 This project provides a solid foundation for implementing Serverless Microservice Patterns with AWS Lambda functions using Node.js and TypeScript. The project uses the AWS CDK for infrastructure as code, Jest for testing, and modern development tooling.
 
+## Simple Web Service Pattern
+
 There are many Serverless Microservice Patterns which may be implemented with AWS Lambda functions. This project illustrates the "Simple Web Service" pattern, which is one of the most frequently used.
+
+The Simple Web Service pattern is the foundational architecture for building serverless microservices. It combines API Gateway with Lambda functions to handle HTTP requests and return responses in a straightforward, synchronous manner.
+
+### Key Characteristics
+
+The Simple Web Service pattern is characterized by:
+
+- **Synchronous Request-Response**: Direct HTTP requests receive immediate responses from Lambda functions
+- **API Gateway Integration**: API Gateway manages routing, request validation, and response formatting
+- **Single-Purpose Functions**: Each Lambda function handles a specific operation (e.g., create, read, update, delete)
+- **Direct Database Interaction**: Lambda functions directly interact with persistent data stores like DynamoDB
+- **Stateless Handlers**: Lambda functions are stateless and independent, enabling horizontal scaling
+
+### When to Use
+
+The Simple Web Service pattern is ideal for scenarios such as:
+
+- **RESTful APIs**: Building traditional REST APIs with standard CRUD operations
+- **Web Applications**: Serving backend APIs for web applications requiring real-time responses
+- **Mobile Backends**: Providing backend services for mobile applications
+- **Microservices**: Creating individual microservices that handle specific business domains
+- **Real-time Operations**: Applications requiring immediate synchronous responses
+- **Rapid Prototyping**: Getting services up and running quickly with minimal infrastructure complexity
+- **Internal Tools**: Building internal APIs and administrative tools
+
+### Key Benefits
+
+1. **Simplicity**: Straightforward architecture that's easy to understand, implement, and maintain
+2. **Low Latency**: Synchronous request-response model provides immediate feedback to clients
+3. **Cost Effective**: Pay-per-invocation pricing makes this ideal for moderate-traffic services
+4. **Scalability**: Lambda automatically scales to handle traffic without configuration
+5. **Minimal Operations Overhead**: No servers to manage; focus on business logic
+6. **Easy Testing**: Synchronous nature makes unit and integration testing straightforward
+7. **Quick Feedback Loop**: Ideal for rapid development and iteration with immediate results
 
 ![Design diagram](../../docs/img/diagram-simple-web-service.png 'Simple Web Service')
 
