@@ -2,15 +2,50 @@
 
 This project provides a solid foundation for implementing Serverless Microservice Patterns with AWS Lambda functions using Node.js and TypeScript. The project uses the AWS CDK for infrastructure as code, Jest for testing, and modern development tooling.
 
-There are many Serverless Microservice Patterns which may be implemented with AWS Lambda functions. This project illustrates the "Internal Handoff" pattern. The Internal Handoff is similar to the Internal API, however the calling service invokes the called microservice _asynchronously_ rather than synchronously. The Lambda functions are invoked asynchronously via the AWS SDK via Lambda-to-Lambda invocations using an `InvocationType` of `Event`.
+## Internal Handoff Pattern
+
+There are many Serverless Microservice Patterns which may be implemented with AWS Lambda functions. This project illustrates the "Internal Handoff" pattern. The Internal Handoff pattern enables _asynchronous_, service-to-service communication using Lambda-to-Lambda invocations. Rather than blocking and waiting for a response, the calling service hands off work to another service and continues execution immediately. The Lambda functions are invoked asynchronously via the AWS SDK via Lambda-to-Lambda invocations using an `InvocationType` of `Event`.
 
 An asynchronously invoked Lambda function will automatically retry failed invocations. Ensure the function's logic is idempotent and can handle the same event delivered multiple times. Attach a SQS Queue, a dead letter queue, to the Lambda function to capture failed events so that they may be replayed later.
 
 Some may say that calling a Lambda function from a Lambda function is an anti-pattern, but I do not share that opinion. There are many valid scenarios where one microservice needs to call another microservice. One of the _core principles of microservices_ is **single responsibility** or **high cohesion**. This means that a microservice has _one_ responsibility, _one_ business or functional domain. It does one thing and does it well. Therefore it makes perfect sense that one Lambda microservice may need to synchronously call another Lambda microservice, especially when each has a specific purpose.
 
-That said, implement this pattern carefully and on an as-needed basis. Consider if a different pattern is a better fit for the use-case such as "Notifier" or "Publish Subscribe".
+That said, implement this pattern carefully and on an as-needed basis. Consider if a different pattern is a better fit for the use-case such as "Notifier", "Publish Subscribe", or "Queue-Based Load Leveling".
 
 ![Design diagram](../../docs/img/diagram-internal-handoff.png "Internal Handoff")
+
+### Key Characteristics
+
+The Internal Handoff pattern is characterized by:
+
+- **Asynchronous Service-to-Service Communication**: Lambda functions invoke other Lambda functions using the AWS SDK with `InvocationType` set to `Event`
+- **Fire-and-Forget Invocation**: The calling service does not wait for the called service to complete; it returns immediately
+- **No API Gateway**: Services are not exposed through API Gateway; they are only accessible internally via AWS SDK calls
+- **Automatic Retry Mechanism**: Lambda automatically retries failed invocations based on configured retry policies
+- **Dead Letter Queue Support**: Failed events that exhaust retries are captured in an SQS Dead Letter Queue for later inspection and replay
+- **Idempotent Processing**: Called services must handle the possibility of receiving the same event multiple times
+
+### When to Use
+
+The Internal Handoff pattern is ideal for scenarios such as:
+
+- **Event-Driven Workflows**: One service triggers work in another service without waiting for completion
+- **Notification Delivery**: Trigger notifications asynchronously when certain events occur
+- **Audit Logging**: Send audit events to a logging service without impacting primary service performance
+- **Background Tasks**: Offload heavy processing to dedicated services while maintaining responsiveness
+- **Secondary Operations**: Execute optional operations that don't impact the primary business logic
+- **Service Chaining**: Multiple services coordinate through asynchronous handoffs in sequence
+- **Decoupled Microservices**: Services need independence without tight synchronous coupling
+
+### Key Benefits
+
+1. **Non-Blocking Execution**: Calling service responds immediately without waiting for downstream service completion
+2. **Improved Performance**: Reduces caller latency by eliminating wait time for called service
+3. **Service Independence**: Services are completely decoupled; called service failures don't block the caller
+4. **Built-in Resilience**: Automatic retries and Dead Letter Queue handling ensure no work is lost
+5. **Scalability**: Called service can scale independently; bursts don't impact caller
+6. **Idempotency Support**: Framework enables handling of duplicate events gracefully
+7. **Operational Visibility**: Clear separation of concerns with explicit service-to-service handoffs
 
 ## What's inside
 
