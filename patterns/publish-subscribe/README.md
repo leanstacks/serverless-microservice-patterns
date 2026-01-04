@@ -2,13 +2,49 @@
 
 This project provides a solid foundation for implementing Serverless Microservice Patterns with AWS Lambda functions using Node.js and TypeScript. The project uses the AWS CDK for infrastructure as code, Jest for testing, and modern development tooling.
 
-There are many Serverless Microservice Patterns which may be implemented with AWS Lambda functions. This project illustrates the "Publish Subscribe" pattern, also known as "Pub/Sub". The Pub/Sub pattern is similar to the Notifier pattern where the first service _publishes_ events to a SNS topic. Any number of services may _subscribe_ to the topic so that they may take action when those events occur.
+## Publish Subscribe Pattern
+
+There are many Serverless Microservice Patterns which may be implemented with AWS Lambda functions. This project illustrates the "Publish Subscribe" pattern, also known as "Pub/Sub". The Publish Subscribe pattern implements event-driven architecture by enabling multiple independent services to react to events published by other services. Services publish events to SNS topics without knowing which services subscribe, promoting loose coupling and independent evolution.
 
 To prevent losing events when unforseen issues occur and to manage the volume of incoming events, services subscribe to SNS topics with their own SQS queues rather than directly from the Lambda functions. When repeated failures occur, messages are moved to a Dead Letter Queue, DLQ, for review and potential replay. Ensure the subscribing function's logic is idempotent and can safely process the same event delivered multiple times.
 
 The Publish Subscribe pattern is one of the essential patterns in an event-driven architecture. It promotes **loose coupling** between services. Services do not need to know the implementation details of other services, only the format of published events.
 
 ![Design diagram](../../docs/img/diagram-publish-subscribe.png "Publish-Subscribe")
+
+### Key Characteristics
+
+The Publish Subscribe pattern is characterized by:
+
+- **Event Publishing**: Services publish events to SNS topics without knowing about subscribers
+- **Multiple Subscribers**: Any number of services can independently subscribe to the same SNS topic
+- **Loose Coupling**: Publishers and subscribers have no direct dependencies on each other
+- **SNS/SQS Integration**: Subscribers use SQS queues to reliably receive events from SNS topics
+- **Message Filtering**: Subscription filters allow consumers to process only relevant events
+- **Asynchronous Processing**: Subscribers process events independently and asynchronously
+- **Dead Letter Queue Support**: Failed messages are captured for review and potential replay
+
+### When to Use
+
+The Publish Subscribe pattern is ideal for scenarios such as:
+
+- **Event Broadcasting**: Publishing a single event that multiple services need to act upon
+- **Loose Coupling**: Services that need to communicate without direct dependencies
+- **Event-Driven Architecture**: Building systems where services react to domain events
+- **Independent Scaling**: Services that scale independently based on their own workload
+- **Complex Workflows**: Multi-step processes where multiple services coordinate through events
+- **Audit and Logging**: Capturing events for audit trails while services process normally
+- **Fan Out with Processing**: Similar to Fan Out pattern, but with multiple independent consumers
+
+### Key Benefits
+
+1. **Loose Coupling**: Publishers don't know about subscribers; services are completely independent
+2. **Scalability**: Add new subscribers without modifying the publisher or existing subscribers
+3. **Resilience**: SNS/SQS provides message durability, automatic retries, and Dead Letter Queue support
+4. **Flexibility**: Message filtering allows subscribers to process only events relevant to them
+5. **Independent Evolution**: Services can evolve, deploy, and scale independently
+6. **Multiple Consumers**: Many services can react to the same event concurrently
+7. **Operational Clarity**: Event-driven model makes business processes and workflows explicit
 
 ## What's inside
 
