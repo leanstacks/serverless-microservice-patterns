@@ -15,7 +15,7 @@ The Fan Out pattern is characterized by:
 - **Parallel Execution**: Multiple worker Lambda functions processing tasks concurrently from the message queue
 - **Asynchronous Processing**: The initial upload function returns quickly after queuing work, rather than waiting for completion
 
-### Applications
+### When to Use
 
 The Fan Out pattern is ideal for scenarios such as:
 
