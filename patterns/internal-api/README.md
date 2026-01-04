@@ -12,7 +12,7 @@ Some may say that calling a Lambda function from a Lambda function is an anti-pa
 
 That said, implement this pattern carefully and on an as-needed basis. It is important to remember that the calling service will block and wait for the called service to return. This increases the execution time of the calling service and therefore the cost. Consider if an event-driven, asynchronous pattern is a better fit for the use-case.
 
-![Design diagram](../../docs/img/diagram-internal-api.png "Simple Web Service")
+![Design diagram](../../docs/img/diagram-internal-api.png "Internal API")
 
 ### Key Characteristics
 
