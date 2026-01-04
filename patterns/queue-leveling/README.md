@@ -20,6 +20,39 @@ The Queue-Based Load Leveling pattern is essential in a loosely coupled architec
 
 ![Design diagram](../../docs/img/diagram-queue-leveling.png "Queue-based Load Leveling")
 
+### Key Characteristics
+
+The Queue-Based Load Leveling pattern is characterized by:
+
+- **Message Queue Buffering**: An SQS queue buffers messages between producers and consumers, decoupling the two
+- **Load Smoothing**: Allows consumers to process messages at a steady rate regardless of producer traffic spikes
+- **Asynchronous Processing**: Producers don't wait for consumers; they send messages and return immediately
+- **Independent Scaling**: Producers and consumers scale independently based on their own workload
+- **Resilience**: Dead Letter Queues capture failed messages for later inspection and replay
+- **Idempotent Consumption**: Consumers must handle duplicate messages safely
+
+### When to Use
+
+The Queue-Based Load Leveling pattern is ideal for scenarios such as:
+
+- **Traffic Spikes**: Applications experiencing unpredictable bursts of requests
+- **Resource Protection**: Preventing downstream services from being overwhelmed during peak demand
+- **Batch Processing**: Processing work items at a steady, manageable rate
+- **Notification Systems**: Sending notifications without impacting the primary service
+- **Report Generation**: Asynchronously generating reports or analytics without blocking users
+- **Email/SMS Delivery**: Queuing communication tasks for eventual delivery
+- **Rate Limiting**: Controlling the rate at which backend systems process requests
+
+### Key Benefits
+
+1. **Load Smoothing**: Protects downstream services by buffering traffic spikes
+2. **Improved Availability**: Consumers remain available even if producers send bursts of requests
+3. **Independent Scaling**: Scale producers and consumers independently based on demand
+4. **Reduced Cost**: Process messages at average rate rather than peak rate, optimizing resource usage
+5. **System Stability**: Prevents services from being throttled or failing under sudden heavy loads
+6. **Performance**: Producers respond immediately without waiting for consumer processing
+7. **Loose Coupling**: Producers and consumers are completely independent with no direct dependencies
+
 ## What's inside
 
 This example demonstrates the Queue-Based Load Leveling pattern with two microservices:
