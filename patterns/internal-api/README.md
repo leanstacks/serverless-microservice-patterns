@@ -2,8 +2,6 @@
 
 This project provides a solid foundation for implementing Serverless Microservice Patterns with AWS Lambda functions using Node.js and TypeScript. The project uses the AWS CDK for infrastructure as code, Jest for testing, and modern development tooling.
 
-![Design diagram](../../docs/img/diagram-internal-api.png "Simple Web Service")
-
 ## Internal API Pattern
 
 The Internal API pattern extends the simple microservice architecture by enabling synchronous, service-to-service communication within a serverless ecosystem using Lambda-to-Lambda invocations via the AWS SDK.
@@ -13,6 +11,8 @@ There are many Serverless Microservice Patterns which may be implemented with AW
 Some may say that calling a Lambda function from a Lambda function is an anti-pattern, but I do not share that opinion. There are many valid scenarios where one microservice needs to call another microservice synchronously. One of the _core principles of microservices_ is **single responsibility** or **high cohesion**. This means that a microservice has _one_ responsibility, _one_ business or functional domain. It does one thing and does it well. Therefore it makes perfect sense that one Lambda microservice may need to synchronously call another Lambda microservice, especially when each has a specific purpose.
 
 That said, implement this pattern carefully and on an as-needed basis. It is important to remember that the calling service will block and wait for the called service to return. This increases the execution time of the calling service and therefore the cost. Consider if an event-driven, asynchronous pattern is a better fit for the use-case.
+
+![Design diagram](../../docs/img/diagram-internal-api.png "Simple Web Service")
 
 ### Key Characteristics
 
