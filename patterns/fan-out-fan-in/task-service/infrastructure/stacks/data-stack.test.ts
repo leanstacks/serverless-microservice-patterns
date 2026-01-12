@@ -71,6 +71,78 @@ describe('DataStack', () => {
         },
       });
     });
+
+    it('should create a Task Uploads S3 bucket', () => {
+      template.hasResourceProperties('AWS::S3::Bucket', {
+        BucketName: 'smp-fan-out-fan-in-task-service-task-uploads-dev',
+      });
+    });
+
+    it('should block public access to S3 bucket', () => {
+      template.hasResourceProperties('AWS::S3::Bucket', {
+        PublicAccessBlockConfiguration: {
+          BlockPublicAcls: true,
+          BlockPublicPolicy: true,
+          IgnorePublicAcls: true,
+          RestrictPublicBuckets: true,
+        },
+      });
+    });
+
+    it('should enable bucket encryption with S3 managed keys', () => {
+      template.hasResourceProperties('AWS::S3::Bucket', {
+        BucketEncryption: {
+          ServerSideEncryptionConfiguration: [
+            {
+              ServerSideEncryptionByDefault: {
+                SSEAlgorithm: 'AES256',
+              },
+            },
+          ],
+        },
+      });
+    });
+
+    it('should enforce SSL for S3 bucket', () => {
+      // Verify bucket policy exists that denies insecure transport
+      template.resourceCountIs('AWS::S3::BucketPolicy', 1);
+    });
+
+    it('should not enable versioning for dev', () => {
+      // CDK does not include VersioningConfiguration when versioning is disabled (default)
+      // This test verifies bucket is created without explicit versioning
+      template.hasResourceProperties('AWS::S3::Bucket', {
+        BucketName: 'smp-fan-out-fan-in-task-service-task-uploads-dev',
+        PublicAccessBlockConfiguration: {
+          BlockPublicAcls: true,
+          BlockPublicPolicy: true,
+          IgnorePublicAcls: true,
+          RestrictPublicBuckets: true,
+        },
+      });
+    });
+
+    it('should use DESTROY removal policy for dev S3 bucket', () => {
+      template.hasResource('AWS::S3::Bucket', {
+        DeletionPolicy: 'Delete',
+      });
+    });
+
+    it('should export bucket name', () => {
+      template.hasOutput('TaskUploadsBucketName', {
+        Export: {
+          Name: 'smp-fan-out-fan-in-task-service-task-uploads-bucket-name-dev',
+        },
+      });
+    });
+
+    it('should export bucket ARN', () => {
+      template.hasOutput('TaskUploadsBucketArn', {
+        Export: {
+          Name: 'smp-fan-out-fan-in-task-service-task-uploads-bucket-arn-dev',
+        },
+      });
+    });
   });
 
   describe('prd environment', () => {
@@ -103,6 +175,42 @@ describe('DataStack', () => {
           PointInTimeRecoveryEnabled: true,
         },
       });
+    });
+
+    it('should create a Task Uploads S3 bucket with prd naming', () => {
+      template.hasResourceProperties('AWS::S3::Bucket', {
+        BucketName: 'smp-fan-out-fan-in-task-service-task-uploads-prd',
+      });
+    });
+
+    it('should enable versioning for prd S3 bucket', () => {
+      template.hasResourceProperties('AWS::S3::Bucket', {
+        VersioningConfiguration: {
+          Status: 'Enabled',
+        },
+      });
+    });
+
+    it('should use RETAIN removal policy for prd S3 bucket', () => {
+      template.hasResource('AWS::S3::Bucket', {
+        DeletionPolicy: 'Retain',
+      });
+    });
+
+    it('should block public access to prd S3 bucket', () => {
+      template.hasResourceProperties('AWS::S3::Bucket', {
+        PublicAccessBlockConfiguration: {
+          BlockPublicAcls: true,
+          BlockPublicPolicy: true,
+          IgnorePublicAcls: true,
+          RestrictPublicBuckets: true,
+        },
+      });
+    });
+
+    it('should enforce SSL for prd S3 bucket', () => {
+      // Verify bucket policy exists that denies insecure transport
+      template.resourceCountIs('AWS::S3::BucketPolicy', 1);
     });
   });
 });

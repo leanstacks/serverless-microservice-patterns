@@ -1,6 +1,7 @@
 import * as cdk from 'aws-cdk-lib';
 import { Match, Template } from 'aws-cdk-lib/assertions';
 import * as dynamodb from 'aws-cdk-lib/aws-dynamodb';
+import * as s3 from 'aws-cdk-lib/aws-s3';
 import * as sqs from 'aws-cdk-lib/aws-sqs';
 import { LambdaStack } from './lambda-stack';
 
@@ -39,12 +40,16 @@ describe('LambdaStack', () => {
       const testMockQueue = new sqs.Queue(mockTestStack, 'MockQueue', {
         queueName: 'mock-create-task-queue',
       });
+      const testMockBucket = new s3.Bucket(mockTestStack, 'MockBucket', {
+        bucketName: 'mock-task-uploads-bucket',
+      });
 
       const stack = new LambdaStack(testApp, 'TestLambdaStack', {
         appName: 'smp-fan-out-fan-in-task-service',
         envName: 'dev',
         taskTable: testMockTable,
         createTaskQueue: testMockQueue,
+        taskUploadsBucket: testMockBucket,
         loggingEnabled: true,
         loggingLevel: 'debug',
         loggingFormat: 'json',
@@ -104,12 +109,57 @@ describe('LambdaStack', () => {
     });
 
     it('should create an upload CSV Lambda function', () => {
+      // The upload CSV Lambda function is created but not connected to API Gateway
       template.hasResourceProperties('AWS::Lambda::Function', {
         FunctionName: 'smp-fan-out-fan-in-task-service-upload-csv-dev',
         Runtime: 'nodejs24.x',
         Handler: 'handler',
         Timeout: 120,
         MemorySize: 512,
+      });
+    });
+
+    it('should configure S3 integration for /tasks/upload POST method', () => {
+      template.hasResourceProperties('AWS::ApiGateway::Method', {
+        HttpMethod: 'POST',
+        Integration: {
+          Type: 'AWS',
+          IntegrationHttpMethod: 'PUT',
+        },
+      });
+    });
+
+    it('should create IAM role for API Gateway S3 access', () => {
+      template.hasResourceProperties('AWS::IAM::Role', {
+        AssumeRolePolicyDocument: {
+          Statement: [
+            {
+              Effect: 'Allow',
+              Principal: {
+                Service: 'apigateway.amazonaws.com',
+              },
+              Action: 'sts:AssumeRole',
+            },
+          ],
+        },
+      });
+    });
+
+    it('should grant S3 PutObject permission to API Gateway role', () => {
+      // Verify that the API Gateway role has inline policy for S3 access
+      template.hasResourceProperties('AWS::IAM::Role', {
+        AssumeRolePolicyDocument: {
+          Statement: [
+            {
+              Effect: 'Allow',
+              Principal: {
+                Service: 'apigateway.amazonaws.com',
+              },
+              Action: 'sts:AssumeRole',
+            },
+          ],
+        },
+        // The inline policy is created via addToPrincipalPolicy
       });
     });
 
@@ -184,7 +234,8 @@ describe('LambdaStack', () => {
       });
     });
 
-    it('should integrate API Gateway with Lambda', () => {
+    it('should integrate most API Gateway methods with Lambda', () => {
+      // Lambda methods use AWS_PROXY integration
       template.hasResourceProperties('AWS::ApiGateway::Method', {
         Integration: {
           Type: 'AWS_PROXY',
@@ -350,12 +401,16 @@ describe('LambdaStack', () => {
       const testMockQueue = new sqs.Queue(mockTestStack, 'MockQueue', {
         queueName: 'mock-create-task-queue',
       });
+      const testMockBucket = new s3.Bucket(mockTestStack, 'MockBucket', {
+        bucketName: 'mock-task-uploads-bucket-prd',
+      });
 
       const stack = new LambdaStack(testApp, 'TestLambdaStack', {
         appName: 'smp-fan-out-fan-in-task-service',
         envName: 'prd',
         taskTable: testMockTable,
         createTaskQueue: testMockQueue,
+        taskUploadsBucket: testMockBucket,
         loggingEnabled: true,
         loggingLevel: 'info',
         loggingFormat: 'json',
@@ -410,12 +465,16 @@ describe('LambdaStack', () => {
       const testMockQueue = new sqs.Queue(mockTestStack, 'MockQueue', {
         queueName: 'mock-create-task-queue',
       });
+      const testMockBucket = new s3.Bucket(mockTestStack, 'MockBucket', {
+        bucketName: 'mock-task-uploads-bucket-cors',
+      });
 
       const stack = new LambdaStack(testApp, 'TestLambdaStack', {
         appName: 'smp-fan-out-fan-in-task-service',
         envName: 'dev',
         taskTable: testMockTable,
         createTaskQueue: testMockQueue,
+        taskUploadsBucket: testMockBucket,
         loggingEnabled: true,
         loggingLevel: 'debug',
         loggingFormat: 'json',

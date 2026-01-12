@@ -2,8 +2,10 @@ import * as path from 'path';
 import * as cdk from 'aws-cdk-lib';
 import * as apigateway from 'aws-cdk-lib/aws-apigateway';
 import * as dynamodb from 'aws-cdk-lib/aws-dynamodb';
+import * as iam from 'aws-cdk-lib/aws-iam';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
 import * as logs from 'aws-cdk-lib/aws-logs';
+import * as s3 from 'aws-cdk-lib/aws-s3';
 import * as sqs from 'aws-cdk-lib/aws-sqs';
 import { SqsEventSource } from 'aws-cdk-lib/aws-lambda-event-sources';
 import { NodejsFunction } from 'aws-cdk-lib/aws-lambda-nodejs';
@@ -32,6 +34,11 @@ export interface LambdaStackProps extends cdk.StackProps {
    * Reference to the Create Task SQS queue.
    */
   createTaskQueue: sqs.IQueue;
+
+  /**
+   * Reference to the Task Uploads S3 bucket.
+   */
+  taskUploadsBucket: s3.IBucket;
 
   /**
    * Whether to enable application logging.
@@ -377,8 +384,57 @@ export class LambdaStack extends cdk.Stack {
     // Create /tasks/upload resource
     const uploadResource = tasksResource.addResource('upload');
 
-    // Add POST method to /tasks/upload
-    uploadResource.addMethod('POST', new apigateway.LambdaIntegration(this.uploadCsvFunction));
+    // Create an IAM role for API Gateway to put objects in S3
+    const apiGatewayS3Role = new iam.Role(this, 'ApiGatewayS3Role', {
+      assumedBy: new iam.ServicePrincipal('apigateway.amazonaws.com'),
+      description: 'Role for API Gateway to put objects in Task Uploads S3 bucket',
+    });
+
+    // Grant the role permission to put objects in the S3 bucket under /new prefix
+    apiGatewayS3Role.addToPrincipalPolicy(
+      new iam.PolicyStatement({
+        actions: ['s3:PutObject', 's3:PutObjectAcl'],
+        resources: [`${props.taskUploadsBucket.bucketArn}/new/*`],
+        effect: iam.Effect.ALLOW,
+      }),
+    );
+
+    // Create S3 integration for the upload endpoint
+    const s3Integration = new apigateway.AwsIntegration({
+      service: 's3',
+      region: this.region,
+      path: `${props.taskUploadsBucket.bucketName}/new/{key}`,
+      integrationHttpMethod: 'PUT',
+      options: {
+        credentialsRole: apiGatewayS3Role,
+        integrationResponses: [
+          {
+            statusCode: '200',
+            responseTemplates: {
+              'application/json': '{"message": "File uploaded successfully"}',
+            },
+          },
+        ],
+        requestParameters: {
+          'integration.request.path.key': 'method.request.querystring.key',
+        },
+      },
+    });
+
+    // Add POST method to /tasks/upload with S3 integration
+    uploadResource.addMethod('POST', s3Integration, {
+      requestParameters: {
+        'method.request.querystring.key': true,
+      },
+      methodResponses: [
+        {
+          statusCode: '200',
+          responseModels: {
+            'application/json': apigateway.Model.EMPTY_MODEL,
+          },
+        },
+      ],
+    });
 
     // Create /tasks/{taskId} resource
     const taskResource = tasksResource.addResource('{taskId}');
