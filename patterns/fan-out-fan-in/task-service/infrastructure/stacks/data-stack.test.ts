@@ -143,6 +143,64 @@ describe('DataStack', () => {
         },
       });
     });
+
+    it('should create a Task Upload Queue', () => {
+      template.hasResourceProperties('AWS::SQS::Queue', {
+        QueueName: 'smp-fan-out-fan-in-task-service-task-upload-dev',
+        MessageRetentionPeriod: 345600, // 4 days in seconds
+        VisibilityTimeout: 300,
+      });
+    });
+
+    it('should create a Task Upload DLQ with 14-day retention', () => {
+      template.hasResourceProperties('AWS::SQS::Queue', {
+        QueueName: 'smp-fan-out-fan-in-task-service-task-upload-dlq-dev',
+        MessageRetentionPeriod: 1209600, // 14 days in seconds
+      });
+    });
+
+    it('should configure queue with DLQ redrive policy', () => {
+      template.hasResourceProperties('AWS::SQS::Queue', {
+        RedrivePolicy: {
+          deadLetterTargetArn: {
+            'Fn::GetAtt': ['TaskUploadDLQD275BF02', 'Arn'],
+          },
+          maxReceiveCount: 3,
+        },
+      });
+    });
+
+    it('should export queue URL', () => {
+      template.hasOutput('TaskUploadQueueUrl', {
+        Export: {
+          Name: 'smp-fan-out-fan-in-task-service-task-upload-queue-url-dev',
+        },
+      });
+    });
+
+    it('should export queue ARN', () => {
+      template.hasOutput('TaskUploadQueueArn', {
+        Export: {
+          Name: 'smp-fan-out-fan-in-task-service-task-upload-queue-arn-dev',
+        },
+      });
+    });
+
+    it('should export DLQ URL', () => {
+      template.hasOutput('TaskUploadDLQUrl', {
+        Export: {
+          Name: 'smp-fan-out-fan-in-task-service-task-upload-dlq-url-dev',
+        },
+      });
+    });
+
+    it('should export DLQ ARN', () => {
+      template.hasOutput('TaskUploadDLQArn', {
+        Export: {
+          Name: 'smp-fan-out-fan-in-task-service-task-upload-dlq-arn-dev',
+        },
+      });
+    });
   });
 
   describe('prd environment', () => {
@@ -211,6 +269,40 @@ describe('DataStack', () => {
     it('should enforce SSL for prd S3 bucket', () => {
       // Verify bucket policy exists that denies insecure transport
       template.resourceCountIs('AWS::S3::BucketPolicy', 1);
+    });
+
+    it('should create a Task Upload Queue with prd naming', () => {
+      template.hasResourceProperties('AWS::SQS::Queue', {
+        QueueName: 'smp-fan-out-fan-in-task-service-task-upload-prd',
+      });
+    });
+
+    it('should create a Task Upload DLQ with prd naming', () => {
+      template.hasResourceProperties('AWS::SQS::Queue', {
+        QueueName: 'smp-fan-out-fan-in-task-service-task-upload-dlq-prd',
+      });
+    });
+
+    it('should use RETAIN removal policy for prd queue', () => {
+      template.hasResource('AWS::SQS::Queue', {
+        DeletionPolicy: 'Retain',
+      });
+    });
+
+    it('should export prd queue URL', () => {
+      template.hasOutput('TaskUploadQueueUrl', {
+        Export: {
+          Name: 'smp-fan-out-fan-in-task-service-task-upload-queue-url-prd',
+        },
+      });
+    });
+
+    it('should export prd DLQ URL', () => {
+      template.hasOutput('TaskUploadDLQUrl', {
+        Export: {
+          Name: 'smp-fan-out-fan-in-task-service-task-upload-dlq-url-prd',
+        },
+      });
     });
   });
 });
