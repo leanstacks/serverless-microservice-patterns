@@ -74,13 +74,11 @@ export class DataStack extends cdk.Stack {
     });
 
     // Create Task Upload Dead Letter Queue
-    const taskUploadDLQ = new sqs.Queue(this, 'TaskUploadDLQ', {
+    this.taskUploadDLQ = new sqs.Queue(this, 'TaskUploadDLQ', {
       queueName: `${props.appName}-task-upload-dlq-${props.envName}`,
       retentionPeriod: cdk.Duration.days(14),
       removalPolicy: props.envName === 'prd' ? cdk.RemovalPolicy.RETAIN : cdk.RemovalPolicy.DESTROY,
     });
-
-    this.taskUploadDLQ = taskUploadDLQ;
 
     // Create Task Upload Queue
     this.taskUploadQueue = new sqs.Queue(this, 'TaskUploadQueue', {
@@ -89,7 +87,7 @@ export class DataStack extends cdk.Stack {
       retentionPeriod: cdk.Duration.days(4),
       removalPolicy: props.envName === 'prd' ? cdk.RemovalPolicy.RETAIN : cdk.RemovalPolicy.DESTROY,
       deadLetterQueue: {
-        queue: taskUploadDLQ,
+        queue: this.taskUploadDLQ,
         maxReceiveCount: 3,
       },
     });

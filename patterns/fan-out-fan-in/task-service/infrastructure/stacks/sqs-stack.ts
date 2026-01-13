@@ -45,7 +45,7 @@ export class SqsStack extends cdk.Stack {
     this.createTaskQueue = new sqs.Queue(this, 'CreateTaskQueue', {
       queueName: `${props.appName}-create-task-queue-${props.envName}`,
       visibilityTimeout: cdk.Duration.seconds(60),
-      retentionPeriod: cdk.Duration.days(14),
+      retentionPeriod: cdk.Duration.days(4),
       deadLetterQueue: {
         queue: this.createTaskDLQ,
         maxReceiveCount: 3,

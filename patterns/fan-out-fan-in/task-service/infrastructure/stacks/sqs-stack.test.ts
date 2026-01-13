@@ -28,7 +28,7 @@ describe('SqsStack', () => {
       template.hasResourceProperties('AWS::SQS::Queue', {
         QueueName: 'test-app-create-task-queue-dev',
         VisibilityTimeout: 60,
-        MessageRetentionPeriod: 1209600, // 14 days in seconds
+        MessageRetentionPeriod: 345600, // 4 days in seconds
       });
     });
 
