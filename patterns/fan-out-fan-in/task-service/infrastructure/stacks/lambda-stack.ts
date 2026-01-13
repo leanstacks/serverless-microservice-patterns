@@ -264,35 +264,6 @@ export class LambdaStack extends cdk.Stack {
     // Grant the Lambda function read and write access to the DynamoDB table
     props.taskTable.grantReadWriteData(this.deleteTaskFunction);
 
-    // Create the upload CSV Lambda function
-    this.uploadCsvFunction = new NodejsFunction(this, 'UploadCsvFunction', {
-      functionName: `${props.appName}-upload-csv-${props.envName}`,
-      runtime: lambda.Runtime.NODEJS_24_X,
-      handler: 'handler',
-      entry: path.join(__dirname, '../../src/handlers/upload-csv.ts'),
-      environment: lambdaEnvironment,
-      timeout: cdk.Duration.seconds(120),
-      memorySize: 512,
-      bundling: {
-        minify: true,
-        sourceMap: true,
-      },
-      loggingFormat: lambda.LoggingFormat.JSON,
-      applicationLogLevelV2: lambda.ApplicationLogLevel.DEBUG,
-      systemLogLevelV2: lambda.SystemLogLevel.INFO,
-      logGroup: new logs.LogGroup(this, 'UploadCsvFunctionLogGroup', {
-        logGroupName: `/aws/lambda/${props.appName}-upload-csv-${props.envName}`,
-        retention: props.envName === 'prd' ? logs.RetentionDays.ONE_MONTH : logs.RetentionDays.ONE_WEEK,
-        removalPolicy: props.envName === 'prd' ? cdk.RemovalPolicy.RETAIN : cdk.RemovalPolicy.DESTROY,
-      }),
-    });
-
-    // Grant the Lambda function read access to the DynamoDB table
-    props.taskTable.grantReadData(this.uploadCsvFunction);
-
-    // Grant the Lambda function send message access to the SQS queue
-    props.createTaskQueue.grantSendMessages(this.uploadCsvFunction);
-
     // Create the create task subscriber Lambda function
     this.createTaskSubscriberFunction = new NodejsFunction(this, 'CreateTaskSubscriberFunction', {
       functionName: `${props.appName}-create-task-subscriber-${props.envName}`,
@@ -508,13 +479,6 @@ export class LambdaStack extends cdk.Stack {
       value: this.deleteTaskFunction.functionArn,
       description: 'ARN of the delete task Lambda function',
       exportName: `${props.appName}-delete-task-function-arn-${props.envName}`,
-    });
-
-    // Output the upload CSV function ARN
-    new cdk.CfnOutput(this, 'UploadCsvFunctionArn', {
-      value: this.uploadCsvFunction.functionArn,
-      description: 'ARN of the upload CSV Lambda function',
-      exportName: `${props.appName}-upload-csv-function-arn-${props.envName}`,
     });
 
     // Output the create task subscriber function ARN

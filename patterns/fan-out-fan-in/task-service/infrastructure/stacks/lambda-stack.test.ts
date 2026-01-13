@@ -109,17 +109,6 @@ describe('LambdaStack', () => {
       });
     });
 
-    it('should create an upload CSV Lambda function', () => {
-      // The upload CSV Lambda function is created but not connected to API Gateway
-      template.hasResourceProperties('AWS::Lambda::Function', {
-        FunctionName: 'smp-fan-out-fan-in-task-service-upload-csv-dev',
-        Runtime: 'nodejs24.x',
-        Handler: 'handler',
-        Timeout: 120,
-        MemorySize: 512,
-      });
-    });
-
     it('should create an upload task subscriber Lambda function', () => {
       template.hasResourceProperties('AWS::Lambda::Function', {
         FunctionName: 'smp-fan-out-fan-in-task-service-upload-task-subscriber-dev',
@@ -360,14 +349,6 @@ describe('LambdaStack', () => {
       template.hasOutput('DeleteTaskFunctionArn', {
         Export: {
           Name: 'smp-fan-out-fan-in-task-service-delete-task-function-arn-dev',
-        },
-      });
-    });
-
-    it('should export upload CSV function ARN', () => {
-      template.hasOutput('UploadCsvFunctionArn', {
-        Export: {
-          Name: 'smp-fan-out-fan-in-task-service-upload-csv-function-arn-dev',
         },
       });
     });
