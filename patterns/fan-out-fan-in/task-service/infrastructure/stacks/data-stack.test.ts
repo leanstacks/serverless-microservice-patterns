@@ -201,6 +201,66 @@ describe('DataStack', () => {
         },
       });
     });
+
+    it('should create a Create Task Queue with correct properties', () => {
+      template.hasResourceProperties('AWS::SQS::Queue', {
+        QueueName: 'smp-fan-out-fan-in-task-service-create-task-queue-dev',
+        VisibilityTimeout: 60,
+        MessageRetentionPeriod: 345600, // 4 days in seconds
+      });
+    });
+
+    it('should create a Create Task Dead Letter Queue with correct properties', () => {
+      template.hasResourceProperties('AWS::SQS::Queue', {
+        QueueName: 'smp-fan-out-fan-in-task-service-create-task-queue-dlq-dev',
+        MessageRetentionPeriod: 1209600, // 14 days in seconds
+      });
+    });
+
+    it('should configure Create Task Queue with DLQ redrive policy', () => {
+      template.hasResourceProperties('AWS::SQS::Queue', {
+        QueueName: 'smp-fan-out-fan-in-task-service-create-task-queue-dev',
+        RedrivePolicy: {
+          maxReceiveCount: 3,
+        },
+      });
+    });
+
+    it('should output Create Task Queue URL', () => {
+      template.hasOutput('CreateTaskQueueUrl', {
+        Description: 'URL of the Create Task Queue',
+        Export: {
+          Name: 'smp-fan-out-fan-in-task-service-create-task-queue-url-dev',
+        },
+      });
+    });
+
+    it('should output Create Task Queue ARN', () => {
+      template.hasOutput('CreateTaskQueueArn', {
+        Description: 'ARN of the Create Task Queue',
+        Export: {
+          Name: 'smp-fan-out-fan-in-task-service-create-task-queue-arn-dev',
+        },
+      });
+    });
+
+    it('should output Create Task DLQ URL', () => {
+      template.hasOutput('CreateTaskDLQUrl', {
+        Description: 'URL of the Create Task Dead Letter Queue',
+        Export: {
+          Name: 'smp-fan-out-fan-in-task-service-create-task-dlq-url-dev',
+        },
+      });
+    });
+
+    it('should output Create Task DLQ ARN', () => {
+      template.hasOutput('CreateTaskDLQArn', {
+        Description: 'ARN of the Create Task Dead Letter Queue',
+        Export: {
+          Name: 'smp-fan-out-fan-in-task-service-create-task-dlq-arn-dev',
+        },
+      });
+    });
   });
 
   describe('prd environment', () => {
@@ -301,6 +361,72 @@ describe('DataStack', () => {
       template.hasOutput('TaskUploadDLQUrl', {
         Export: {
           Name: 'smp-fan-out-fan-in-task-service-task-upload-dlq-url-prd',
+        },
+      });
+    });
+
+    it('should create a Create Task Queue with prd naming', () => {
+      template.hasResourceProperties('AWS::SQS::Queue', {
+        QueueName: 'smp-fan-out-fan-in-task-service-create-task-queue-prd',
+        VisibilityTimeout: 60,
+        MessageRetentionPeriod: 345600, // 4 days in seconds
+      });
+    });
+
+    it('should create a Create Task DLQ with prd naming', () => {
+      template.hasResourceProperties('AWS::SQS::Queue', {
+        QueueName: 'smp-fan-out-fan-in-task-service-create-task-queue-dlq-prd',
+        MessageRetentionPeriod: 1209600, // 14 days in seconds
+      });
+    });
+
+    it('should use RETAIN removal policy for prd Create Task Queue', () => {
+      template.hasResource('AWS::SQS::Queue', {
+        DeletionPolicy: 'Retain',
+      });
+    });
+
+    it('should configure prd Create Task Queue with DLQ redrive policy', () => {
+      template.hasResourceProperties('AWS::SQS::Queue', {
+        QueueName: 'smp-fan-out-fan-in-task-service-create-task-queue-prd',
+        RedrivePolicy: {
+          maxReceiveCount: 3,
+        },
+      });
+    });
+
+    it('should export prd Create Task Queue URL', () => {
+      template.hasOutput('CreateTaskQueueUrl', {
+        Description: 'URL of the Create Task Queue',
+        Export: {
+          Name: 'smp-fan-out-fan-in-task-service-create-task-queue-url-prd',
+        },
+      });
+    });
+
+    it('should export prd Create Task Queue ARN', () => {
+      template.hasOutput('CreateTaskQueueArn', {
+        Description: 'ARN of the Create Task Queue',
+        Export: {
+          Name: 'smp-fan-out-fan-in-task-service-create-task-queue-arn-prd',
+        },
+      });
+    });
+
+    it('should export prd Create Task DLQ URL', () => {
+      template.hasOutput('CreateTaskDLQUrl', {
+        Description: 'URL of the Create Task Dead Letter Queue',
+        Export: {
+          Name: 'smp-fan-out-fan-in-task-service-create-task-dlq-url-prd',
+        },
+      });
+    });
+
+    it('should export prd Create Task DLQ ARN', () => {
+      template.hasOutput('CreateTaskDLQArn', {
+        Description: 'ARN of the Create Task Dead Letter Queue',
+        Export: {
+          Name: 'smp-fan-out-fan-in-task-service-create-task-dlq-arn-prd',
         },
       });
     });

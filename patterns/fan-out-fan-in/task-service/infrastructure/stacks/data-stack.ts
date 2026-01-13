@@ -44,6 +44,16 @@ export class DataStack extends cdk.Stack {
    */
   public readonly taskUploadDLQ: sqs.IQueue;
 
+  /**
+   * The Create Task SQS queue.
+   */
+  public readonly createTaskQueue: sqs.Queue;
+
+  /**
+   * The Dead Letter Queue for the Create Task queue.
+   */
+  public readonly createTaskDLQ: sqs.Queue;
+
   constructor(scope: Construct, id: string, props: DataStackProps) {
     super(scope, id, props);
 
@@ -98,60 +108,107 @@ export class DataStack extends cdk.Stack {
       new s3n.SqsDestination(this.taskUploadQueue),
     );
 
-    // Output the table name
+    // Create Dead Letter Queue for Create Task Queue
+    this.createTaskDLQ = new sqs.Queue(this, 'CreateTaskDLQ', {
+      queueName: `${props.appName}-create-task-queue-dlq-${props.envName}`,
+      retentionPeriod: cdk.Duration.days(14),
+      removalPolicy: props.envName === 'prd' ? cdk.RemovalPolicy.RETAIN : cdk.RemovalPolicy.DESTROY,
+    });
+
+    // Create the Create Task Queue
+    this.createTaskQueue = new sqs.Queue(this, 'CreateTaskQueue', {
+      queueName: `${props.appName}-create-task-queue-${props.envName}`,
+      visibilityTimeout: cdk.Duration.seconds(60),
+      retentionPeriod: cdk.Duration.days(4),
+      deadLetterQueue: {
+        queue: this.createTaskDLQ,
+        maxReceiveCount: 3,
+      },
+      removalPolicy: props.envName === 'prd' ? cdk.RemovalPolicy.RETAIN : cdk.RemovalPolicy.DESTROY,
+    });
+
+    // Output the Task table name
     new cdk.CfnOutput(this, 'TaskTableName', {
       value: this.taskTable.tableName,
       description: 'The name of the Task DynamoDB table',
       exportName: `${props.appName}-task-table-name-${props.envName}`,
     });
 
-    // Output the table ARN
+    // Output the Task table ARN
     new cdk.CfnOutput(this, 'TaskTableArn', {
       value: this.taskTable.tableArn,
       description: 'The ARN of the Task DynamoDB table',
       exportName: `${props.appName}-task-table-arn-${props.envName}`,
     });
 
-    // Output the bucket name
+    // Output the Task Uploads bucket name
     new cdk.CfnOutput(this, 'TaskUploadsBucketName', {
       value: this.taskUploadsBucket.bucketName,
       description: 'The name of the Task Uploads S3 bucket',
       exportName: `${props.appName}-task-uploads-bucket-name-${props.envName}`,
     });
 
-    // Output the bucket ARN
+    // Output the Task Uploads bucket ARN
     new cdk.CfnOutput(this, 'TaskUploadsBucketArn', {
       value: this.taskUploadsBucket.bucketArn,
       description: 'The ARN of the Task Uploads S3 bucket',
       exportName: `${props.appName}-task-uploads-bucket-arn-${props.envName}`,
     });
 
-    // Output the queue URL
+    // Output the Task Upload queue URL
     new cdk.CfnOutput(this, 'TaskUploadQueueUrl', {
       value: this.taskUploadQueue.queueUrl,
       description: 'The URL of the Task Upload Queue',
       exportName: `${props.appName}-task-upload-queue-url-${props.envName}`,
     });
 
-    // Output the queue ARN
+    // Output the Task Upload queue ARN
     new cdk.CfnOutput(this, 'TaskUploadQueueArn', {
       value: this.taskUploadQueue.queueArn,
       description: 'The ARN of the Task Upload Queue',
       exportName: `${props.appName}-task-upload-queue-arn-${props.envName}`,
     });
 
-    // Output the DLQ URL
+    // Output the Task Upload DLQ URL
     new cdk.CfnOutput(this, 'TaskUploadDLQUrl', {
       value: this.taskUploadDLQ.queueUrl,
       description: 'The URL of the Task Upload Dead Letter Queue',
       exportName: `${props.appName}-task-upload-dlq-url-${props.envName}`,
     });
 
-    // Output the DLQ ARN
+    // Output the Task Upload DLQ ARN
     new cdk.CfnOutput(this, 'TaskUploadDLQArn', {
       value: this.taskUploadDLQ.queueArn,
       description: 'The ARN of the Task Upload Dead Letter Queue',
       exportName: `${props.appName}-task-upload-dlq-arn-${props.envName}`,
+    });
+
+    // Output the Create Task queue URL
+    new cdk.CfnOutput(this, 'CreateTaskQueueUrl', {
+      value: this.createTaskQueue.queueUrl,
+      description: 'URL of the Create Task Queue',
+      exportName: `${props.appName}-create-task-queue-url-${props.envName}`,
+    });
+
+    // Output the Create Task queue ARN
+    new cdk.CfnOutput(this, 'CreateTaskQueueArn', {
+      value: this.createTaskQueue.queueArn,
+      description: 'ARN of the Create Task Queue',
+      exportName: `${props.appName}-create-task-queue-arn-${props.envName}`,
+    });
+
+    // Output the Create Task DLQ URL
+    new cdk.CfnOutput(this, 'CreateTaskDLQUrl', {
+      value: this.createTaskDLQ.queueUrl,
+      description: 'URL of the Create Task Dead Letter Queue',
+      exportName: `${props.appName}-create-task-dlq-url-${props.envName}`,
+    });
+
+    // Output the Create Task DLQ ARN
+    new cdk.CfnOutput(this, 'CreateTaskDLQArn', {
+      value: this.createTaskDLQ.queueArn,
+      description: 'ARN of the Create Task Dead Letter Queue',
+      exportName: `${props.appName}-create-task-dlq-arn-${props.envName}`,
     });
   }
 }
