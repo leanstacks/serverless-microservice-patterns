@@ -49,6 +49,7 @@ describe('LambdaStack', () => {
         envName: 'dev',
         taskTable: testMockTable,
         createTaskQueue: testMockQueue,
+        taskUploadQueue: testMockQueue,
         taskUploadsBucket: testMockBucket,
         loggingEnabled: true,
         loggingLevel: 'debug',
@@ -115,6 +116,16 @@ describe('LambdaStack', () => {
         Runtime: 'nodejs24.x',
         Handler: 'handler',
         Timeout: 120,
+        MemorySize: 512,
+      });
+    });
+
+    it('should create an upload task subscriber Lambda function', () => {
+      template.hasResourceProperties('AWS::Lambda::Function', {
+        FunctionName: 'smp-fan-out-fan-in-task-service-upload-task-subscriber-dev',
+        Runtime: 'nodejs24.x',
+        Handler: 'handler',
+        Timeout: 60,
         MemorySize: 512,
       });
     });
@@ -361,6 +372,14 @@ describe('LambdaStack', () => {
       });
     });
 
+    it('should export upload task subscriber function ARN', () => {
+      template.hasOutput('UploadTaskSubscriberFunctionArn', {
+        Export: {
+          Name: 'smp-fan-out-fan-in-task-service-upload-task-subscriber-function-arn-dev',
+        },
+      });
+    });
+
     it('should grant Lambda read-write access to DynamoDB for update function', () => {
       template.hasResourceProperties('AWS::IAM::Policy', {
         PolicyDocument: {
@@ -410,6 +429,7 @@ describe('LambdaStack', () => {
         envName: 'prd',
         taskTable: testMockTable,
         createTaskQueue: testMockQueue,
+        taskUploadQueue: testMockQueue,
         taskUploadsBucket: testMockBucket,
         loggingEnabled: true,
         loggingLevel: 'info',
@@ -474,6 +494,7 @@ describe('LambdaStack', () => {
         envName: 'dev',
         taskTable: testMockTable,
         createTaskQueue: testMockQueue,
+        taskUploadQueue: testMockQueue,
         taskUploadsBucket: testMockBucket,
         loggingEnabled: true,
         loggingLevel: 'debug',

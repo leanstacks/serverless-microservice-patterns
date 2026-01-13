@@ -7,6 +7,7 @@ const envSchema = z.object({
   // Required variables
   TASKS_TABLE: z.string().min(1, 'TASKS_TABLE environment variable is required'),
   CREATE_TASK_QUEUE_URL: z.string().min(1, 'CREATE_TASK_QUEUE_URL environment variable is required'),
+  TASK_UPLOADS_BUCKET: z.string().min(1, 'TASK_UPLOADS_BUCKET environment variable is required'),
 
   // Optional variables with defaults
   AWS_REGION: z.string().default('us-east-1'),

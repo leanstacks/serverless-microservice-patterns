@@ -36,6 +36,11 @@ export interface LambdaStackProps extends cdk.StackProps {
   createTaskQueue: sqs.IQueue;
 
   /**
+   * Reference to the Task Upload SQS queue.
+   */
+  taskUploadQueue: sqs.IQueue;
+
+  /**
    * Reference to the Task Uploads S3 bucket.
    */
   taskUploadsBucket: s3.IBucket;
@@ -110,8 +115,24 @@ export class LambdaStack extends cdk.Stack {
    */
   public readonly createTaskSubscriberFunction: NodejsFunction;
 
+  /**
+   * The upload task subscriber Lambda function.
+   */
+  public readonly uploadTaskSubscriberFunction: NodejsFunction;
+
   constructor(scope: Construct, id: string, props: LambdaStackProps) {
     super(scope, id, props);
+
+    // Common Lambda environment variables
+    const lambdaEnvironment = {
+      TASKS_TABLE: props.taskTable.tableName,
+      CREATE_TASK_QUEUE_URL: props.createTaskQueue.queueUrl,
+      TASK_UPLOADS_BUCKET: props.taskUploadsBucket.bucketName,
+      LOGGING_ENABLED: props.loggingEnabled.toString(),
+      LOGGING_LEVEL: props.loggingLevel,
+      LOGGING_FORMAT: props.loggingFormat,
+      CORS_ALLOW_ORIGIN: props.corsAllowOrigin,
+    };
 
     // Create the list tasks Lambda function
     this.listTasksFunction = new NodejsFunction(this, 'ListTasksFunction', {
@@ -119,14 +140,7 @@ export class LambdaStack extends cdk.Stack {
       runtime: lambda.Runtime.NODEJS_24_X,
       handler: 'handler',
       entry: path.join(__dirname, '../../src/handlers/list-tasks.ts'),
-      environment: {
-        TASKS_TABLE: props.taskTable.tableName,
-        CREATE_TASK_QUEUE_URL: props.createTaskQueue.queueUrl,
-        LOGGING_ENABLED: props.loggingEnabled.toString(),
-        LOGGING_LEVEL: props.loggingLevel,
-        LOGGING_FORMAT: props.loggingFormat,
-        CORS_ALLOW_ORIGIN: props.corsAllowOrigin,
-      },
+      environment: lambdaEnvironment,
       timeout: cdk.Duration.seconds(10),
       memorySize: 256,
       bundling: {
@@ -152,14 +166,7 @@ export class LambdaStack extends cdk.Stack {
       runtime: lambda.Runtime.NODEJS_24_X,
       handler: 'handler',
       entry: path.join(__dirname, '../../src/handlers/get-task.ts'),
-      environment: {
-        TASKS_TABLE: props.taskTable.tableName,
-        CREATE_TASK_QUEUE_URL: props.createTaskQueue.queueUrl,
-        LOGGING_ENABLED: props.loggingEnabled.toString(),
-        LOGGING_LEVEL: props.loggingLevel,
-        LOGGING_FORMAT: props.loggingFormat,
-        CORS_ALLOW_ORIGIN: props.corsAllowOrigin,
-      },
+      environment: lambdaEnvironment,
       timeout: cdk.Duration.seconds(10),
       memorySize: 256,
       bundling: {
@@ -185,14 +192,7 @@ export class LambdaStack extends cdk.Stack {
       runtime: lambda.Runtime.NODEJS_24_X,
       handler: 'handler',
       entry: path.join(__dirname, '../../src/handlers/create-task.ts'),
-      environment: {
-        TASKS_TABLE: props.taskTable.tableName,
-        CREATE_TASK_QUEUE_URL: props.createTaskQueue.queueUrl,
-        LOGGING_ENABLED: props.loggingEnabled.toString(),
-        LOGGING_LEVEL: props.loggingLevel,
-        LOGGING_FORMAT: props.loggingFormat,
-        CORS_ALLOW_ORIGIN: props.corsAllowOrigin,
-      },
+      environment: lambdaEnvironment,
       timeout: cdk.Duration.seconds(10),
       memorySize: 256,
       bundling: {
@@ -218,14 +218,7 @@ export class LambdaStack extends cdk.Stack {
       runtime: lambda.Runtime.NODEJS_24_X,
       handler: 'handler',
       entry: path.join(__dirname, '../../src/handlers/update-task.ts'),
-      environment: {
-        TASKS_TABLE: props.taskTable.tableName,
-        CREATE_TASK_QUEUE_URL: props.createTaskQueue.queueUrl,
-        LOGGING_ENABLED: props.loggingEnabled.toString(),
-        LOGGING_LEVEL: props.loggingLevel,
-        LOGGING_FORMAT: props.loggingFormat,
-        CORS_ALLOW_ORIGIN: props.corsAllowOrigin,
-      },
+      environment: lambdaEnvironment,
       timeout: cdk.Duration.seconds(10),
       memorySize: 256,
       bundling: {
@@ -251,14 +244,7 @@ export class LambdaStack extends cdk.Stack {
       runtime: lambda.Runtime.NODEJS_24_X,
       handler: 'handler',
       entry: path.join(__dirname, '../../src/handlers/delete-task.ts'),
-      environment: {
-        TASKS_TABLE: props.taskTable.tableName,
-        CREATE_TASK_QUEUE_URL: props.createTaskQueue.queueUrl,
-        LOGGING_ENABLED: props.loggingEnabled.toString(),
-        LOGGING_LEVEL: props.loggingLevel,
-        LOGGING_FORMAT: props.loggingFormat,
-        CORS_ALLOW_ORIGIN: props.corsAllowOrigin,
-      },
+      environment: lambdaEnvironment,
       timeout: cdk.Duration.seconds(10),
       memorySize: 256,
       bundling: {
@@ -284,14 +270,7 @@ export class LambdaStack extends cdk.Stack {
       runtime: lambda.Runtime.NODEJS_24_X,
       handler: 'handler',
       entry: path.join(__dirname, '../../src/handlers/upload-csv.ts'),
-      environment: {
-        TASKS_TABLE: props.taskTable.tableName,
-        CREATE_TASK_QUEUE_URL: props.createTaskQueue.queueUrl,
-        LOGGING_ENABLED: props.loggingEnabled.toString(),
-        LOGGING_LEVEL: props.loggingLevel,
-        LOGGING_FORMAT: props.loggingFormat,
-        CORS_ALLOW_ORIGIN: props.corsAllowOrigin,
-      },
+      environment: lambdaEnvironment,
       timeout: cdk.Duration.seconds(120),
       memorySize: 512,
       bundling: {
@@ -320,14 +299,7 @@ export class LambdaStack extends cdk.Stack {
       runtime: lambda.Runtime.NODEJS_24_X,
       handler: 'handler',
       entry: path.join(__dirname, '../../src/handlers/create-task-subscriber.ts'),
-      environment: {
-        TASKS_TABLE: props.taskTable.tableName,
-        CREATE_TASK_QUEUE_URL: props.createTaskQueue.queueUrl,
-        LOGGING_ENABLED: props.loggingEnabled.toString(),
-        LOGGING_LEVEL: props.loggingLevel,
-        LOGGING_FORMAT: props.loggingFormat,
-        CORS_ALLOW_ORIGIN: props.corsAllowOrigin,
-      },
+      environment: lambdaEnvironment,
       timeout: cdk.Duration.seconds(30),
       memorySize: 256,
       bundling: {
@@ -350,6 +322,47 @@ export class LambdaStack extends cdk.Stack {
     // Add SQS event source to the Lambda function
     this.createTaskSubscriberFunction.addEventSource(
       new SqsEventSource(props.createTaskQueue, {
+        maxConcurrency: 5,
+        batchSize: 10,
+        reportBatchItemFailures: true,
+      }),
+    );
+
+    // Create the upload task subscriber Lambda function
+    this.uploadTaskSubscriberFunction = new NodejsFunction(this, 'UploadTaskSubscriberFunction', {
+      functionName: `${props.appName}-upload-task-subscriber-${props.envName}`,
+      runtime: lambda.Runtime.NODEJS_24_X,
+      handler: 'handler',
+      entry: path.join(__dirname, '../../src/handlers/upload-task-subscriber.ts'),
+      environment: lambdaEnvironment,
+      timeout: cdk.Duration.seconds(60),
+      memorySize: 512,
+      bundling: {
+        minify: true,
+        sourceMap: true,
+      },
+      loggingFormat: lambda.LoggingFormat.JSON,
+      applicationLogLevelV2: lambda.ApplicationLogLevel.DEBUG,
+      systemLogLevelV2: lambda.SystemLogLevel.INFO,
+      logGroup: new logs.LogGroup(this, 'UploadTaskSubscriberFunctionLogGroup', {
+        logGroupName: `/aws/lambda/${props.appName}-upload-task-subscriber-${props.envName}`,
+        retention: props.envName === 'prd' ? logs.RetentionDays.ONE_MONTH : logs.RetentionDays.ONE_WEEK,
+        removalPolicy: props.envName === 'prd' ? cdk.RemovalPolicy.RETAIN : cdk.RemovalPolicy.DESTROY,
+      }),
+    });
+
+    // Grant the Lambda function read and write access to the DynamoDB table
+    props.taskTable.grantReadWriteData(this.uploadTaskSubscriberFunction);
+
+    // Grant the Lambda function read access to the S3 bucket
+    props.taskUploadsBucket.grantRead(this.uploadTaskSubscriberFunction);
+
+    // Grant the Lambda function send message access to the SQS queue
+    props.createTaskQueue.grantSendMessages(this.uploadTaskSubscriberFunction);
+
+    // Add SQS event source to the Lambda function
+    this.uploadTaskSubscriberFunction.addEventSource(
+      new SqsEventSource(props.taskUploadQueue, {
         maxConcurrency: 5,
         batchSize: 10,
         reportBatchItemFailures: true,
@@ -509,6 +522,13 @@ export class LambdaStack extends cdk.Stack {
       value: this.createTaskSubscriberFunction.functionArn,
       description: 'ARN of the create task subscriber Lambda function',
       exportName: `${props.appName}-create-task-subscriber-function-arn-${props.envName}`,
+    });
+
+    // Output the upload task subscriber function ARN
+    new cdk.CfnOutput(this, 'UploadTaskSubscriberFunctionArn', {
+      value: this.uploadTaskSubscriberFunction.functionArn,
+      description: 'ARN of the upload task subscriber Lambda function',
+      exportName: `${props.appName}-upload-task-subscriber-function-arn-${props.envName}`,
     });
   }
 }

@@ -45,6 +45,7 @@ new LambdaStack(app, `${config.CDK_APP_NAME}-lambda-stack-${config.CDK_ENV}`, {
   description: `Lambda functions and API Gateway for ${config.CDK_APP_NAME} (${config.CDK_ENV})`,
   taskTable: dataStack.taskTable,
   createTaskQueue: sqsStack.createTaskQueue,
+  taskUploadQueue: dataStack.taskUploadQueue,
   taskUploadsBucket: dataStack.taskUploadsBucket,
   loggingEnabled: config.CDK_APP_LOGGING_ENABLED,
   loggingLevel: config.CDK_APP_LOGGING_LEVEL,

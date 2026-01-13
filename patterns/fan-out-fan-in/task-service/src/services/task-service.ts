@@ -4,6 +4,7 @@ import { DeleteCommand, GetCommand, PutCommand, ScanCommand, UpdateCommand } fro
 import { CreateTaskDto } from '../models/create-task-dto.js';
 import { UpdateTaskDto } from '../models/update-task-dto.js';
 import { Task, TaskItem, TaskKeys, toTask } from '../models/task.js';
+import { parseCsv } from './csv-service.js';
 import { config } from '../utils/config.js';
 import { dynamoDocClient } from '../utils/dynamodb-client.js';
 import { logger } from '../utils/logger.js';
@@ -265,6 +266,31 @@ export const fanOutCreateTasks = async (createTaskDtos: CreateTaskDto[]): Promis
     return messageIds;
   } catch (error) {
     logger.error({ error }, '[TaskService] < fanOutCreateTasks - failed to publish messages to queue');
+    throw error;
+  }
+};
+
+/**
+ * Parses CSV content and fans out create tasks by publishing to SQS queue
+ * @param csvContent - The CSV file content as a string
+ * @returns Promise that resolves when all tasks have been fanned out
+ * @throws Error if CSV parsing or message publishing fails
+ */
+export const parseCsvAndCreateTasks = async (csvContent: string): Promise<void> => {
+  logger.info('[TaskService] > parseCsvAndCreateTasks');
+
+  try {
+    // Parse CSV content into CreateTaskDto objects
+    const tasks = parseCsv(csvContent);
+
+    logger.debug({ taskCount: tasks.length }, '[TaskService] parseCsvAndCreateTasks - parsed CSV');
+
+    // Fan out create tasks to SQS queue
+    await fanOutCreateTasks(tasks);
+
+    logger.info({ taskCount: tasks.length }, '[TaskService] < parseCsvAndCreateTasks - successfully fanned out tasks');
+  } catch (error) {
+    logger.error({ error }, '[TaskService] < parseCsvAndCreateTasks - failed to parse CSV and fan out tasks');
     throw error;
   }
 };

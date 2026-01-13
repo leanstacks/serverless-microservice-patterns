@@ -19,6 +19,9 @@ describe('config', () => {
 
     // Reset environment variables to a clean slate
     process.env = { ...originalEnv };
+
+    // Always set required variables with defaults
+    process.env.TASK_UPLOADS_BUCKET = 'my-uploads-bucket';
   });
 
   afterEach(() => {
@@ -32,6 +35,7 @@ describe('config', () => {
       // Arrange
       process.env.TASKS_TABLE = 'my-tasks-table';
       process.env.CREATE_TASK_QUEUE_URL = 'https://sqs.us-east-1.amazonaws.com/123456789/my-queue';
+      process.env.TASK_UPLOADS_BUCKET = 'my-uploads-bucket';
 
       // Act
       config = require('./config').config;
@@ -45,6 +49,7 @@ describe('config', () => {
       // Arrange
       process.env.TASKS_TABLE = 'my-tasks-table';
       process.env.CREATE_TASK_QUEUE_URL = 'https://sqs.us-east-1.amazonaws.com/123456789/my-queue';
+      process.env.TASK_UPLOADS_BUCKET = 'my-uploads-bucket';
 
       // Act
       config = require('./config').config;
