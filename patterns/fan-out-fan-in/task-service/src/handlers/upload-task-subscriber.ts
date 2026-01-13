@@ -1,7 +1,7 @@
 import { Context, SQSBatchItemFailure, SQSBatchResponse, SQSEvent, S3EventRecord } from 'aws-lambda';
 import { z } from 'zod';
 
-import { parseCsvAndCreateTasks } from '../services/task-service.js';
+import { parseCsvAndCreateTasks } from '../services/task-file-service.js';
 import { logger, withRequestTracking } from '../utils/logger.js';
 import { getObjectContent } from '../utils/s3-client.js';
 
@@ -98,7 +98,7 @@ export const handler = async (event: SQSEvent, context: Context): Promise<SQSBat
           );
 
           // Parse the CSV and fan out create tasks
-          await parseCsvAndCreateTasks(csvContent);
+          await parseCsvAndCreateTasks(csvContent, objectKey);
 
           logger.debug(
             { messageId: record.messageId, bucketName, objectKey },

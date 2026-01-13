@@ -30,6 +30,11 @@ export class DataStack extends cdk.Stack {
   public readonly taskTable: dynamodb.ITable;
 
   /**
+   * The TaskFile DynamoDB table.
+   */
+  public readonly taskFileTable: dynamodb.ITable;
+
+  /**
    * The Task Uploads S3 bucket.
    */
   public readonly taskUploadsBucket: s3.IBucket;
@@ -62,6 +67,25 @@ export class DataStack extends cdk.Stack {
       tableName: `${props.appName}-task-${props.envName}`,
       partitionKey: {
         name: 'pk',
+        type: dynamodb.AttributeType.STRING,
+      },
+      billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
+      removalPolicy: props.envName === 'prd' ? cdk.RemovalPolicy.RETAIN : cdk.RemovalPolicy.DESTROY,
+      pointInTimeRecoverySpecification: {
+        pointInTimeRecoveryEnabled: props.envName === 'prd',
+      },
+      encryption: dynamodb.TableEncryption.AWS_MANAGED,
+    });
+
+    // Create TaskFile table
+    this.taskFileTable = new dynamodb.Table(this, 'TaskFileTable', {
+      tableName: `${props.appName}-task-file-${props.envName}`,
+      partitionKey: {
+        name: 'pk',
+        type: dynamodb.AttributeType.STRING,
+      },
+      sortKey: {
+        name: 'sk',
         type: dynamodb.AttributeType.STRING,
       },
       billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
@@ -139,6 +163,20 @@ export class DataStack extends cdk.Stack {
       value: this.taskTable.tableArn,
       description: 'The ARN of the Task DynamoDB table',
       exportName: `${props.appName}-task-table-arn-${props.envName}`,
+    });
+
+    // Output the TaskFile table name
+    new cdk.CfnOutput(this, 'TaskFileTableName', {
+      value: this.taskFileTable.tableName,
+      description: 'The name of the TaskFile DynamoDB table',
+      exportName: `${props.appName}-task-file-table-name-${props.envName}`,
+    });
+
+    // Output the TaskFile table ARN
+    new cdk.CfnOutput(this, 'TaskFileTableArn', {
+      value: this.taskFileTable.tableArn,
+      description: 'The ARN of the TaskFile DynamoDB table',
+      exportName: `${props.appName}-task-file-table-arn-${props.envName}`,
     });
 
     // Output the Task Uploads bucket name

@@ -35,6 +35,7 @@ jest.mock('../utils/logger', () => ({
 jest.mock('../utils/config', () => ({
   config: {
     TASKS_TABLE: 'test-tasks-table',
+    TASK_FILE_TABLE: 'test-task-file-table',
     CREATE_TASK_QUEUE_URL: 'https://sqs.us-east-1.amazonaws.com/123456789012/test-queue',
   },
 }));

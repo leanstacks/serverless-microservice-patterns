@@ -31,6 +31,11 @@ export interface LambdaStackProps extends cdk.StackProps {
   taskTable: dynamodb.ITable;
 
   /**
+   * Reference to the TaskFile DynamoDB table.
+   */
+  taskFileTable: dynamodb.ITable;
+
+  /**
    * Reference to the Create Task SQS queue.
    */
   createTaskQueue: sqs.IQueue;
@@ -126,6 +131,7 @@ export class LambdaStack extends cdk.Stack {
     // Common Lambda environment variables
     const lambdaEnvironment = {
       TASKS_TABLE: props.taskTable.tableName,
+      TASK_FILE_TABLE: props.taskFileTable.tableName,
       CREATE_TASK_QUEUE_URL: props.createTaskQueue.queueUrl,
       TASK_UPLOADS_BUCKET: props.taskUploadsBucket.bucketName,
       LOGGING_ENABLED: props.loggingEnabled.toString(),
@@ -324,6 +330,9 @@ export class LambdaStack extends cdk.Stack {
 
     // Grant the Lambda function read and write access to the DynamoDB table
     props.taskTable.grantReadWriteData(this.uploadTaskSubscriberFunction);
+
+    // Grant the Lambda function write access to the TaskFile DynamoDB table
+    props.taskFileTable.grantWriteData(this.uploadTaskSubscriberFunction);
 
     // Grant the Lambda function read access to the S3 bucket
     props.taskUploadsBucket.grantRead(this.uploadTaskSubscriberFunction);

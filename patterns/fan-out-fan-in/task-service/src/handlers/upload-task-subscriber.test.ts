@@ -19,7 +19,7 @@ jest.mock('../utils/s3-client', () => ({
   getObjectContent: mockGetObjectContent,
 }));
 
-jest.mock('../services/task-service', () => ({
+jest.mock('../services/task-file-service', () => ({
   parseCsvAndCreateTasks: mockParseCsvAndCreateTasks,
 }));
 
@@ -116,7 +116,7 @@ Task 2,Detail 2,2026-01-15T12:00:00Z,true`;
       // Assert
       expect(result.batchItemFailures).toHaveLength(0);
       expect(mockGetObjectContent).toHaveBeenCalledWith('test-bucket', 'uploads/test-file.csv');
-      expect(mockParseCsvAndCreateTasks).toHaveBeenCalledWith(csvContent);
+      expect(mockParseCsvAndCreateTasks).toHaveBeenCalledWith(csvContent, 'uploads/test-file.csv');
     });
 
     it('should handle multiple SQS messages', async () => {

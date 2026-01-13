@@ -22,6 +22,9 @@ describe('config', () => {
 
     // Always set required variables with defaults
     process.env.TASK_UPLOADS_BUCKET = 'my-uploads-bucket';
+    process.env.TASKS_TABLE = 'my-tasks-table';
+    process.env.TASK_FILE_TABLE = 'my-task-file-table';
+    process.env.CREATE_TASK_QUEUE_URL = 'https://sqs.us-east-1.amazonaws.com/123456789/my-queue';
   });
 
   afterEach(() => {
@@ -34,6 +37,7 @@ describe('config', () => {
     it('should validate and return config with required environment variables', () => {
       // Arrange
       process.env.TASKS_TABLE = 'my-tasks-table';
+      process.env.TASK_FILE_TABLE = 'my-task-file-table';
       process.env.CREATE_TASK_QUEUE_URL = 'https://sqs.us-east-1.amazonaws.com/123456789/my-queue';
       process.env.TASK_UPLOADS_BUCKET = 'my-uploads-bucket';
 
@@ -43,11 +47,13 @@ describe('config', () => {
       // Assert
       expect(config).toBeDefined();
       expect(config.TASKS_TABLE).toBe('my-tasks-table');
+      expect(config.TASK_FILE_TABLE).toBe('my-task-file-table');
     });
 
     it('should apply default values for optional environment variables', () => {
       // Arrange
       process.env.TASKS_TABLE = 'my-tasks-table';
+      process.env.TASK_FILE_TABLE = 'my-task-file-table';
       process.env.CREATE_TASK_QUEUE_URL = 'https://sqs.us-east-1.amazonaws.com/123456789/my-queue';
       process.env.TASK_UPLOADS_BUCKET = 'my-uploads-bucket';
 
@@ -65,6 +71,7 @@ describe('config', () => {
     it('should use provided values instead of defaults', () => {
       // Arrange
       process.env.TASKS_TABLE = 'my-tasks-table';
+      process.env.TASK_FILE_TABLE = 'my-task-file-table';
       process.env.CREATE_TASK_QUEUE_URL = 'https://sqs.us-east-1.amazonaws.com/123456789/my-queue';
       process.env.AWS_REGION = 'us-west-2';
       process.env.LOGGING_ENABLED = 'false';
@@ -216,7 +223,9 @@ describe('config', () => {
     it('should refresh config when environment variables change', () => {
       // Arrange
       process.env.TASKS_TABLE = 'original-table';
+      process.env.TASK_FILE_TABLE = 'original-task-file-table';
       process.env.CREATE_TASK_QUEUE_URL = 'https://sqs.us-east-1.amazonaws.com/123456789/my-queue';
+      process.env.TASK_UPLOADS_BUCKET = 'my-uploads-bucket';
       process.env.AWS_REGION = 'us-east-1';
       refreshConfig = require('./config').refreshConfig;
       config = require('./config').config;
@@ -237,7 +246,9 @@ describe('config', () => {
     it('should update cached config after refresh', () => {
       // Arrange
       process.env.TASKS_TABLE = 'original-table';
+      process.env.TASK_FILE_TABLE = 'original-task-file-table';
       process.env.CREATE_TASK_QUEUE_URL = 'https://sqs.us-east-1.amazonaws.com/123456789/my-queue';
+      process.env.TASK_UPLOADS_BUCKET = 'my-uploads-bucket';
       refreshConfig = require('./config').refreshConfig;
       const configModule = require('./config');
       const originalConfig = configModule.config;
@@ -257,7 +268,9 @@ describe('config', () => {
     it('should throw error on refresh if validation fails', () => {
       // Arrange
       process.env.TASKS_TABLE = 'valid-table';
+      process.env.TASK_FILE_TABLE = 'valid-task-file-table';
       process.env.CREATE_TASK_QUEUE_URL = 'https://sqs.us-east-1.amazonaws.com/123456789/my-queue';
+      process.env.TASK_UPLOADS_BUCKET = 'my-uploads-bucket';
       refreshConfig = require('./config').refreshConfig;
       config = require('./config').config;
 
@@ -275,7 +288,9 @@ describe('config', () => {
     it('should cache config after first validation', () => {
       // Arrange
       process.env.TASKS_TABLE = 'my-tasks-table';
+      process.env.TASK_FILE_TABLE = 'my-task-file-table';
       process.env.CREATE_TASK_QUEUE_URL = 'https://sqs.us-east-1.amazonaws.com/123456789/my-queue';
+      process.env.TASK_UPLOADS_BUCKET = 'my-uploads-bucket';
       const configModule = require('./config');
 
       // Act
@@ -289,7 +304,9 @@ describe('config', () => {
     it('should return cached config on subsequent imports', () => {
       // Arrange
       process.env.TASKS_TABLE = 'cached-table';
+      process.env.TASK_FILE_TABLE = 'cached-task-file-table';
       process.env.CREATE_TASK_QUEUE_URL = 'https://sqs.us-east-1.amazonaws.com/123456789/my-queue';
+      process.env.TASK_UPLOADS_BUCKET = 'my-uploads-bucket';
       process.env.AWS_REGION = 'us-west-1';
 
       // Act
@@ -341,7 +358,9 @@ describe('config', () => {
     it('should export Config type matching validated schema', () => {
       // Arrange
       process.env.TASKS_TABLE = 'my-tasks-table';
+      process.env.TASK_FILE_TABLE = 'my-task-file-table';
       process.env.CREATE_TASK_QUEUE_URL = 'https://sqs.us-east-1.amazonaws.com/123456789/my-queue';
+      process.env.TASK_UPLOADS_BUCKET = 'my-uploads-bucket';
       process.env.AWS_REGION = 'us-east-1';
       process.env.LOGGING_ENABLED = 'true';
       process.env.LOGGING_LEVEL = 'info';
@@ -352,6 +371,7 @@ describe('config', () => {
 
       // Assert - verify all expected properties exist and have correct types
       expect(typeof config.TASKS_TABLE).toBe('string');
+      expect(typeof config.TASK_FILE_TABLE).toBe('string');
       expect(typeof config.AWS_REGION).toBe('string');
       expect(typeof config.LOGGING_ENABLED).toBe('boolean');
       expect(['debug', 'info', 'warn', 'error']).toContain(config.LOGGING_LEVEL);

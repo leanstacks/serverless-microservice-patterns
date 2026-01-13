@@ -43,11 +43,19 @@ describe('LambdaStack', () => {
       const testMockBucket = new s3.Bucket(mockTestStack, 'MockBucket', {
         bucketName: 'mock-task-uploads-bucket',
       });
+      const testMockFileTable = new dynamodb.Table(mockTestStack, 'MockFileTable', {
+        tableName: 'mock-task-file-table',
+        partitionKey: {
+          name: 'pk',
+          type: dynamodb.AttributeType.STRING,
+        },
+      });
 
       const stack = new LambdaStack(testApp, 'TestLambdaStack', {
         appName: 'smp-fan-out-fan-in-task-service',
         envName: 'dev',
         taskTable: testMockTable,
+        taskFileTable: testMockFileTable,
         createTaskQueue: testMockQueue,
         taskUploadQueue: testMockQueue,
         taskUploadsBucket: testMockBucket,
@@ -398,6 +406,13 @@ describe('LambdaStack', () => {
           type: dynamodb.AttributeType.STRING,
         },
       });
+      const testMockFileTable = new dynamodb.Table(mockTestStack, 'MockTaskFileTable', {
+        tableName: 'mock-task-file-table',
+        partitionKey: {
+          name: 'pk',
+          type: dynamodb.AttributeType.STRING,
+        },
+      });
       const testMockQueue = new sqs.Queue(mockTestStack, 'MockQueue', {
         queueName: 'mock-create-task-queue',
       });
@@ -409,6 +424,7 @@ describe('LambdaStack', () => {
         appName: 'smp-fan-out-fan-in-task-service',
         envName: 'prd',
         taskTable: testMockTable,
+        taskFileTable: testMockFileTable,
         createTaskQueue: testMockQueue,
         taskUploadQueue: testMockQueue,
         taskUploadsBucket: testMockBucket,
@@ -463,6 +479,13 @@ describe('LambdaStack', () => {
           type: dynamodb.AttributeType.STRING,
         },
       });
+      const testMockFileTable = new dynamodb.Table(mockTestStack, 'MockTaskFileTable', {
+        tableName: 'mock-task-file-table',
+        partitionKey: {
+          name: 'pk',
+          type: dynamodb.AttributeType.STRING,
+        },
+      });
       const testMockQueue = new sqs.Queue(mockTestStack, 'MockQueue', {
         queueName: 'mock-create-task-queue',
       });
@@ -474,6 +497,7 @@ describe('LambdaStack', () => {
         appName: 'smp-fan-out-fan-in-task-service',
         envName: 'dev',
         taskTable: testMockTable,
+        taskFileTable: testMockFileTable,
         createTaskQueue: testMockQueue,
         taskUploadQueue: testMockQueue,
         taskUploadsBucket: testMockBucket,
