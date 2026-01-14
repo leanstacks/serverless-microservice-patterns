@@ -1,5 +1,5 @@
 import { randomUUID } from 'crypto';
-import { PutCommand } from '@aws-sdk/lib-dynamodb';
+import { PutCommand, UpdateCommand } from '@aws-sdk/lib-dynamodb';
 
 import { CreateTaskFileDto } from '../models/create-task-file-dto.js';
 import { ProcessingStatus, TaskFile, TaskFileItem, TaskFileKeys, toTaskFile } from '../models/task-file.js';
@@ -82,7 +82,7 @@ export const parseCsvAndCreateTasks = async (csvContent: string, fileName: strin
     );
 
     // Fan out create tasks to SQS queue
-    await fanOutCreateTasks(tasks);
+    await fanOutCreateTasks(tasks, taskFile.id);
 
     logger.info(
       { taskFileId: taskFile.id, taskCount: tasks.length },
@@ -92,6 +92,45 @@ export const parseCsvAndCreateTasks = async (csvContent: string, fileName: strin
     return taskFile.id;
   } catch (error) {
     logger.error({ error }, '[TaskFileService] < parseCsvAndCreateTasks - failed to parse CSV and fan out tasks');
+    throw error;
+  }
+};
+
+export const incrementTaskFileProcessedCount = async (taskFileId: string): Promise<TaskFile> => {
+  logger.info({ taskFileId }, '[TaskFileService] > incrementTaskFileProcessedCount');
+
+  try {
+    const command = new UpdateCommand({
+      TableName: config.TASK_FILE_TABLE,
+      Key: {
+        pk: TaskFileKeys.pk(taskFileId),
+        sk: TaskFileKeys.sk(),
+      },
+      UpdateExpression:
+        'SET processingStatus = :processingStatus, processedCount = processedCount + :inc, unprocessedCount = unprocessedCount - :inc, updatedAt = :updatedAt',
+      ExpressionAttributeValues: {
+        ':processingStatus': ProcessingStatus.IN_PROGRESS,
+        ':inc': 1,
+        ':updatedAt': new Date().toISOString(),
+      },
+      ReturnValues: 'ALL_NEW',
+    });
+    logger.debug({ input: command.input }, '[TaskFileService] incrementTaskFileProcessedCount - UpdateCommandInput');
+
+    const result = await dynamoDocClient.send(command);
+    const taskFile = toTaskFile(result.Attributes as TaskFileItem);
+    logger.debug({ taskFile }, '[TaskFileService] incrementTaskFileProcessedCount - updated TaskFile');
+
+    logger.info(
+      { taskFileId },
+      '[TaskFileService] < incrementTaskFileProcessedCount - successfully updated processed count',
+    );
+    return taskFile;
+  } catch (error) {
+    logger.error(
+      { taskFileId, error: String(error) },
+      '[TaskFileService] < incrementTaskFileProcessedCount - failed to update processed count in DynamoDB',
+    );
     throw error;
   }
 };

@@ -1,9 +1,10 @@
 import { Context, SQSBatchItemFailure, SQSBatchResponse, SQSEvent } from 'aws-lambda';
 import { z } from 'zod';
 
-import { CreateTaskDtoSchema } from '../models/create-task-dto.js';
+import { CreateTaskMessage, CreateTaskMessageSchema } from '../models/create-task-message.js';
 import { createTask } from '../services/task-service.js';
 import { logger, withRequestTracking } from '../utils/logger.js';
+import { incrementTaskFileProcessedCount } from '../services/task-file-service.js';
 
 /**
  * Schema for validating SQS event structure.
@@ -49,13 +50,13 @@ export const handler = async (event: SQSEvent, context: Context): Promise<SQSBat
     const results = await Promise.allSettled(
       event.Records.map(async (record) => {
         try {
-          logger.info({ messageId: record.messageId }, '[CreateTaskSubscriber] processing message');
+          logger.debug({ messageId: record.messageId }, '[CreateTaskSubscriber] processing message');
 
           // Parse and validate the message body
-          let createTaskDto;
+          let createTaskMessage: CreateTaskMessage;
           try {
             const parsedBody = JSON.parse(record.body);
-            createTaskDto = CreateTaskDtoSchema.parse(parsedBody);
+            createTaskMessage = CreateTaskMessageSchema.parse(parsedBody);
           } catch (error) {
             logger.error(
               { messageId: record.messageId, error, body: record.body },
@@ -65,12 +66,12 @@ export const handler = async (event: SQSEvent, context: Context): Promise<SQSBat
           }
 
           // Create the task
-          const task = await createTask(createTaskDto);
-          logger.info(
-            { messageId: record.messageId, taskId: task.id },
-            '[CreateTaskSubscriber] successfully created task',
-          );
+          await createTask(createTaskMessage.task);
 
+          // Increment the processed count for the associated TaskFile
+          await incrementTaskFileProcessedCount(createTaskMessage.taskFileId);
+
+          // Successfully processed the message
           return { messageId: record.messageId, success: true };
         } catch (error) {
           logger.error({ messageId: record.messageId, error }, '[CreateTaskSubscriber] failed to process message');
@@ -98,7 +99,7 @@ export const handler = async (event: SQSEvent, context: Context): Promise<SQSBat
       },
       '[CreateTaskSubscriber] < handler - completed processing',
     );
-
+    // Return the batch item failures for SQS to retry
     return { batchItemFailures };
   } catch (error) {
     logger.error({ error }, '[CreateTaskSubscriber] < handler - unexpected error during processing');

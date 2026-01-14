@@ -296,6 +296,9 @@ export class LambdaStack extends cdk.Stack {
     // Grant the Lambda function read and write access to the DynamoDB table
     props.taskTable.grantReadWriteData(this.createTaskSubscriberFunction);
 
+    // Grant the Lambda function read and write access to the TaskFile DynamoDB table
+    props.taskFileTable.grantReadWriteData(this.createTaskSubscriberFunction);
+
     // Add SQS event source to the Lambda function
     this.createTaskSubscriberFunction.addEventSource(
       new SqsEventSource(props.createTaskQueue, {

@@ -1,4 +1,4 @@
-import { createTaskFile, parseCsvAndCreateTasks } from './task-file-service';
+import { createTaskFile, parseCsvAndCreateTasks, incrementTaskFileProcessedCount } from './task-file-service';
 import { CreateTaskFileDto } from '../models/create-task-file-dto';
 import { ProcessingStatus } from '../models/task-file';
 
@@ -131,10 +131,10 @@ describe('task-file-service', () => {
       expect(mockParseCsv).toHaveBeenCalledWith(csvContent);
       expect(mockSend).toHaveBeenCalledTimes(1);
       expect(mockSendToQueue).toHaveBeenCalledTimes(1);
-      expect(mockSendToQueue).toHaveBeenCalledWith(
-        'https://sqs.us-east-1.amazonaws.com/123456789012/test-queue',
-        mockCreateTaskDto,
-      );
+      expect(mockSendToQueue).toHaveBeenCalledWith('https://sqs.us-east-1.amazonaws.com/123456789012/test-queue', {
+        task: mockCreateTaskDto,
+        taskFileId,
+      });
     });
 
     it('should return the TaskFile ID after successfully fanning out tasks', async () => {
@@ -158,6 +158,22 @@ describe('task-file-service', () => {
       expect(mockParseCsv).toHaveBeenCalledWith(csvContent);
       expect(mockSend).toHaveBeenCalledTimes(1);
       expect(mockSendToQueue).toHaveBeenCalledTimes(2);
+      expect(mockSendToQueue).toHaveBeenNthCalledWith(
+        1,
+        'https://sqs.us-east-1.amazonaws.com/123456789012/test-queue',
+        {
+          task: mockCreateTaskDtos[0],
+          taskFileId: '123e4567-e89b-12d3-a456-426614174000',
+        },
+      );
+      expect(mockSendToQueue).toHaveBeenNthCalledWith(
+        2,
+        'https://sqs.us-east-1.amazonaws.com/123456789012/test-queue',
+        {
+          task: mockCreateTaskDtos[1],
+          taskFileId: '123e4567-e89b-12d3-a456-426614174000',
+        },
+      );
     });
 
     it('should throw error if CSV parsing fails', async () => {
@@ -234,6 +250,184 @@ describe('task-file-service', () => {
       expect(putCommand.input.Item.recordCount).toBe(3);
       expect(putCommand.input.Item.fileName).toBe('multi-task.csv');
       expect(mockSendToQueue).toHaveBeenCalledTimes(3);
+    });
+  });
+
+  describe('incrementTaskFileProcessedCount', () => {
+    it('should increment processed count and decrement unprocessed count', async () => {
+      // Arrange
+      const taskFileId = '550e8400-e29b-41d4-a716-446655440000';
+      const now = '2026-01-14T10:00:00.000Z';
+      jest.spyOn(Date.prototype, 'toISOString').mockReturnValue(now);
+
+      const mockTaskFile = {
+        pk: `TASK_FILE#${taskFileId}`,
+        sk: 'METADATA',
+        id: taskFileId,
+        fileName: 'test.csv',
+        processingStatus: ProcessingStatus.IN_PROGRESS,
+        recordCount: 5,
+        processedCount: 2,
+        unprocessedCount: 3,
+        createdAt: now,
+        updatedAt: now,
+      };
+
+      mockSend.mockResolvedValueOnce({ Attributes: mockTaskFile });
+
+      // Act
+      const result = await incrementTaskFileProcessedCount(taskFileId);
+
+      // Assert
+      expect(mockSend).toHaveBeenCalledTimes(1);
+      const updateCommand = mockSend.mock.calls[0][0];
+      expect(updateCommand.input.TableName).toBe('test-task-file-table');
+      expect(updateCommand.input.Key).toEqual({
+        pk: `TASKFILE#${taskFileId}`,
+        sk: 'DETAIL',
+      });
+      expect(updateCommand.input.UpdateExpression).toContain('processedCount = processedCount + :inc');
+      expect(updateCommand.input.UpdateExpression).toContain('unprocessedCount = unprocessedCount - :inc');
+      expect(updateCommand.input.ExpressionAttributeValues[':inc']).toBe(1);
+      expect(updateCommand.input.ExpressionAttributeValues[':processingStatus']).toBe(ProcessingStatus.IN_PROGRESS);
+      expect(result.id).toBe(taskFileId);
+      expect(result.processedCount).toBe(2);
+      expect(result.unprocessedCount).toBe(3);
+    });
+
+    it('should set status to IN_PROGRESS', async () => {
+      // Arrange
+      const taskFileId = '550e8400-e29b-41d4-a716-446655440000';
+      const now = '2026-01-14T10:00:00.000Z';
+      jest.spyOn(Date.prototype, 'toISOString').mockReturnValue(now);
+
+      const mockTaskFile = {
+        pk: `TASKFILE#${taskFileId}`,
+        sk: 'DETAIL',
+        id: taskFileId,
+        fileName: 'test.csv',
+        processingStatus: ProcessingStatus.IN_PROGRESS,
+        recordCount: 5,
+        processedCount: 1,
+        unprocessedCount: 4,
+        createdAt: now,
+        updatedAt: now,
+      };
+
+      mockSend.mockResolvedValueOnce({ Attributes: mockTaskFile });
+
+      // Act
+      await incrementTaskFileProcessedCount(taskFileId);
+
+      // Assert
+      const updateCommand = mockSend.mock.calls[0][0];
+      expect(updateCommand.input.ExpressionAttributeValues[':processingStatus']).toBe(ProcessingStatus.IN_PROGRESS);
+    });
+
+    it('should update the updatedAt timestamp', async () => {
+      // Arrange
+      const taskFileId = '550e8400-e29b-41d4-a716-446655440000';
+      const now = '2026-01-14T10:00:00.000Z';
+      jest.spyOn(Date.prototype, 'toISOString').mockReturnValue(now);
+
+      const mockTaskFile = {
+        pk: `TASKFILE#${taskFileId}`,
+        sk: 'DETAIL',
+        id: taskFileId,
+        fileName: 'test.csv',
+        processingStatus: ProcessingStatus.IN_PROGRESS,
+        recordCount: 5,
+        processedCount: 1,
+        unprocessedCount: 4,
+        createdAt: '2026-01-14T09:00:00.000Z',
+        updatedAt: now,
+      };
+
+      mockSend.mockResolvedValueOnce({ Attributes: mockTaskFile });
+
+      // Act
+      await incrementTaskFileProcessedCount(taskFileId);
+
+      // Assert
+      const updateCommand = mockSend.mock.calls[0][0];
+      expect(updateCommand.input.ExpressionAttributeValues[':updatedAt']).toBe(now);
+    });
+
+    it('should return a TaskFile object', async () => {
+      // Arrange
+      const taskFileId = '550e8400-e29b-41d4-a716-446655440000';
+      const now = '2026-01-14T10:00:00.000Z';
+
+      const mockTaskFile = {
+        pk: `TASKFILE#${taskFileId}`,
+        sk: 'DETAIL',
+        id: taskFileId,
+        fileName: 'test.csv',
+        processingStatus: ProcessingStatus.IN_PROGRESS,
+        recordCount: 10,
+        processedCount: 5,
+        unprocessedCount: 5,
+        createdAt: '2026-01-14T09:00:00.000Z',
+        updatedAt: now,
+      };
+
+      mockSend.mockResolvedValueOnce({ Attributes: mockTaskFile });
+
+      // Act
+      const result = await incrementTaskFileProcessedCount(taskFileId);
+
+      // Assert
+      expect(result).toEqual({
+        id: taskFileId,
+        fileName: 'test.csv',
+        processingStatus: ProcessingStatus.IN_PROGRESS,
+        recordCount: 10,
+        processedCount: 5,
+        unprocessedCount: 5,
+        createdAt: '2026-01-14T09:00:00.000Z',
+        updatedAt: now,
+      });
+    });
+
+    it('should handle DynamoDB errors gracefully', async () => {
+      // Arrange
+      const taskFileId = '550e8400-e29b-41d4-a716-446655440000';
+      const dbError = new Error('DynamoDB UpdateCommand failed');
+      mockSend.mockRejectedValueOnce(dbError);
+
+      // Act & Assert
+      await expect(incrementTaskFileProcessedCount(taskFileId)).rejects.toThrow('DynamoDB UpdateCommand failed');
+      expect(mockLoggerError).toHaveBeenCalled();
+    });
+
+    it('should log success message with taskFileId', async () => {
+      // Arrange
+      const taskFileId = '550e8400-e29b-41d4-a716-446655440000';
+      const now = '2026-01-14T10:00:00.000Z';
+
+      const mockTaskFile = {
+        pk: `TASKFILE#${taskFileId}`,
+        sk: 'DETAIL',
+        id: taskFileId,
+        fileName: 'test.csv',
+        processingStatus: ProcessingStatus.IN_PROGRESS,
+        recordCount: 5,
+        processedCount: 2,
+        unprocessedCount: 3,
+        createdAt: now,
+        updatedAt: now,
+      };
+
+      mockSend.mockResolvedValueOnce({ Attributes: mockTaskFile });
+
+      // Act
+      await incrementTaskFileProcessedCount(taskFileId);
+
+      // Assert
+      expect(mockLoggerInfo).toHaveBeenCalledWith(
+        expect.objectContaining({ taskFileId }),
+        expect.stringContaining('incrementTaskFileProcessedCount'),
+      );
     });
   });
 });

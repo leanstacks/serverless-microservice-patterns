@@ -243,16 +243,17 @@ export const deleteTask = async (id: string): Promise<boolean> => {
 /**
  * Fans out create task DTOs by publishing each as a message to the Create Task SQS queue
  * @param createTaskDtos - Array of CreateTaskDto objects to fan out
+ * @param taskFileId - The ID of the task file associated with the tasks
  * @returns Promise that resolves to an array of message IDs for successfully published messages
  * @throws Error if the SQS send operations fail
  */
-export const fanOutCreateTasks = async (createTaskDtos: CreateTaskDto[]): Promise<string[]> => {
+export const fanOutCreateTasks = async (createTaskDtos: CreateTaskDto[], taskFileId: string): Promise<string[]> => {
   logger.info({ count: createTaskDtos.length }, '[TaskService] > fanOutCreateTasks');
 
   try {
     // Publish each CreateTaskDto to the queue in parallel
     const publishPromises = createTaskDtos.map(async (dto) => {
-      return sendToQueue(config.CREATE_TASK_QUEUE_URL, dto);
+      return sendToQueue(config.CREATE_TASK_QUEUE_URL, { task: dto, taskFileId });
     });
 
     const messageIds = await Promise.all(publishPromises);

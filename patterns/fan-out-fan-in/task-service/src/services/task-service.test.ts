@@ -801,6 +801,7 @@ describe('task-service', () => {
   describe('fanOutCreateTasks', () => {
     it('should publish each CreateTaskDto to the SQS queue in parallel', async () => {
       // Arrange
+      const taskFileId = '123e4567-e89b-12d3-a456-426614174000';
       const createTaskDtos: CreateTaskDto[] = [
         { title: 'Task 1', isComplete: false },
         { title: 'Task 2', detail: 'Details for task 2', isComplete: true },
@@ -811,31 +812,32 @@ describe('task-service', () => {
       mockSendToQueue.mockResolvedValueOnce('msg-id-3');
 
       // Act
-      const messageIds = await fanOutCreateTasks(createTaskDtos);
+      const messageIds = await fanOutCreateTasks(createTaskDtos, taskFileId);
 
       // Assert
       expect(messageIds).toEqual(['msg-id-1', 'msg-id-2', 'msg-id-3']);
       expect(mockSendToQueue).toHaveBeenCalledTimes(3);
-      expect(mockSendToQueue).toHaveBeenCalledWith(
-        'https://sqs.us-east-1.amazonaws.com/123456789012/test-queue',
-        createTaskDtos[0],
-      );
-      expect(mockSendToQueue).toHaveBeenCalledWith(
-        'https://sqs.us-east-1.amazonaws.com/123456789012/test-queue',
-        createTaskDtos[1],
-      );
-      expect(mockSendToQueue).toHaveBeenCalledWith(
-        'https://sqs.us-east-1.amazonaws.com/123456789012/test-queue',
-        createTaskDtos[2],
-      );
+      expect(mockSendToQueue).toHaveBeenCalledWith('https://sqs.us-east-1.amazonaws.com/123456789012/test-queue', {
+        task: createTaskDtos[0],
+        taskFileId,
+      });
+      expect(mockSendToQueue).toHaveBeenCalledWith('https://sqs.us-east-1.amazonaws.com/123456789012/test-queue', {
+        task: createTaskDtos[1],
+        taskFileId,
+      });
+      expect(mockSendToQueue).toHaveBeenCalledWith('https://sqs.us-east-1.amazonaws.com/123456789012/test-queue', {
+        task: createTaskDtos[2],
+        taskFileId,
+      });
     });
 
     it('should handle empty array of CreateTaskDtos', async () => {
       // Arrange
+      const taskFileId = '123e4567-e89b-12d3-a456-426614174000';
       const createTaskDtos: CreateTaskDto[] = [];
 
       // Act
-      const messageIds = await fanOutCreateTasks(createTaskDtos);
+      const messageIds = await fanOutCreateTasks(createTaskDtos, taskFileId);
 
       // Assert
       expect(messageIds).toEqual([]);
@@ -844,17 +846,19 @@ describe('task-service', () => {
 
     it('should handle SQS errors and rethrow them', async () => {
       // Arrange
+      const taskFileId = '123e4567-e89b-12d3-a456-426614174000';
       const createTaskDtos: CreateTaskDto[] = [{ title: 'Task 1', isComplete: false }];
       const mockError = new Error('SQS send error');
       mockSendToQueue.mockRejectedValue(mockError);
 
       // Act & Assert
-      await expect(fanOutCreateTasks(createTaskDtos)).rejects.toThrow('SQS send error');
+      await expect(fanOutCreateTasks(createTaskDtos, taskFileId)).rejects.toThrow('SQS send error');
       expect(mockSendToQueue).toHaveBeenCalledTimes(1);
     });
 
     it('should publish all messages even if some fail (Promise.all behavior)', async () => {
       // Arrange
+      const taskFileId = '123e4567-e89b-12d3-a456-426614174000';
       const createTaskDtos: CreateTaskDto[] = [
         { title: 'Task 1', isComplete: false },
         { title: 'Task 2', isComplete: false },
@@ -863,12 +867,13 @@ describe('task-service', () => {
       mockSendToQueue.mockRejectedValueOnce(new Error('SQS error'));
 
       // Act & Assert
-      await expect(fanOutCreateTasks(createTaskDtos)).rejects.toThrow('SQS error');
+      await expect(fanOutCreateTasks(createTaskDtos, taskFileId)).rejects.toThrow('SQS error');
       expect(mockSendToQueue).toHaveBeenCalledTimes(2);
     });
 
     it('should return message IDs in the same order as input DTOs', async () => {
       // Arrange
+      const taskFileId = '123e4567-e89b-12d3-a456-426614174000';
       const createTaskDtos: CreateTaskDto[] = [
         { title: 'First Task', isComplete: false },
         { title: 'Second Task', isComplete: false },
@@ -879,7 +884,7 @@ describe('task-service', () => {
       mockSendToQueue.mockResolvedValueOnce('msg-gamma');
 
       // Act
-      const messageIds = await fanOutCreateTasks(createTaskDtos);
+      const messageIds = await fanOutCreateTasks(createTaskDtos, taskFileId);
 
       // Assert
       expect(messageIds).toEqual(['msg-alpha', 'msg-beta', 'msg-gamma']);
