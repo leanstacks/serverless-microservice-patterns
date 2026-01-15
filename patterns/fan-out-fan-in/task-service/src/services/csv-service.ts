@@ -1,3 +1,8 @@
+/**
+ * @module CsvService
+ * @description Service for parsing and validating CSV content.
+ */
+
 import { parse } from 'csv-parse/sync';
 import { z } from 'zod';
 

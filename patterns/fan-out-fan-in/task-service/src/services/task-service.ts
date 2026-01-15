@@ -1,3 +1,8 @@
+/**
+ * @module TaskService
+ * @description Service for managing Task records in DynamoDB and publishing "create task" messages to SQS.
+ */
+
 import { randomUUID } from 'crypto';
 import { DeleteCommand, GetCommand, PutCommand, ScanCommand, UpdateCommand } from '@aws-sdk/lib-dynamodb';
 

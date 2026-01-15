@@ -2,7 +2,7 @@ import { Context, SQSBatchItemFailure, SQSBatchResponse, SQSEvent } from 'aws-la
 import { z } from 'zod';
 
 import { CreateTaskMessage, CreateTaskMessageSchema } from '../models/create-task-message.js';
-import { createTask } from '../services/task-service.js';
+import { createTask, deleteTask } from '../services/task-service.js';
 import { logger, withRequestTracking } from '../utils/logger.js';
 import { incrementTaskFileProcessedCount } from '../services/task-file-service.js';
 
@@ -59,22 +59,35 @@ export const handler = async (event: SQSEvent, context: Context): Promise<SQSBat
             createTaskMessage = CreateTaskMessageSchema.parse(parsedBody);
           } catch (error) {
             logger.error(
-              { messageId: record.messageId, error, body: record.body },
+              { messageId: record.messageId, error: String(error), body: record.body },
               '[CreateTaskSubscriber] failed to parse or validate message body',
             );
-            throw new Error('Invalid message body');
+            throw new Error(`Invalid message body for messageId: ${record.messageId}`);
           }
 
           // Create the task
-          await createTask(createTaskMessage.task);
+          const task = await createTask(createTaskMessage.task);
 
           // Increment the processed count for the associated TaskFile
-          await incrementTaskFileProcessedCount(createTaskMessage.taskFileId);
+          try {
+            await incrementTaskFileProcessedCount(createTaskMessage.taskFileId);
+          } catch (error) {
+            // Failed to update TaskFile processed count; delete the created task for idempotency
+            await deleteTask(task.id);
+            logger.error(
+              { messageId: record.messageId, error: String(error), taskFileId: createTaskMessage.taskFileId },
+              '[CreateTaskSubscriber] failed to increment processed count for TaskFile',
+            );
+            throw error;
+          }
 
           // Successfully processed the message
           return { messageId: record.messageId, success: true };
         } catch (error) {
-          logger.error({ messageId: record.messageId, error }, '[CreateTaskSubscriber] failed to process message');
+          logger.error(
+            { messageId: record.messageId, error: String(error) },
+            '[CreateTaskSubscriber] failed to process message',
+          );
           throw error;
         }
       }),

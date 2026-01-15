@@ -1,3 +1,8 @@
+/**
+ * @module TaskFileService
+ * @description Service for managing TaskFile records in DynamoDB and processing CSV uploads.
+ */
+
 import { randomUUID } from 'crypto';
 import { PutCommand, UpdateCommand } from '@aws-sdk/lib-dynamodb';
 
@@ -48,7 +53,10 @@ export const createTaskFile = async (createTaskFileDto: CreateTaskFileDto): Prom
     logger.info({ id: taskFile.id }, '[TaskFileService] < createTaskFile - successfully created task file');
     return taskFile;
   } catch (error) {
-    logger.error({ error }, '[TaskFileService] < createTaskFile - failed to create task file in DynamoDB');
+    logger.error(
+      { error: String(error) },
+      '[TaskFileService] < createTaskFile - failed to create task file in DynamoDB',
+    );
     throw error;
   }
 };
@@ -91,7 +99,10 @@ export const parseCsvAndCreateTasks = async (csvContent: string, fileName: strin
 
     return taskFile.id;
   } catch (error) {
-    logger.error({ error }, '[TaskFileService] < parseCsvAndCreateTasks - failed to parse CSV and fan out tasks');
+    logger.error(
+      { error: String(error) },
+      '[TaskFileService] < parseCsvAndCreateTasks - failed to parse CSV and fan out tasks',
+    );
     throw error;
   }
 };
