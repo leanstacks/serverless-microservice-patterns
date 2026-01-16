@@ -6,13 +6,15 @@
 import { randomUUID } from 'crypto';
 import { PutCommand, UpdateCommand } from '@aws-sdk/lib-dynamodb';
 
+import { logger } from '../utils/logger.js';
+import { config } from '../utils/config.js';
+import { SNSEventName } from '@/utils/constants.js';
 import { CreateTaskFileDto } from '../models/create-task-file-dto.js';
 import { ProcessingStatus, TaskFile, TaskFileItem, TaskFileKeys, toTaskFile } from '../models/task-file.js';
 import { parseCsv } from './csv-service.js';
 import { fanOutCreateTasks } from './task-service.js';
-import { config } from '../utils/config.js';
 import { dynamoDocClient } from '../utils/dynamodb-client.js';
-import { logger } from '../utils/logger.js';
+import { publishToTopic } from '../utils/sns-client.js';
 
 /**
  * Creates a new TaskFile item in DynamoDB to track the processing state of an uploaded CSV file
@@ -107,9 +109,20 @@ export const parseCsvAndCreateTasks = async (csvContent: string, fileName: strin
   }
 };
 
-export const incrementTaskFileProcessedCount = async (taskFileId: string): Promise<TaskFile> => {
+/**
+ * Increments the processed count and sets processing status to IN_PROGRESS for a TaskFile.
+ * @param taskFileId - The ID of the TaskFile to update
+ * @param incrementBy - The number to increment the processed count by (default is 1)
+ * @returns The updated TaskFile
+ */
+export const incrementTaskFileProcessedCount = async (
+  taskFileId: string,
+  incrementBy: number = 1,
+): Promise<TaskFile> => {
   logger.info({ taskFileId }, '[TaskFileService] > incrementTaskFileProcessedCount');
 
+  // Track if the processed count was successfully incremented for potential rollback
+  let isCountIncremented = false;
   try {
     const command = new UpdateCommand({
       TableName: config.TASK_FILE_TABLE,
@@ -121,7 +134,7 @@ export const incrementTaskFileProcessedCount = async (taskFileId: string): Promi
         'SET processingStatus = :processingStatus, processedCount = processedCount + :inc, unprocessedCount = unprocessedCount - :inc, updatedAt = :updatedAt',
       ExpressionAttributeValues: {
         ':processingStatus': ProcessingStatus.IN_PROGRESS,
-        ':inc': 1,
+        ':inc': incrementBy,
         ':updatedAt': new Date().toISOString(),
       },
       ReturnValues: 'ALL_NEW',
@@ -129,8 +142,23 @@ export const incrementTaskFileProcessedCount = async (taskFileId: string): Promi
     logger.debug({ input: command.input }, '[TaskFileService] incrementTaskFileProcessedCount - UpdateCommandInput');
 
     const result = await dynamoDocClient.send(command);
+    isCountIncremented = true;
     const taskFile = toTaskFile(result.Attributes as TaskFileItem);
     logger.debug({ taskFile }, '[TaskFileService] incrementTaskFileProcessedCount - updated TaskFile');
+
+    // If unprocessedCount reaches zero, publish to SNS topic that processing is complete
+    if (taskFile.unprocessedCount === 0) {
+      await publishToTopic(
+        config.TASK_TOPIC_ARN,
+        { taskFile },
+        {
+          event: {
+            DataType: 'String',
+            StringValue: SNSEventName.taskFileProcessingComplete,
+          },
+        },
+      );
+    }
 
     logger.info(
       { taskFileId },
@@ -141,6 +169,66 @@ export const incrementTaskFileProcessedCount = async (taskFileId: string): Promi
     logger.error(
       { taskFileId, error: String(error) },
       '[TaskFileService] < incrementTaskFileProcessedCount - failed to update processed count in DynamoDB',
+    );
+
+    // If the processed count was incremented but an error occurred later, attempt to roll back the increment
+    if (isCountIncremented) {
+      try {
+        await incrementTaskFileProcessedCount(taskFileId, -incrementBy);
+        logger.info(
+          { taskFileId },
+          '[TaskFileService] incrementTaskFileProcessedCount - rolled back processed count increment',
+        );
+      } catch (rollbackError) {
+        logger.error(
+          { taskFileId, error: String(rollbackError) },
+          '[TaskFileService] incrementTaskFileProcessedCount - failed to roll back processed count increment',
+        );
+      }
+    }
+
+    throw error;
+  }
+};
+
+/**
+ * Updates the processing status of a TaskFile.
+ * @param taskFileId - The ID of the TaskFile to update
+ * @param processingStatus - The new processing status to set
+ * @returns The updated TaskFile
+ */
+export const updateTaskFileStatus = async (
+  taskFileId: string,
+  processingStatus: ProcessingStatus,
+): Promise<TaskFile> => {
+  logger.info({ taskFileId, processingStatus }, '[TaskFileService] > updateTaskFileStatus');
+
+  try {
+    const command = new UpdateCommand({
+      TableName: config.TASK_FILE_TABLE,
+      Key: {
+        pk: TaskFileKeys.pk(taskFileId),
+        sk: TaskFileKeys.sk(),
+      },
+      UpdateExpression: 'SET processingStatus = :processingStatus, updatedAt = :updatedAt',
+      ExpressionAttributeValues: {
+        ':processingStatus': processingStatus,
+        ':updatedAt': new Date().toISOString(),
+      },
+      ReturnValues: 'ALL_NEW',
+    });
+    logger.debug({ input: command.input }, '[TaskFileService] updateTaskFileStatus - UpdateCommandInput');
+
+    const result = await dynamoDocClient.send(command);
+    const taskFile = toTaskFile(result.Attributes as TaskFileItem);
+    logger.debug({ taskFile }, '[TaskFileService] updateTaskFileStatus - updated TaskFile');
+
+    logger.info({ taskFileId }, '[TaskFileService] < updateTaskFileStatus - successfully updated status');
+    return taskFile;
+  } catch (error) {
+    logger.error(
+      { taskFileId, error: String(error) },
+      '[TaskFileService] < updateTaskFileStatus - failed to update status in DynamoDB',
     );
     throw error;
   }

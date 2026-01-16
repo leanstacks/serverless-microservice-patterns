@@ -1,4 +1,9 @@
-import { createTaskFile, parseCsvAndCreateTasks, incrementTaskFileProcessedCount } from './task-file-service';
+import {
+  createTaskFile,
+  parseCsvAndCreateTasks,
+  incrementTaskFileProcessedCount,
+  updateTaskFileStatus,
+} from './task-file-service';
 import { CreateTaskFileDto } from '../models/create-task-file-dto';
 import { ProcessingStatus } from '../models/task-file';
 
@@ -14,6 +19,7 @@ jest.mock('../utils/config', () => ({
   config: {
     TASK_FILE_TABLE: 'test-task-file-table',
     CREATE_TASK_QUEUE_URL: 'https://sqs.us-east-1.amazonaws.com/123456789012/test-queue',
+    TASK_TOPIC_ARN: 'arn:aws:sns:us-east-1:123456789012:task-topic',
   },
 }));
 
@@ -31,6 +37,10 @@ jest.mock('../utils/sqs-client', () => ({
   sendToQueue: jest.fn(),
 }));
 
+jest.mock('../utils/sns-client', () => ({
+  publishToTopic: jest.fn(),
+}));
+
 jest.mock('./csv-service', () => ({
   parseCsv: jest.fn(),
 }));
@@ -41,6 +51,7 @@ const mockLoggerInfo = jest.requireMock('../utils/logger').logger.info;
 const mockLoggerError = jest.requireMock('../utils/logger').logger.error;
 const mockRandomUUID = jest.requireMock('crypto').randomUUID;
 const mockSendToQueue = jest.requireMock('../utils/sqs-client').sendToQueue;
+const mockPublishToTopic = jest.requireMock('../utils/sns-client').publishToTopic;
 const mockParseCsv = jest.requireMock('./csv-service').parseCsv;
 
 describe('task-file-service', () => {
@@ -428,6 +439,410 @@ describe('task-file-service', () => {
         expect.objectContaining({ taskFileId }),
         expect.stringContaining('incrementTaskFileProcessedCount'),
       );
+    });
+
+    it('should publish to SNS topic when unprocessedCount reaches zero', async () => {
+      // Arrange
+      const taskFileId = '550e8400-e29b-41d4-a716-446655440000';
+      const now = '2026-01-14T10:00:00.000Z';
+
+      const mockTaskFile = {
+        pk: `TASKFILE#${taskFileId}`,
+        sk: 'DETAIL',
+        id: taskFileId,
+        fileName: 'test.csv',
+        processingStatus: ProcessingStatus.IN_PROGRESS,
+        recordCount: 5,
+        processedCount: 5,
+        unprocessedCount: 0, // All tasks processed
+        createdAt: now,
+        updatedAt: now,
+      };
+
+      mockSend.mockResolvedValueOnce({ Attributes: mockTaskFile });
+      mockPublishToTopic.mockResolvedValueOnce({});
+
+      // Act
+      await incrementTaskFileProcessedCount(taskFileId);
+
+      // Assert
+      expect(mockPublishToTopic).toHaveBeenCalledTimes(1);
+      expect(mockPublishToTopic).toHaveBeenCalledWith(
+        'arn:aws:sns:us-east-1:123456789012:task-topic',
+        { taskFile: expect.objectContaining({ id: taskFileId, unprocessedCount: 0 }) },
+        {
+          event: {
+            DataType: 'String',
+            StringValue: 'taskfile_processing_complete',
+          },
+        },
+      );
+    });
+
+    it('should not publish to SNS topic when unprocessedCount is greater than zero', async () => {
+      // Arrange
+      const taskFileId = '550e8400-e29b-41d4-a716-446655440000';
+      const now = '2026-01-14T10:00:00.000Z';
+
+      const mockTaskFile = {
+        pk: `TASKFILE#${taskFileId}`,
+        sk: 'DETAIL',
+        id: taskFileId,
+        fileName: 'test.csv',
+        processingStatus: ProcessingStatus.IN_PROGRESS,
+        recordCount: 5,
+        processedCount: 3,
+        unprocessedCount: 2, // Still have unprocessed tasks
+        createdAt: now,
+        updatedAt: now,
+      };
+
+      mockSend.mockResolvedValueOnce({ Attributes: mockTaskFile });
+
+      // Act
+      await incrementTaskFileProcessedCount(taskFileId);
+
+      // Assert
+      expect(mockPublishToTopic).not.toHaveBeenCalled();
+    });
+
+    it('should support custom incrementBy value', async () => {
+      // Arrange
+      const taskFileId = '550e8400-e29b-41d4-a716-446655440000';
+      const incrementBy = 5;
+      const now = '2026-01-14T10:00:00.000Z';
+
+      const mockTaskFile = {
+        pk: `TASKFILE#${taskFileId}`,
+        sk: 'DETAIL',
+        id: taskFileId,
+        fileName: 'test.csv',
+        processingStatus: ProcessingStatus.IN_PROGRESS,
+        recordCount: 10,
+        processedCount: 5,
+        unprocessedCount: 5,
+        createdAt: now,
+        updatedAt: now,
+      };
+
+      mockSend.mockResolvedValueOnce({ Attributes: mockTaskFile });
+
+      // Act
+      await incrementTaskFileProcessedCount(taskFileId, incrementBy);
+
+      // Assert
+      const updateCommand = mockSend.mock.calls[0][0];
+      expect(updateCommand.input.ExpressionAttributeValues[':inc']).toBe(5);
+    });
+
+    it('should attempt rollback on SNS publish failure after successful count increment', async () => {
+      // Arrange
+      const taskFileId = '550e8400-e29b-41d4-a716-446655440000';
+      const now = '2026-01-14T10:00:00.000Z';
+
+      const mockTaskFile = {
+        pk: `TASKFILE#${taskFileId}`,
+        sk: 'DETAIL',
+        id: taskFileId,
+        fileName: 'test.csv',
+        processingStatus: ProcessingStatus.IN_PROGRESS,
+        recordCount: 5,
+        processedCount: 5,
+        unprocessedCount: 0,
+        createdAt: now,
+        updatedAt: now,
+      };
+
+      const snsError = new Error('SNS publish failed');
+
+      // First call: successful update
+      // Second call: rollback attempt
+      mockSend.mockResolvedValueOnce({ Attributes: mockTaskFile });
+      mockSend.mockResolvedValueOnce({ Attributes: mockTaskFile });
+      mockPublishToTopic.mockRejectedValueOnce(snsError);
+
+      // Act & Assert
+      await expect(incrementTaskFileProcessedCount(taskFileId)).rejects.toThrow('SNS publish failed');
+      // Verify that rollback was attempted (second call to mockSend)
+      expect(mockSend).toHaveBeenCalledTimes(2);
+      expect(mockLoggerError).toHaveBeenCalledWith(
+        expect.objectContaining({ taskFileId, error: 'Error: SNS publish failed' }),
+        expect.stringContaining('incrementTaskFileProcessedCount'),
+      );
+    });
+
+    it('should log error if rollback fails', async () => {
+      // Arrange
+      const taskFileId = '550e8400-e29b-41d4-a716-446655440000';
+      const now = '2026-01-14T10:00:00.000Z';
+
+      const mockTaskFile = {
+        pk: `TASKFILE#${taskFileId}`,
+        sk: 'DETAIL',
+        id: taskFileId,
+        fileName: 'test.csv',
+        processingStatus: ProcessingStatus.IN_PROGRESS,
+        recordCount: 5,
+        processedCount: 5,
+        unprocessedCount: 0,
+        createdAt: now,
+        updatedAt: now,
+      };
+
+      const snsError = new Error('SNS publish failed');
+      const rollbackError = new Error('Rollback failed');
+
+      // First call: successful update
+      // Second call: rollback fails
+      mockSend.mockResolvedValueOnce({ Attributes: mockTaskFile });
+      mockSend.mockRejectedValueOnce(rollbackError);
+      mockPublishToTopic.mockRejectedValueOnce(snsError);
+
+      // Act & Assert
+      await expect(incrementTaskFileProcessedCount(taskFileId)).rejects.toThrow('SNS publish failed');
+      // Verify rollback was attempted
+      expect(mockSend).toHaveBeenCalledTimes(2);
+      // Verify that a rollback error was logged (one of the error calls should have the rollback message)
+      const rollbackErrorCalls = mockLoggerError.mock.calls.filter(
+        (call: unknown[]) =>
+          typeof call[1] === 'string' &&
+          call[1].includes('roll back') &&
+          typeof call[0] === 'object' &&
+          call[0] !== null &&
+          'error' in call[0] &&
+          (call[0] as Record<string, unknown>).error === 'Error: Rollback failed',
+      );
+      expect(rollbackErrorCalls.length).toBeGreaterThan(0);
+    });
+
+    it('should throw error if initial update fails without triggering rollback', async () => {
+      // Arrange
+      const taskFileId = '550e8400-e29b-41d4-a716-446655440000';
+      const dbError = new Error('Initial update failed');
+      mockSend.mockRejectedValueOnce(dbError);
+
+      // Act & Assert
+      await expect(incrementTaskFileProcessedCount(taskFileId)).rejects.toThrow('Initial update failed');
+      // Only one call since update failed
+      expect(mockSend).toHaveBeenCalledTimes(1);
+      expect(mockLoggerError).toHaveBeenCalledWith(
+        expect.objectContaining({ taskFileId }),
+        expect.stringContaining('incrementTaskFileProcessedCount'),
+      );
+    });
+  });
+
+  describe('updateTaskFileStatus', () => {
+    it('should update the processing status of a TaskFile', async () => {
+      // Arrange
+      const taskFileId = '550e8400-e29b-41d4-a716-446655440000';
+      const newStatus = ProcessingStatus.COMPLETED;
+      const now = '2026-01-14T10:00:00.000Z';
+      jest.spyOn(Date.prototype, 'toISOString').mockReturnValue(now);
+
+      const mockTaskFile = {
+        pk: `TASKFILE#${taskFileId}`,
+        sk: 'DETAIL',
+        id: taskFileId,
+        fileName: 'test.csv',
+        processingStatus: newStatus,
+        recordCount: 5,
+        processedCount: 5,
+        unprocessedCount: 0,
+        createdAt: '2026-01-14T09:00:00.000Z',
+        updatedAt: now,
+      };
+
+      mockSend.mockResolvedValueOnce({ Attributes: mockTaskFile });
+
+      // Act
+      const result = await updateTaskFileStatus(taskFileId, newStatus);
+
+      // Assert
+      expect(mockSend).toHaveBeenCalledTimes(1);
+      const updateCommand = mockSend.mock.calls[0][0];
+      expect(updateCommand.input.TableName).toBe('test-task-file-table');
+      expect(updateCommand.input.Key).toEqual({
+        pk: `TASKFILE#${taskFileId}`,
+        sk: 'DETAIL',
+      });
+      expect(updateCommand.input.UpdateExpression).toBe(
+        'SET processingStatus = :processingStatus, updatedAt = :updatedAt',
+      );
+      expect(updateCommand.input.ExpressionAttributeValues[':processingStatus']).toBe(newStatus);
+      expect(updateCommand.input.ExpressionAttributeValues[':updatedAt']).toBe(now);
+      expect(result.processingStatus).toBe(newStatus);
+    });
+
+    it('should return a TaskFile object with updated status', async () => {
+      // Arrange
+      const taskFileId = '550e8400-e29b-41d4-a716-446655440000';
+      const newStatus = ProcessingStatus.COMPLETED;
+      const now = '2026-01-14T10:00:00.000Z';
+
+      const mockTaskFile = {
+        pk: `TASKFILE#${taskFileId}`,
+        sk: 'DETAIL',
+        id: taskFileId,
+        fileName: 'test.csv',
+        processingStatus: newStatus,
+        recordCount: 5,
+        processedCount: 2,
+        unprocessedCount: 3,
+        createdAt: '2026-01-14T09:00:00.000Z',
+        updatedAt: now,
+      };
+
+      mockSend.mockResolvedValueOnce({ Attributes: mockTaskFile });
+
+      // Act
+      const result = await updateTaskFileStatus(taskFileId, newStatus);
+
+      // Assert
+      expect(result).toEqual({
+        id: taskFileId,
+        fileName: 'test.csv',
+        processingStatus: newStatus,
+        recordCount: 5,
+        processedCount: 2,
+        unprocessedCount: 3,
+        createdAt: '2026-01-14T09:00:00.000Z',
+        updatedAt: now,
+      });
+    });
+
+    it('should update the updatedAt timestamp', async () => {
+      // Arrange
+      const taskFileId = '550e8400-e29b-41d4-a716-446655440000';
+      const newStatus = ProcessingStatus.COMPLETED;
+      const now = '2026-01-14T10:00:00.000Z';
+      jest.spyOn(Date.prototype, 'toISOString').mockReturnValue(now);
+
+      const mockTaskFile = {
+        pk: `TASKFILE#${taskFileId}`,
+        sk: 'DETAIL',
+        id: taskFileId,
+        fileName: 'test.csv',
+        processingStatus: newStatus,
+        recordCount: 5,
+        processedCount: 5,
+        unprocessedCount: 0,
+        createdAt: '2026-01-14T09:00:00.000Z',
+        updatedAt: now,
+      };
+
+      mockSend.mockResolvedValueOnce({ Attributes: mockTaskFile });
+
+      // Act
+      await updateTaskFileStatus(taskFileId, newStatus);
+
+      // Assert
+      const updateCommand = mockSend.mock.calls[0][0];
+      expect(updateCommand.input.ExpressionAttributeValues[':updatedAt']).toBe(now);
+    });
+
+    it('should log info message with taskFileId and processingStatus', async () => {
+      // Arrange
+      const taskFileId = '550e8400-e29b-41d4-a716-446655440000';
+      const newStatus = ProcessingStatus.IN_PROGRESS;
+      const now = '2026-01-14T10:00:00.000Z';
+
+      const mockTaskFile = {
+        pk: `TASKFILE#${taskFileId}`,
+        sk: 'DETAIL',
+        id: taskFileId,
+        fileName: 'test.csv',
+        processingStatus: newStatus,
+        recordCount: 5,
+        processedCount: 1,
+        unprocessedCount: 4,
+        createdAt: now,
+        updatedAt: now,
+      };
+
+      mockSend.mockResolvedValueOnce({ Attributes: mockTaskFile });
+
+      // Act
+      await updateTaskFileStatus(taskFileId, newStatus);
+
+      // Assert
+      expect(mockLoggerInfo).toHaveBeenCalledWith(
+        expect.objectContaining({ taskFileId, processingStatus: newStatus }),
+        expect.stringContaining('updateTaskFileStatus'),
+      );
+    });
+
+    it('should handle DynamoDB errors gracefully', async () => {
+      // Arrange
+      const taskFileId = '550e8400-e29b-41d4-a716-446655440000';
+      const newStatus = ProcessingStatus.COMPLETED;
+      const dbError = new Error('DynamoDB UpdateCommand failed');
+      mockSend.mockRejectedValueOnce(dbError);
+
+      // Act & Assert
+      await expect(updateTaskFileStatus(taskFileId, newStatus)).rejects.toThrow('DynamoDB UpdateCommand failed');
+      expect(mockLoggerError).toHaveBeenCalledWith(
+        expect.objectContaining({ taskFileId, error: 'Error: DynamoDB UpdateCommand failed' }),
+        expect.stringContaining('updateTaskFileStatus'),
+      );
+    });
+
+    it('should support updating to COMPLETED status', async () => {
+      // Arrange
+      const taskFileId = '550e8400-e29b-41d4-a716-446655440000';
+      const now = '2026-01-14T10:00:00.000Z';
+
+      const mockTaskFile = {
+        pk: `TASKFILE#${taskFileId}`,
+        sk: 'DETAIL',
+        id: taskFileId,
+        fileName: 'test.csv',
+        processingStatus: ProcessingStatus.COMPLETED,
+        recordCount: 5,
+        processedCount: 5,
+        unprocessedCount: 0,
+        createdAt: '2026-01-14T09:00:00.000Z',
+        updatedAt: now,
+      };
+
+      mockSend.mockResolvedValueOnce({ Attributes: mockTaskFile });
+
+      // Act
+      const result = await updateTaskFileStatus(taskFileId, ProcessingStatus.COMPLETED);
+
+      // Assert
+      expect(result.processingStatus).toBe(ProcessingStatus.COMPLETED);
+      const updateCommand = mockSend.mock.calls[0][0];
+      expect(updateCommand.input.ExpressionAttributeValues[':processingStatus']).toBe(ProcessingStatus.COMPLETED);
+    });
+
+    it('should support updating to IN_PROGRESS status', async () => {
+      // Arrange
+      const taskFileId = '550e8400-e29b-41d4-a716-446655440000';
+      const now = '2026-01-14T10:00:00.000Z';
+
+      const mockTaskFile = {
+        pk: `TASKFILE#${taskFileId}`,
+        sk: 'DETAIL',
+        id: taskFileId,
+        fileName: 'test.csv',
+        processingStatus: ProcessingStatus.IN_PROGRESS,
+        recordCount: 5,
+        processedCount: 2,
+        unprocessedCount: 3,
+        createdAt: '2026-01-14T09:00:00.000Z',
+        updatedAt: now,
+      };
+
+      mockSend.mockResolvedValueOnce({ Attributes: mockTaskFile });
+
+      // Act
+      const result = await updateTaskFileStatus(taskFileId, ProcessingStatus.IN_PROGRESS);
+
+      // Assert
+      expect(result.processingStatus).toBe(ProcessingStatus.IN_PROGRESS);
+      const updateCommand = mockSend.mock.calls[0][0];
+      expect(updateCommand.input.ExpressionAttributeValues[':processingStatus']).toBe(ProcessingStatus.IN_PROGRESS);
     });
   });
 });
