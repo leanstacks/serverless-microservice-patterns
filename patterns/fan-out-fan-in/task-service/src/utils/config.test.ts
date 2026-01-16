@@ -25,6 +25,7 @@ describe('config', () => {
     process.env.TASKS_TABLE = 'my-tasks-table';
     process.env.TASK_FILE_TABLE = 'my-task-file-table';
     process.env.CREATE_TASK_QUEUE_URL = 'https://sqs.us-east-1.amazonaws.com/123456789/my-queue';
+    process.env.TASK_TOPIC_ARN = 'arn:aws:sns:us-east-1:123456789:my-topic';
   });
 
   afterEach(() => {
@@ -39,6 +40,7 @@ describe('config', () => {
       process.env.TASKS_TABLE = 'my-tasks-table';
       process.env.TASK_FILE_TABLE = 'my-task-file-table';
       process.env.CREATE_TASK_QUEUE_URL = 'https://sqs.us-east-1.amazonaws.com/123456789/my-queue';
+      process.env.TASK_TOPIC_ARN = 'arn:aws:sns:us-east-1:123456789:my-topic';
       process.env.TASK_UPLOADS_BUCKET = 'my-uploads-bucket';
 
       // Act
@@ -48,6 +50,7 @@ describe('config', () => {
       expect(config).toBeDefined();
       expect(config.TASKS_TABLE).toBe('my-tasks-table');
       expect(config.TASK_FILE_TABLE).toBe('my-task-file-table');
+      expect(config.TASK_TOPIC_ARN).toBe('arn:aws:sns:us-east-1:123456789:my-topic');
     });
 
     it('should apply default values for optional environment variables', () => {
@@ -55,6 +58,7 @@ describe('config', () => {
       process.env.TASKS_TABLE = 'my-tasks-table';
       process.env.TASK_FILE_TABLE = 'my-task-file-table';
       process.env.CREATE_TASK_QUEUE_URL = 'https://sqs.us-east-1.amazonaws.com/123456789/my-queue';
+      process.env.TASK_TOPIC_ARN = 'arn:aws:sns:us-east-1:123456789:my-topic';
       process.env.TASK_UPLOADS_BUCKET = 'my-uploads-bucket';
 
       // Act
@@ -73,6 +77,7 @@ describe('config', () => {
       process.env.TASKS_TABLE = 'my-tasks-table';
       process.env.TASK_FILE_TABLE = 'my-task-file-table';
       process.env.CREATE_TASK_QUEUE_URL = 'https://sqs.us-east-1.amazonaws.com/123456789/my-queue';
+      process.env.TASK_TOPIC_ARN = 'arn:aws:sns:eu-west-1:123456789:my-topic';
       process.env.AWS_REGION = 'us-west-2';
       process.env.LOGGING_ENABLED = 'false';
       process.env.LOGGING_LEVEL = 'error';
@@ -88,6 +93,7 @@ describe('config', () => {
       expect(config.LOGGING_LEVEL).toBe('error');
       expect(config.LOGGING_FORMAT).toBe('text');
       expect(config.CORS_ALLOW_ORIGIN).toBe('https://example.com');
+      expect(config.TASK_TOPIC_ARN).toBe('arn:aws:sns:eu-west-1:123456789:my-topic');
     });
 
     it('should throw error when required TASKS_TABLE is missing', () => {
@@ -120,10 +126,41 @@ describe('config', () => {
       }).toThrow('TASKS_TABLE');
     });
 
+    it('should throw error when required TASK_TOPIC_ARN is missing', () => {
+      // Arrange
+      delete process.env.TASK_TOPIC_ARN;
+
+      // Act & Assert
+      expect(() => {
+        const { config: testConfig } = require('./config');
+        return testConfig;
+      }).toThrow('Configuration validation failed');
+      expect(() => {
+        const { config: testConfig } = require('./config');
+        return testConfig;
+      }).toThrow('TASK_TOPIC_ARN');
+    });
+
+    it('should throw error when TASK_TOPIC_ARN is empty string', () => {
+      // Arrange
+      process.env.TASK_TOPIC_ARN = '';
+
+      // Act & Assert
+      expect(() => {
+        const { config: testConfig } = require('./config');
+        return testConfig;
+      }).toThrow('Configuration validation failed');
+      expect(() => {
+        const { config: testConfig } = require('./config');
+        return testConfig;
+      }).toThrow('TASK_TOPIC_ARN');
+    });
+
     it('should transform LOGGING_ENABLED string to boolean true', () => {
       // Arrange
       process.env.TASKS_TABLE = 'my-tasks-table';
       process.env.CREATE_TASK_QUEUE_URL = 'https://sqs.us-east-1.amazonaws.com/123456789/my-queue';
+      process.env.TASK_TOPIC_ARN = 'arn:aws:sns:us-east-1:123456789:my-topic';
       process.env.LOGGING_ENABLED = 'true';
 
       // Act
@@ -138,6 +175,7 @@ describe('config', () => {
       // Arrange
       process.env.TASKS_TABLE = 'my-tasks-table';
       process.env.CREATE_TASK_QUEUE_URL = 'https://sqs.us-east-1.amazonaws.com/123456789/my-queue';
+      process.env.TASK_TOPIC_ARN = 'arn:aws:sns:us-east-1:123456789:my-topic';
       process.env.LOGGING_ENABLED = 'false';
 
       // Act
@@ -152,6 +190,7 @@ describe('config', () => {
       // Arrange
       process.env.TASKS_TABLE = 'my-tasks-table';
       process.env.CREATE_TASK_QUEUE_URL = 'https://sqs.us-east-1.amazonaws.com/123456789/my-queue';
+      process.env.TASK_TOPIC_ARN = 'arn:aws:sns:us-east-1:123456789:my-topic';
 
       // Act & Assert - valid values
       const validLogLevels = ['debug', 'info', 'warn', 'error'];
@@ -159,6 +198,7 @@ describe('config', () => {
         jest.resetModules();
         process.env.TASKS_TABLE = 'my-tasks-table';
         process.env.CREATE_TASK_QUEUE_URL = 'https://sqs.us-east-1.amazonaws.com/123456789/my-queue';
+        process.env.TASK_TOPIC_ARN = 'arn:aws:sns:us-east-1:123456789:my-topic';
         process.env.LOGGING_LEVEL = level;
         config = require('./config').config;
         expect(config.LOGGING_LEVEL).toBe(level);
@@ -168,6 +208,7 @@ describe('config', () => {
     it('should throw error for invalid LOGGING_LEVEL', () => {
       // Arrange
       process.env.TASKS_TABLE = 'my-tasks-table';
+      process.env.TASK_TOPIC_ARN = 'arn:aws:sns:us-east-1:123456789:my-topic';
       process.env.LOGGING_LEVEL = 'invalid';
 
       // Act & Assert
@@ -180,6 +221,7 @@ describe('config', () => {
     it('should throw error for invalid LOGGING_ENABLED value', () => {
       // Arrange
       process.env.TASKS_TABLE = 'my-tasks-table';
+      process.env.TASK_TOPIC_ARN = 'arn:aws:sns:us-east-1:123456789:my-topic';
       process.env.LOGGING_ENABLED = 'yes';
 
       // Act & Assert
@@ -193,6 +235,7 @@ describe('config', () => {
       // Arrange
       process.env.TASKS_TABLE = 'my-tasks-table';
       process.env.CREATE_TASK_QUEUE_URL = 'https://sqs.us-east-1.amazonaws.com/123456789/my-queue';
+      process.env.TASK_TOPIC_ARN = 'arn:aws:sns:us-east-1:123456789:my-topic';
 
       // Act & Assert - valid values
       const validLogFormats = ['text', 'json'];
@@ -200,6 +243,7 @@ describe('config', () => {
         jest.resetModules();
         process.env.TASKS_TABLE = 'my-tasks-table';
         process.env.CREATE_TASK_QUEUE_URL = 'https://sqs.us-east-1.amazonaws.com/123456789/my-queue';
+        process.env.TASK_TOPIC_ARN = 'arn:aws:sns:us-east-1:123456789:my-topic';
         process.env.LOGGING_FORMAT = format;
         config = require('./config').config;
         expect(config.LOGGING_FORMAT).toBe(format);
@@ -209,6 +253,7 @@ describe('config', () => {
     it('should throw error for invalid LOGGING_FORMAT', () => {
       // Arrange
       process.env.TASKS_TABLE = 'my-tasks-table';
+      process.env.TASK_TOPIC_ARN = 'arn:aws:sns:us-east-1:123456789:my-topic';
       process.env.LOGGING_FORMAT = 'xml';
 
       // Act & Assert
@@ -225,21 +270,25 @@ describe('config', () => {
       process.env.TASKS_TABLE = 'original-table';
       process.env.TASK_FILE_TABLE = 'original-task-file-table';
       process.env.CREATE_TASK_QUEUE_URL = 'https://sqs.us-east-1.amazonaws.com/123456789/my-queue';
+      process.env.TASK_TOPIC_ARN = 'arn:aws:sns:us-east-1:123456789:original-topic';
       process.env.TASK_UPLOADS_BUCKET = 'my-uploads-bucket';
       process.env.AWS_REGION = 'us-east-1';
       refreshConfig = require('./config').refreshConfig;
       config = require('./config').config;
 
       expect(config.TASKS_TABLE).toBe('original-table');
+      expect(config.TASK_TOPIC_ARN).toBe('arn:aws:sns:us-east-1:123456789:original-topic');
       expect(config.AWS_REGION).toBe('us-east-1');
 
       // Act - change environment and refresh
       process.env.TASKS_TABLE = 'updated-table';
+      process.env.TASK_TOPIC_ARN = 'arn:aws:sns:eu-west-1:123456789:updated-topic';
       process.env.AWS_REGION = 'eu-west-1';
       const refreshedConfig = refreshConfig();
 
       // Assert
       expect(refreshedConfig.TASKS_TABLE).toBe('updated-table');
+      expect(refreshedConfig.TASK_TOPIC_ARN).toBe('arn:aws:sns:eu-west-1:123456789:updated-topic');
       expect(refreshedConfig.AWS_REGION).toBe('eu-west-1');
     });
 
@@ -248,6 +297,7 @@ describe('config', () => {
       process.env.TASKS_TABLE = 'original-table';
       process.env.TASK_FILE_TABLE = 'original-task-file-table';
       process.env.CREATE_TASK_QUEUE_URL = 'https://sqs.us-east-1.amazonaws.com/123456789/my-queue';
+      process.env.TASK_TOPIC_ARN = 'arn:aws:sns:us-east-1:123456789:my-topic';
       process.env.TASK_UPLOADS_BUCKET = 'my-uploads-bucket';
       refreshConfig = require('./config').refreshConfig;
       const configModule = require('./config');
@@ -257,10 +307,12 @@ describe('config', () => {
 
       // Act
       process.env.TASKS_TABLE = 'new-table';
+      process.env.TASK_TOPIC_ARN = 'arn:aws:sns:us-east-1:123456789:new-topic';
       const refreshedConfig = refreshConfig();
 
       // Assert - refreshedConfig should have new value
       expect(refreshedConfig.TASKS_TABLE).toBe('new-table');
+      expect(refreshedConfig.TASK_TOPIC_ARN).toBe('arn:aws:sns:us-east-1:123456789:new-topic');
       // The originally exported config constant won't change, but refreshConfig returns the new value
       expect(originalConfig.TASKS_TABLE).toBe('original-table');
     });
@@ -270,6 +322,7 @@ describe('config', () => {
       process.env.TASKS_TABLE = 'valid-table';
       process.env.TASK_FILE_TABLE = 'valid-task-file-table';
       process.env.CREATE_TASK_QUEUE_URL = 'https://sqs.us-east-1.amazonaws.com/123456789/my-queue';
+      process.env.TASK_TOPIC_ARN = 'arn:aws:sns:us-east-1:123456789:my-topic';
       process.env.TASK_UPLOADS_BUCKET = 'my-uploads-bucket';
       refreshConfig = require('./config').refreshConfig;
       config = require('./config').config;
@@ -290,6 +343,7 @@ describe('config', () => {
       process.env.TASKS_TABLE = 'my-tasks-table';
       process.env.TASK_FILE_TABLE = 'my-task-file-table';
       process.env.CREATE_TASK_QUEUE_URL = 'https://sqs.us-east-1.amazonaws.com/123456789/my-queue';
+      process.env.TASK_TOPIC_ARN = 'arn:aws:sns:us-east-1:123456789:my-topic';
       process.env.TASK_UPLOADS_BUCKET = 'my-uploads-bucket';
       const configModule = require('./config');
 
@@ -306,6 +360,7 @@ describe('config', () => {
       process.env.TASKS_TABLE = 'cached-table';
       process.env.TASK_FILE_TABLE = 'cached-task-file-table';
       process.env.CREATE_TASK_QUEUE_URL = 'https://sqs.us-east-1.amazonaws.com/123456789/my-queue';
+      process.env.TASK_TOPIC_ARN = 'arn:aws:sns:us-east-1:123456789:cached-topic';
       process.env.TASK_UPLOADS_BUCKET = 'my-uploads-bucket';
       process.env.AWS_REGION = 'us-west-1';
 
@@ -314,11 +369,13 @@ describe('config', () => {
 
       // Change env (but don't refresh)
       process.env.AWS_REGION = 'eu-central-1';
+      process.env.TASK_TOPIC_ARN = 'arn:aws:sns:eu-central-1:123456789:different-topic';
 
       const { config: secondConfig } = require('./config');
 
       // Assert - should still have cached value
       expect(secondConfig.AWS_REGION).toBe('us-west-1');
+      expect(secondConfig.TASK_TOPIC_ARN).toBe('arn:aws:sns:us-east-1:123456789:cached-topic');
       expect(firstConfig).toBe(secondConfig);
     });
   });
@@ -327,6 +384,7 @@ describe('config', () => {
     it('should provide detailed error message for multiple validation failures', () => {
       // Arrange
       delete process.env.TASKS_TABLE;
+      delete process.env.TASK_TOPIC_ARN;
       process.env.LOGGING_LEVEL = 'invalid';
 
       // Act & Assert
@@ -360,6 +418,7 @@ describe('config', () => {
       process.env.TASKS_TABLE = 'my-tasks-table';
       process.env.TASK_FILE_TABLE = 'my-task-file-table';
       process.env.CREATE_TASK_QUEUE_URL = 'https://sqs.us-east-1.amazonaws.com/123456789/my-queue';
+      process.env.TASK_TOPIC_ARN = 'arn:aws:sns:us-east-1:123456789:my-topic';
       process.env.TASK_UPLOADS_BUCKET = 'my-uploads-bucket';
       process.env.AWS_REGION = 'us-east-1';
       process.env.LOGGING_ENABLED = 'true';
@@ -372,6 +431,7 @@ describe('config', () => {
       // Assert - verify all expected properties exist and have correct types
       expect(typeof config.TASKS_TABLE).toBe('string');
       expect(typeof config.TASK_FILE_TABLE).toBe('string');
+      expect(typeof config.TASK_TOPIC_ARN).toBe('string');
       expect(typeof config.AWS_REGION).toBe('string');
       expect(typeof config.LOGGING_ENABLED).toBe('boolean');
       expect(['debug', 'info', 'warn', 'error']).toContain(config.LOGGING_LEVEL);

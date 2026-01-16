@@ -1,3 +1,8 @@
+/**
+ * @module utils/config
+ * @description Configuration utility for validating and accessing environment variables.
+ */
+
 import { z } from 'zod';
 
 /**
@@ -8,6 +13,7 @@ const envSchema = z.object({
   TASKS_TABLE: z.string().min(1, 'TASKS_TABLE environment variable is required'),
   TASK_FILE_TABLE: z.string().min(1, 'TASK_FILE_TABLE environment variable is required'),
   CREATE_TASK_QUEUE_URL: z.string().min(1, 'CREATE_TASK_QUEUE_URL environment variable is required'),
+  TASK_TOPIC_ARN: z.string().min(1, 'TASK_TOPIC_ARN environment variable is required'),
   TASK_UPLOADS_BUCKET: z.string().min(1, 'TASK_UPLOADS_BUCKET environment variable is required'),
 
   // Optional variables with defaults
