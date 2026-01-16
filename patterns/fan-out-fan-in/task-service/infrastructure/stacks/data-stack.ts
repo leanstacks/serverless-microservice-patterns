@@ -2,6 +2,7 @@ import * as cdk from 'aws-cdk-lib';
 import * as dynamodb from 'aws-cdk-lib/aws-dynamodb';
 import * as s3 from 'aws-cdk-lib/aws-s3';
 import * as s3n from 'aws-cdk-lib/aws-s3-notifications';
+import * as sns from 'aws-cdk-lib/aws-sns';
 import * as sqs from 'aws-cdk-lib/aws-sqs';
 import { Construct } from 'constructs';
 
@@ -50,6 +51,11 @@ export class DataStack extends cdk.Stack {
   public readonly taskUploadDLQ: sqs.IQueue;
 
   /**
+   * The Task Topic for publishing task events.
+   */
+  public readonly taskTopic: sns.Topic;
+
+  /**
    * The Create Task SQS queue.
    */
   public readonly createTaskQueue: sqs.Queue;
@@ -61,6 +67,12 @@ export class DataStack extends cdk.Stack {
 
   constructor(scope: Construct, id: string, props: DataStackProps) {
     super(scope, id, props);
+
+    // Task Topic for publishing task microservice events
+    this.taskTopic = new sns.Topic(this, 'TaskTopic', {
+      topicName: `${props.appName}-task-topic-${props.envName}`,
+      displayName: `Task events topic for ${props.envName} environment`,
+    });
 
     // Create Task table
     this.taskTable = new dynamodb.Table(this, 'TaskTable', {
@@ -247,6 +259,13 @@ export class DataStack extends cdk.Stack {
       value: this.createTaskDLQ.queueArn,
       description: 'ARN of the Create Task Dead Letter Queue',
       exportName: `${props.appName}-create-task-dlq-arn-${props.envName}`,
+    });
+
+    // Output the Task Topic ARN
+    new cdk.CfnOutput(this, 'TaskTopicArn', {
+      value: this.taskTopic.topicArn,
+      description: 'ARN of the Task Topic',
+      exportName: `${props.appName}-task-topic-arn-${props.envName}`,
     });
   }
 }

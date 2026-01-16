@@ -261,6 +261,22 @@ describe('DataStack', () => {
         },
       });
     });
+
+    it('should create a Task Topic for publishing events', () => {
+      template.hasResourceProperties('AWS::SNS::Topic', {
+        TopicName: 'smp-fan-out-fan-in-task-service-task-topic-dev',
+        DisplayName: 'Task events topic for dev environment',
+      });
+    });
+
+    it('should export Task Topic ARN', () => {
+      template.hasOutput('TaskTopicArn', {
+        Description: 'ARN of the Task Topic',
+        Export: {
+          Name: 'smp-fan-out-fan-in-task-service-task-topic-arn-dev',
+        },
+      });
+    });
   });
 
   describe('prd environment', () => {
@@ -427,6 +443,22 @@ describe('DataStack', () => {
         Description: 'ARN of the Create Task Dead Letter Queue',
         Export: {
           Name: 'smp-fan-out-fan-in-task-service-create-task-dlq-arn-prd',
+        },
+      });
+    });
+
+    it('should create a Task Topic with prd naming for publishing events', () => {
+      template.hasResourceProperties('AWS::SNS::Topic', {
+        TopicName: 'smp-fan-out-fan-in-task-service-task-topic-prd',
+        DisplayName: 'Task events topic for prd environment',
+      });
+    });
+
+    it('should export prd Task Topic ARN', () => {
+      template.hasOutput('TaskTopicArn', {
+        Description: 'ARN of the Task Topic',
+        Export: {
+          Name: 'smp-fan-out-fan-in-task-service-task-topic-arn-prd',
         },
       });
     });

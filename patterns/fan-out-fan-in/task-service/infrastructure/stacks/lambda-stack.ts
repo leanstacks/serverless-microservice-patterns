@@ -4,6 +4,7 @@ import * as apigateway from 'aws-cdk-lib/aws-apigateway';
 import * as dynamodb from 'aws-cdk-lib/aws-dynamodb';
 import * as iam from 'aws-cdk-lib/aws-iam';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
+import * as sns from 'aws-cdk-lib/aws-sns';
 import * as logs from 'aws-cdk-lib/aws-logs';
 import * as s3 from 'aws-cdk-lib/aws-s3';
 import * as sqs from 'aws-cdk-lib/aws-sqs';
@@ -44,6 +45,11 @@ export interface LambdaStackProps extends cdk.StackProps {
    * Reference to the Task Upload SQS queue.
    */
   taskUploadQueue: sqs.IQueue;
+
+  /**
+   * Reference to the Task Topic.
+   */
+  taskTopic: sns.ITopic;
 
   /**
    * Reference to the Task Uploads S3 bucket.
@@ -133,6 +139,7 @@ export class LambdaStack extends cdk.Stack {
       TASKS_TABLE: props.taskTable.tableName,
       TASK_FILE_TABLE: props.taskFileTable.tableName,
       CREATE_TASK_QUEUE_URL: props.createTaskQueue.queueUrl,
+      TASK_TOPIC_ARN: props.taskTopic.topicArn,
       TASK_UPLOADS_BUCKET: props.taskUploadsBucket.bucketName,
       LOGGING_ENABLED: props.loggingEnabled.toString(),
       LOGGING_LEVEL: props.loggingLevel,
@@ -298,6 +305,9 @@ export class LambdaStack extends cdk.Stack {
 
     // Grant the Lambda function read and write access to the TaskFile DynamoDB table
     props.taskFileTable.grantReadWriteData(this.createTaskSubscriberFunction);
+
+    // Grant the Lambda function publish access to the SNS topic
+    props.taskTopic.grantPublish(this.createTaskSubscriberFunction);
 
     // Add SQS event source to the Lambda function
     this.createTaskSubscriberFunction.addEventSource(

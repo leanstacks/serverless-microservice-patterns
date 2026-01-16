@@ -2,6 +2,7 @@ import * as cdk from 'aws-cdk-lib';
 import { Match, Template } from 'aws-cdk-lib/assertions';
 import * as dynamodb from 'aws-cdk-lib/aws-dynamodb';
 import * as s3 from 'aws-cdk-lib/aws-s3';
+import * as sns from 'aws-cdk-lib/aws-sns';
 import * as sqs from 'aws-cdk-lib/aws-sqs';
 import { LambdaStack } from './lambda-stack';
 
@@ -50,6 +51,9 @@ describe('LambdaStack', () => {
           type: dynamodb.AttributeType.STRING,
         },
       });
+      const testMockTopic = new sns.Topic(mockTestStack, 'MockTopic', {
+        topicName: 'mock-task-topic',
+      });
 
       const stack = new LambdaStack(testApp, 'TestLambdaStack', {
         appName: 'smp-fan-out-fan-in-task-service',
@@ -59,6 +63,7 @@ describe('LambdaStack', () => {
         createTaskQueue: testMockQueue,
         taskUploadQueue: testMockQueue,
         taskUploadsBucket: testMockBucket,
+        taskTopic: testMockTopic,
         loggingEnabled: true,
         loggingLevel: 'debug',
         loggingFormat: 'json',
@@ -176,12 +181,19 @@ describe('LambdaStack', () => {
         Environment: {
           Variables: {
             TASKS_TABLE: Match.anyValue(),
+            TASK_TOPIC_ARN: Match.anyValue(),
             LOGGING_ENABLED: 'true',
             LOGGING_LEVEL: 'debug',
             LOGGING_FORMAT: 'json',
             CORS_ALLOW_ORIGIN: '*',
           },
         },
+      });
+    });
+
+    it('should provide TASK_TOPIC_ARN environment variable to all Lambda functions', () => {
+      template.allResources('AWS::Lambda::Function', (props: any) => {
+        return props.Environment && props.Environment.Variables && 'TASK_TOPIC_ARN' in props.Environment.Variables;
       });
     });
 
@@ -419,6 +431,9 @@ describe('LambdaStack', () => {
       const testMockBucket = new s3.Bucket(mockTestStack, 'MockBucket', {
         bucketName: 'mock-task-uploads-bucket-prd',
       });
+      const testMockTopic = new sns.Topic(mockTestStack, 'MockTopic', {
+        topicName: 'mock-task-topic-prd',
+      });
 
       const stack = new LambdaStack(testApp, 'TestLambdaStack', {
         appName: 'smp-fan-out-fan-in-task-service',
@@ -428,6 +443,7 @@ describe('LambdaStack', () => {
         createTaskQueue: testMockQueue,
         taskUploadQueue: testMockQueue,
         taskUploadsBucket: testMockBucket,
+        taskTopic: testMockTopic,
         loggingEnabled: true,
         loggingLevel: 'info',
         loggingFormat: 'json',
@@ -492,6 +508,9 @@ describe('LambdaStack', () => {
       const testMockBucket = new s3.Bucket(mockTestStack, 'MockBucket', {
         bucketName: 'mock-task-uploads-bucket-cors',
       });
+      const testMockTopic = new sns.Topic(mockTestStack, 'MockTopic', {
+        topicName: 'mock-task-topic-cors',
+      });
 
       const stack = new LambdaStack(testApp, 'TestLambdaStack', {
         appName: 'smp-fan-out-fan-in-task-service',
@@ -501,6 +520,7 @@ describe('LambdaStack', () => {
         createTaskQueue: testMockQueue,
         taskUploadQueue: testMockQueue,
         taskUploadsBucket: testMockBucket,
+        taskTopic: testMockTopic,
         loggingEnabled: true,
         loggingLevel: 'debug',
         loggingFormat: 'json',

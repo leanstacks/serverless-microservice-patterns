@@ -39,6 +39,7 @@ new LambdaStack(app, `${config.CDK_APP_NAME}-lambda-stack-${config.CDK_ENV}`, {
   createTaskQueue: dataStack.createTaskQueue,
   taskUploadQueue: dataStack.taskUploadQueue,
   taskUploadsBucket: dataStack.taskUploadsBucket,
+  taskTopic: dataStack.taskTopic,
   loggingEnabled: config.CDK_APP_LOGGING_ENABLED,
   loggingLevel: config.CDK_APP_LOGGING_LEVEL,
   loggingFormat: config.CDK_APP_LOGGING_FORMAT,
