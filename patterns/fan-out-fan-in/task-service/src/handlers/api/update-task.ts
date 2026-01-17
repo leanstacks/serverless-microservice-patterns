@@ -1,10 +1,15 @@
+/**
+ * @module handlers/api/update-task
+ * @description Lambda handler for API Gateway requests to update a task.
+ */
+
 import { APIGatewayProxyEvent, APIGatewayProxyResult, Context } from 'aws-lambda';
 import { ZodError } from 'zod';
 
-import { UpdateTaskDtoSchema } from '../../models/update-task-dto.js';
-import { updateTask } from '../../services/task-service.js';
-import { badRequest, internalServerError, notFound, ok } from '../../utils/apigateway-response.js';
-import { logger, withRequestTracking } from '../../utils/logger.js';
+import { UpdateTaskDtoSchema } from '@/models/update-task-dto.js';
+import { updateTask } from '@/services/task-service.js';
+import { badRequest, internalServerError, notFound, ok } from '@/utils/apigateway-response.js';
+import { logger, withRequestTracking } from '@/utils/logger.js';
 
 /**
  * Lambda handler for updating an existing task

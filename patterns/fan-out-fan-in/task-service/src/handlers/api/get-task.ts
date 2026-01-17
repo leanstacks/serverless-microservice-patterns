@@ -1,8 +1,13 @@
+/**
+ * @module handlers/api/get-task
+ * @description Lambda handler for API Gateway requests to retrieve a task by ID.
+ */
+
 import { APIGatewayProxyEvent, APIGatewayProxyResult, Context } from 'aws-lambda';
 
-import { getTask } from '../../services/task-service.js';
-import { internalServerError, notFound, ok } from '../../utils/apigateway-response.js';
-import { logger, withRequestTracking } from '../../utils/logger.js';
+import { getTask } from '@/services/task-service.js';
+import { internalServerError, notFound, ok } from '@/utils/apigateway-response.js';
+import { logger, withRequestTracking } from '@/utils/logger.js';
 
 /**
  * Lambda handler for retrieving a task by ID
