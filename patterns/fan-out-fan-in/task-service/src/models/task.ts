@@ -1,4 +1,9 @@
 /**
+ * @module models/task
+ * @description Zod schema and TypeScript types for Task model and related utilities.
+ */
+
+/**
  * Prefix for task partition keys in Single Table Design
  */
 export const TASK_PK_PREFIX = 'TASK#';

@@ -1,3 +1,8 @@
+/**
+ * @module models/create-task-file-dto
+ * @description Data Transfer Object (DTO) and validation schema for creating a TaskFile.
+ */
+
 import { z } from 'zod';
 
 /**

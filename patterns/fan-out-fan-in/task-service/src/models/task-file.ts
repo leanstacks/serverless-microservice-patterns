@@ -1,3 +1,8 @@
+/**
+ * @module models/task-file
+ * @description Zod schema and TypeScript types for TaskFile model and related utilities.
+ */
+
 import z from 'zod';
 
 /**

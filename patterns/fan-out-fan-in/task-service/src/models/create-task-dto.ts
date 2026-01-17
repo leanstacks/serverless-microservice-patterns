@@ -1,3 +1,8 @@
+/**
+ * @module models/create-task-dto
+ * @description Data Transfer Object (DTO) and validation schema for creating a new Task.
+ */
+
 import { z } from 'zod';
 
 /**

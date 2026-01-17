@@ -1,3 +1,8 @@
+/**
+ * @module models/create-task-message
+ * @description Zod schema and type definition for create task messages sent to the Create Task SQS queue.
+ */
+
 import { z } from 'zod';
 
 import { CreateTaskDtoSchema } from './create-task-dto';

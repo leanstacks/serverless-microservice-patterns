@@ -1,3 +1,8 @@
+/**
+ * @module models/update-task-dto
+ * @description Data Transfer Object (DTO) and validation schema for updating an existing Task.
+ */
+
 import { z } from 'zod';
 
 /**
