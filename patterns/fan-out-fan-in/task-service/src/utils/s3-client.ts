@@ -1,3 +1,8 @@
+/**
+ * @module utils/s3-client
+ * @description Utility functions for interacting with AWS S3, including retrieving object content.
+ */
+
 import { GetObjectCommand, S3Client } from '@aws-sdk/client-s3';
 
 import { config } from './config.js';

@@ -1,3 +1,8 @@
+/**
+ * @module utils/logger
+ * @description Configures and exports a Pino logger instance for structured logging in AWS Lambda.
+ */
+
 import pino from 'pino';
 import {
   CloudwatchLogFormatter,

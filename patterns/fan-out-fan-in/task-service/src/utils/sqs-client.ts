@@ -1,3 +1,8 @@
+/**
+ * @module utils/sqs-client
+ * @description Utility functions for sending messages to AWS SQS queues.
+ */
+
 import { SendMessageCommand, SQSClient } from '@aws-sdk/client-sqs';
 
 import { config } from './config.js';

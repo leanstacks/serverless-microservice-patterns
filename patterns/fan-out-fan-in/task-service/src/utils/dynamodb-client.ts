@@ -1,3 +1,8 @@
+/**
+ * @module utils/dynamodb-client
+ * @description Initializes and exports a configured DynamoDB client and Document client for use in the application.
+ */
+
 import { DynamoDBClient, DynamoDBClientConfig } from '@aws-sdk/client-dynamodb';
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb';
 

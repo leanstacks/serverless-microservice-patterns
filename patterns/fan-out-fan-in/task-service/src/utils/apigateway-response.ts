@@ -1,3 +1,8 @@
+/**
+ * @module utils/apigateway-response
+ * @description Utility functions to create standardized API Gateway responses with CORS headers.
+ */
+
 import { APIGatewayProxyResult } from 'aws-lambda';
 
 import { config } from './config';

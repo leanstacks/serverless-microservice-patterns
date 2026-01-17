@@ -1,3 +1,8 @@
+/**
+ * @module utils/sns-client
+ * @description Utility functions for publishing messages to AWS SNS topics.
+ */
+
 import { PublishCommand, SNSClient } from '@aws-sdk/client-sns';
 
 import { config } from './config.js';
