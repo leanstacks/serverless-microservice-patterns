@@ -1,24 +1,15 @@
-import { Context, SQSBatchItemFailure, SQSBatchResponse, SQSEvent } from 'aws-lambda';
-import { z } from 'zod';
-
-import { logger, withRequestTracking } from '../../utils/logger.js';
-import { updateTaskFileStatus } from '../../services/task-file-service.js';
-import { ProcessingStatus } from '../../models/task-file.js';
-import { CompleteTaskFileMessage, CompleteTaskFileMessageSchema } from '../../models/complete-task-file-message.js';
-
 /**
- * Schema for validating SQS event structure.
+ * @module handlers/sqs/complete-task-file-subscriber
+ * @description Lambda handler for processing SQS messages from the TaskFile Complete Queue.
  */
-const sqsEventSchema = z.object({
-  Records: z
-    .array(
-      z.object({
-        messageId: z.string(),
-        body: z.string(),
-      }),
-    )
-    .min(1, 'At least one SQS record is required'),
-});
+
+import { Context, SQSBatchItemFailure, SQSBatchResponse, SQSEvent } from 'aws-lambda';
+
+import { SqsEventSchema } from '@/models/sqs-event.js';
+import { logger, withRequestTracking } from '@/utils/logger.js';
+import { updateTaskFileStatus } from '@/services/task-file-service.js';
+import { ProcessingStatus } from '@/models/task-file.js';
+import { CompleteTaskFileMessage, CompleteTaskFileMessageSchema } from '@/models/complete-task-file-message.js';
 
 /**
  * Lambda handler for processing SQS messages from the TaskFile Complete Queue.
@@ -38,7 +29,7 @@ export const handler = async (event: SQSEvent, context: Context): Promise<SQSBat
 
   try {
     // Validate the SQS event structure
-    const validationResult = sqsEventSchema.safeParse(event);
+    const validationResult = SqsEventSchema.safeParse(event);
     if (!validationResult.success) {
       logger.error(
         { error: validationResult.error },

@@ -1,23 +1,14 @@
-import { Context, SQSBatchItemFailure, SQSBatchResponse, SQSEvent, S3EventRecord } from 'aws-lambda';
-import { z } from 'zod';
-
-import { parseCsvAndCreateTasks } from '../../services/task-file-service.js';
-import { logger, withRequestTracking } from '../../utils/logger.js';
-import { getObjectContent } from '../../utils/s3-client.js';
-
 /**
- * Schema for validating SQS event structure.
+ * @module handlers/sqs/upload-task-subscriber
+ * @description Lambda handler for processing SQS messages from the Task Upload Queue.
  */
-const sqsEventSchema = z.object({
-  Records: z
-    .array(
-      z.object({
-        messageId: z.string(),
-        body: z.string(),
-      }),
-    )
-    .min(1, 'At least one SQS record is required'),
-});
+
+import { Context, SQSBatchItemFailure, SQSBatchResponse, SQSEvent, S3EventRecord } from 'aws-lambda';
+
+import { SqsEventSchema } from '@/models/sqs-event.js';
+import { parseCsvAndCreateTasks } from '@/services/task-file-service.js';
+import { logger, withRequestTracking } from '@/utils/logger.js';
+import { getObjectContent } from '@/utils/s3-client.js';
 
 /**
  * Lambda handler for processing SQS messages from the Task Upload Queue.
@@ -37,7 +28,7 @@ export const handler = async (event: SQSEvent, context: Context): Promise<SQSBat
 
   try {
     // Validate the SQS event structure
-    const validationResult = sqsEventSchema.safeParse(event);
+    const validationResult = SqsEventSchema.safeParse(event);
     if (!validationResult.success) {
       logger.error({ error: validationResult.error }, '[UploadTaskSubscriber] < handler - invalid SQS event structure');
       // Return all messages as failures if event structure is invalid

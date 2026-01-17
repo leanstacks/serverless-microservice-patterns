@@ -1,24 +1,15 @@
-import { Context, SQSBatchItemFailure, SQSBatchResponse, SQSEvent } from 'aws-lambda';
-import { z } from 'zod';
-
-import { CreateTaskMessage, CreateTaskMessageSchema } from '../../models/create-task-message.js';
-import { createTask, deleteTask } from '../../services/task-service.js';
-import { logger, withRequestTracking } from '../../utils/logger.js';
-import { incrementTaskFileProcessedCount } from '../../services/task-file-service.js';
-
 /**
- * Schema for validating SQS event structure.
+ * @module handlers/sqs/create-task-subscriber
+ * @description Lambda handler for processing SQS messages from the Create Task Queue.
  */
-const sqsEventSchema = z.object({
-  Records: z
-    .array(
-      z.object({
-        messageId: z.string(),
-        body: z.string(),
-      }),
-    )
-    .min(1, 'At least one SQS record is required'),
-});
+
+import { Context, SQSBatchItemFailure, SQSBatchResponse, SQSEvent } from 'aws-lambda';
+
+import { SqsEventSchema } from '@/models/sqs-event.js';
+import { CreateTaskMessage, CreateTaskMessageSchema } from '@/models/create-task-message.js';
+import { createTask, deleteTask } from '@/services/task-service.js';
+import { logger, withRequestTracking } from '@/utils/logger.js';
+import { incrementTaskFileProcessedCount } from '@/services/task-file-service.js';
 
 /**
  * Lambda handler for processing SQS messages from the Create Task Queue.
@@ -37,7 +28,7 @@ export const handler = async (event: SQSEvent, context: Context): Promise<SQSBat
 
   try {
     // Validate the SQS event structure
-    const validationResult = sqsEventSchema.safeParse(event);
+    const validationResult = SqsEventSchema.safeParse(event);
     if (!validationResult.success) {
       logger.error({ error: validationResult.error }, '[CreateTaskSubscriber] < handler - invalid SQS event structure');
       // Return all messages as failures if event structure is invalid
