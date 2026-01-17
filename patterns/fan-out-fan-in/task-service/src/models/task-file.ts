@@ -1,3 +1,5 @@
+import z from 'zod';
+
 /**
  * Prefix for task file partition keys in Single Table Design
  */
@@ -18,18 +20,23 @@ export enum ProcessingStatus {
 }
 
 /**
+ * Zod schema for validating TaskFile objects
+ */
+export const TaskFileSchema = z.object({
+  id: z.uuid({ message: 'id must be a valid UUID', version: 'v4' }),
+  fileName: z.string().min(1).max(1024),
+  processingStatus: z.enum(ProcessingStatus),
+  recordCount: z.number().int().min(0),
+  processedCount: z.number().int().min(0),
+  unprocessedCount: z.number().int().min(0),
+  createdAt: z.iso.datetime('createdAt must be a valid ISO date string'),
+  updatedAt: z.iso.datetime('updatedAt must be a valid ISO date string'),
+});
+
+/**
  * Type representing a TaskFile (without DynamoDB-specific fields)
  */
-export type TaskFile = {
-  id: string;
-  fileName: string;
-  processingStatus: ProcessingStatus;
-  recordCount: number;
-  processedCount: number;
-  unprocessedCount: number;
-  createdAt: string;
-  updatedAt: string;
-};
+export type TaskFile = z.infer<typeof TaskFileSchema>;
 
 /**
  * Type representing a TaskFile as stored in DynamoDB (Single Table Design)

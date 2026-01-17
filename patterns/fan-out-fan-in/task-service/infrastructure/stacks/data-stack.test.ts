@@ -72,6 +72,49 @@ describe('DataStack', () => {
       });
     });
 
+    it('should create a TaskFile table', () => {
+      template.hasResourceProperties('AWS::DynamoDB::Table', {
+        TableName: 'smp-fan-out-fan-in-task-service-task-file-dev',
+        BillingMode: 'PAY_PER_REQUEST',
+        KeySchema: [
+          {
+            AttributeName: 'pk',
+            KeyType: 'HASH',
+          },
+          {
+            AttributeName: 'sk',
+            KeyType: 'RANGE',
+          },
+        ],
+        AttributeDefinitions: [
+          {
+            AttributeName: 'pk',
+            AttributeType: 'S',
+          },
+          {
+            AttributeName: 'sk',
+            AttributeType: 'S',
+          },
+        ],
+      });
+    });
+
+    it('should export TaskFile table name', () => {
+      template.hasOutput('TaskFileTableName', {
+        Export: {
+          Name: 'smp-fan-out-fan-in-task-service-task-file-table-name-dev',
+        },
+      });
+    });
+
+    it('should export TaskFile table ARN', () => {
+      template.hasOutput('TaskFileTableArn', {
+        Export: {
+          Name: 'smp-fan-out-fan-in-task-service-task-file-table-arn-dev',
+        },
+      });
+    });
+
     it('should create a Task Uploads S3 bucket', () => {
       template.hasResourceProperties('AWS::S3::Bucket', {
         BucketName: 'smp-fan-out-fan-in-task-service-task-uploads-dev',
@@ -277,6 +320,74 @@ describe('DataStack', () => {
         },
       });
     });
+
+    it('should create a TaskFile Complete Queue with correct properties', () => {
+      template.hasResourceProperties('AWS::SQS::Queue', {
+        QueueName: 'smp-fan-out-fan-in-task-service-task-file-complete-dev',
+        VisibilityTimeout: 60,
+        MessageRetentionPeriod: 345600, // 4 days in seconds
+      });
+    });
+
+    it('should create a TaskFile Complete Dead Letter Queue with correct properties', () => {
+      template.hasResourceProperties('AWS::SQS::Queue', {
+        QueueName: 'smp-fan-out-fan-in-task-service-task-file-complete-dlq-dev',
+        MessageRetentionPeriod: 1209600, // 14 days in seconds
+      });
+    });
+
+    it('should configure TaskFile Complete Queue with DLQ redrive policy', () => {
+      template.hasResourceProperties('AWS::SQS::Queue', {
+        QueueName: 'smp-fan-out-fan-in-task-service-task-file-complete-dev',
+        RedrivePolicy: {
+          maxReceiveCount: 3,
+        },
+      });
+    });
+
+    it('should output TaskFile Complete Queue URL', () => {
+      template.hasOutput('TaskFileCompleteQueueUrl', {
+        Description: 'URL of the TaskFile Complete Queue',
+        Export: {
+          Name: 'smp-fan-out-fan-in-task-service-task-file-complete-queue-url-dev',
+        },
+      });
+    });
+
+    it('should output TaskFile Complete Queue ARN', () => {
+      template.hasOutput('TaskFileCompleteQueueArn', {
+        Description: 'ARN of the TaskFile Complete Queue',
+        Export: {
+          Name: 'smp-fan-out-fan-in-task-service-task-file-complete-queue-arn-dev',
+        },
+      });
+    });
+
+    it('should output TaskFile Complete DLQ URL', () => {
+      template.hasOutput('TaskFileCompleteDLQUrl', {
+        Description: 'URL of the TaskFile Complete Dead Letter Queue',
+        Export: {
+          Name: 'smp-fan-out-fan-in-task-service-task-file-complete-dlq-url-dev',
+        },
+      });
+    });
+
+    it('should output TaskFile Complete DLQ ARN', () => {
+      template.hasOutput('TaskFileCompleteDLQArn', {
+        Description: 'ARN of the TaskFile Complete Dead Letter Queue',
+        Export: {
+          Name: 'smp-fan-out-fan-in-task-service-task-file-complete-dlq-arn-dev',
+        },
+      });
+    });
+
+    it('should subscribe TaskFile Complete Queue to Task Topic with event filter', () => {
+      template.resourceCountIs('AWS::SNS::Subscription', 1);
+      template.hasResourceProperties('AWS::SNS::Subscription', {
+        Protocol: 'sqs',
+        RawMessageDelivery: true,
+      });
+    });
   });
 
   describe('prd environment', () => {
@@ -294,6 +405,22 @@ describe('DataStack', () => {
     it('should create a Task table with prd naming', () => {
       template.hasResourceProperties('AWS::DynamoDB::Table', {
         TableName: 'smp-fan-out-fan-in-task-service-task-prd',
+      });
+    });
+
+    it('should create a TaskFile table with prd naming', () => {
+      template.hasResourceProperties('AWS::DynamoDB::Table', {
+        TableName: 'smp-fan-out-fan-in-task-service-task-file-prd',
+        KeySchema: [
+          {
+            AttributeName: 'pk',
+            KeyType: 'HASH',
+          },
+          {
+            AttributeName: 'sk',
+            KeyType: 'RANGE',
+          },
+        ],
       });
     });
 
@@ -460,6 +587,80 @@ describe('DataStack', () => {
         Export: {
           Name: 'smp-fan-out-fan-in-task-service-task-topic-arn-prd',
         },
+      });
+    });
+
+    it('should create a TaskFile Complete Queue with prd naming', () => {
+      template.hasResourceProperties('AWS::SQS::Queue', {
+        QueueName: 'smp-fan-out-fan-in-task-service-task-file-complete-prd',
+        VisibilityTimeout: 60,
+        MessageRetentionPeriod: 345600, // 4 days in seconds
+      });
+    });
+
+    it('should create a TaskFile Complete DLQ with prd naming', () => {
+      template.hasResourceProperties('AWS::SQS::Queue', {
+        QueueName: 'smp-fan-out-fan-in-task-service-task-file-complete-dlq-prd',
+        MessageRetentionPeriod: 1209600, // 14 days in seconds
+      });
+    });
+
+    it('should use RETAIN removal policy for prd TaskFile Complete Queue', () => {
+      template.hasResource('AWS::SQS::Queue', {
+        DeletionPolicy: 'Retain',
+      });
+    });
+
+    it('should configure prd TaskFile Complete Queue with DLQ redrive policy', () => {
+      template.hasResourceProperties('AWS::SQS::Queue', {
+        QueueName: 'smp-fan-out-fan-in-task-service-task-file-complete-prd',
+        RedrivePolicy: {
+          maxReceiveCount: 3,
+        },
+      });
+    });
+
+    it('should export prd TaskFile Complete Queue URL', () => {
+      template.hasOutput('TaskFileCompleteQueueUrl', {
+        Description: 'URL of the TaskFile Complete Queue',
+        Export: {
+          Name: 'smp-fan-out-fan-in-task-service-task-file-complete-queue-url-prd',
+        },
+      });
+    });
+
+    it('should export prd TaskFile Complete Queue ARN', () => {
+      template.hasOutput('TaskFileCompleteQueueArn', {
+        Description: 'ARN of the TaskFile Complete Queue',
+        Export: {
+          Name: 'smp-fan-out-fan-in-task-service-task-file-complete-queue-arn-prd',
+        },
+      });
+    });
+
+    it('should export prd TaskFile Complete DLQ URL', () => {
+      template.hasOutput('TaskFileCompleteDLQUrl', {
+        Description: 'URL of the TaskFile Complete Dead Letter Queue',
+        Export: {
+          Name: 'smp-fan-out-fan-in-task-service-task-file-complete-dlq-url-prd',
+        },
+      });
+    });
+
+    it('should export prd TaskFile Complete DLQ ARN', () => {
+      template.hasOutput('TaskFileCompleteDLQArn', {
+        Description: 'ARN of the TaskFile Complete Dead Letter Queue',
+        Export: {
+          Name: 'smp-fan-out-fan-in-task-service-task-file-complete-dlq-arn-prd',
+        },
+      });
+    });
+
+    it('should subscribe TaskFile Complete Queue to Task Topic with event filter in prd', () => {
+      template.resourceCountIs('AWS::SNS::Subscription', 1);
+      template.hasResourceProperties('AWS::SNS::Subscription', {
+        Protocol: 'sqs',
+        RawMessageDelivery: true,
       });
     });
   });

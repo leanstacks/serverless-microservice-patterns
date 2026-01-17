@@ -47,6 +47,11 @@ export interface LambdaStackProps extends cdk.StackProps {
   taskUploadQueue: sqs.IQueue;
 
   /**
+   * Reference to the TaskFile Complete SQS queue.
+   */
+  taskFileCompleteQueue: sqs.IQueue;
+
+  /**
    * Reference to the Task Topic.
    */
   taskTopic: sns.ITopic;
@@ -130,6 +135,11 @@ export class LambdaStack extends cdk.Stack {
    * The upload task subscriber Lambda function.
    */
   public readonly uploadTaskSubscriberFunction: NodejsFunction;
+
+  /**
+   * The complete task file subscriber Lambda function.
+   */
+  public readonly completeTaskFileSubscriberFunction: NodejsFunction;
 
   constructor(scope: Construct, id: string, props: LambdaStackProps) {
     super(scope, id, props);
@@ -362,6 +372,41 @@ export class LambdaStack extends cdk.Stack {
       }),
     );
 
+    // Create the complete task file subscriber Lambda function
+    this.completeTaskFileSubscriberFunction = new NodejsFunction(this, 'CompleteTaskFileSubscriberFunction', {
+      functionName: `${props.appName}-complete-taskfile-subscriber-${props.envName}`,
+      runtime: lambda.Runtime.NODEJS_24_X,
+      handler: 'handler',
+      entry: path.join(__dirname, '../../src/handlers/complete-task-file-subscriber.ts'),
+      environment: lambdaEnvironment,
+      timeout: cdk.Duration.seconds(30),
+      memorySize: 256,
+      bundling: {
+        minify: true,
+        sourceMap: true,
+      },
+      loggingFormat: lambda.LoggingFormat.JSON,
+      applicationLogLevelV2: lambda.ApplicationLogLevel.DEBUG,
+      systemLogLevelV2: lambda.SystemLogLevel.INFO,
+      logGroup: new logs.LogGroup(this, 'CompleteTaskFileSubscriberFunctionLogGroup', {
+        logGroupName: `/aws/lambda/${props.appName}-complete-taskfile-subscriber-${props.envName}`,
+        retention: props.envName === 'prd' ? logs.RetentionDays.ONE_MONTH : logs.RetentionDays.ONE_WEEK,
+        removalPolicy: props.envName === 'prd' ? cdk.RemovalPolicy.RETAIN : cdk.RemovalPolicy.DESTROY,
+      }),
+    });
+
+    // Grant the Lambda function read and write access to the TaskFile DynamoDB table
+    props.taskFileTable.grantReadWriteData(this.completeTaskFileSubscriberFunction);
+
+    // Add SQS event source to the Lambda function
+    this.completeTaskFileSubscriberFunction.addEventSource(
+      new SqsEventSource(props.taskFileCompleteQueue, {
+        maxConcurrency: 5,
+        batchSize: 10,
+        reportBatchItemFailures: true,
+      }),
+    );
+
     // Create API Gateway REST API
     this.api = new apigateway.RestApi(this, 'LambdaStarterApi', {
       restApiName: `${props.appName}-api-${props.envName}`,
@@ -515,6 +560,13 @@ export class LambdaStack extends cdk.Stack {
       value: this.uploadTaskSubscriberFunction.functionArn,
       description: 'ARN of the upload task subscriber Lambda function',
       exportName: `${props.appName}-upload-task-subscriber-function-arn-${props.envName}`,
+    });
+
+    // Output the complete task file subscriber function ARN
+    new cdk.CfnOutput(this, 'CompleteTaskFileSubscriberFunctionArn', {
+      value: this.completeTaskFileSubscriberFunction.functionArn,
+      description: 'ARN of the complete task file subscriber Lambda function',
+      exportName: `${props.appName}-complete-task-file-subscriber-function-arn-${props.envName}`,
     });
   }
 }

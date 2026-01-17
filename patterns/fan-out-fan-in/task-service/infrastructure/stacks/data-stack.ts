@@ -3,6 +3,7 @@ import * as dynamodb from 'aws-cdk-lib/aws-dynamodb';
 import * as s3 from 'aws-cdk-lib/aws-s3';
 import * as s3n from 'aws-cdk-lib/aws-s3-notifications';
 import * as sns from 'aws-cdk-lib/aws-sns';
+import * as subscriptions from 'aws-cdk-lib/aws-sns-subscriptions';
 import * as sqs from 'aws-cdk-lib/aws-sqs';
 import { Construct } from 'constructs';
 
@@ -64,6 +65,16 @@ export class DataStack extends cdk.Stack {
    * The Dead Letter Queue for the Create Task queue.
    */
   public readonly createTaskDLQ: sqs.Queue;
+
+  /**
+   * The TaskFile Complete Queue.
+   */
+  public readonly taskFileCompleteQueue: sqs.Queue;
+
+  /**
+   * The Dead Letter Queue for the TaskFile Complete queue.
+   */
+  public readonly taskFileCompleteDLQ: sqs.Queue;
 
   constructor(scope: Construct, id: string, props: DataStackProps) {
     super(scope, id, props);
@@ -163,6 +174,37 @@ export class DataStack extends cdk.Stack {
       removalPolicy: props.envName === 'prd' ? cdk.RemovalPolicy.RETAIN : cdk.RemovalPolicy.DESTROY,
     });
 
+    // Create Dead Letter Queue for TaskFile Complete Queue
+    this.taskFileCompleteDLQ = new sqs.Queue(this, 'TaskFileCompleteDLQ', {
+      queueName: `${props.appName}-task-file-complete-dlq-${props.envName}`,
+      retentionPeriod: cdk.Duration.days(14),
+      removalPolicy: props.envName === 'prd' ? cdk.RemovalPolicy.RETAIN : cdk.RemovalPolicy.DESTROY,
+    });
+
+    // Create the TaskFile Complete Queue
+    this.taskFileCompleteQueue = new sqs.Queue(this, 'TaskFileCompleteQueue', {
+      queueName: `${props.appName}-task-file-complete-${props.envName}`,
+      visibilityTimeout: cdk.Duration.seconds(60),
+      retentionPeriod: cdk.Duration.days(4),
+      deadLetterQueue: {
+        queue: this.taskFileCompleteDLQ,
+        maxReceiveCount: 3,
+      },
+      removalPolicy: props.envName === 'prd' ? cdk.RemovalPolicy.RETAIN : cdk.RemovalPolicy.DESTROY,
+    });
+
+    // Subscribe the TaskFile Complete Queue to the Task Topic with event filtering
+    this.taskTopic.addSubscription(
+      new subscriptions.SqsSubscription(this.taskFileCompleteQueue, {
+        filterPolicy: {
+          event: sns.SubscriptionFilter.stringFilter({
+            allowlist: ['taskfile_processing_complete'],
+          }),
+        },
+        rawMessageDelivery: true,
+      }),
+    );
+
     // Output the Task table name
     new cdk.CfnOutput(this, 'TaskTableName', {
       value: this.taskTable.tableName,
@@ -259,6 +301,34 @@ export class DataStack extends cdk.Stack {
       value: this.createTaskDLQ.queueArn,
       description: 'ARN of the Create Task Dead Letter Queue',
       exportName: `${props.appName}-create-task-dlq-arn-${props.envName}`,
+    });
+
+    // Output the TaskFile Complete queue URL
+    new cdk.CfnOutput(this, 'TaskFileCompleteQueueUrl', {
+      value: this.taskFileCompleteQueue.queueUrl,
+      description: 'URL of the TaskFile Complete Queue',
+      exportName: `${props.appName}-task-file-complete-queue-url-${props.envName}`,
+    });
+
+    // Output the TaskFile Complete queue ARN
+    new cdk.CfnOutput(this, 'TaskFileCompleteQueueArn', {
+      value: this.taskFileCompleteQueue.queueArn,
+      description: 'ARN of the TaskFile Complete Queue',
+      exportName: `${props.appName}-task-file-complete-queue-arn-${props.envName}`,
+    });
+
+    // Output the TaskFile Complete DLQ URL
+    new cdk.CfnOutput(this, 'TaskFileCompleteDLQUrl', {
+      value: this.taskFileCompleteDLQ.queueUrl,
+      description: 'URL of the TaskFile Complete Dead Letter Queue',
+      exportName: `${props.appName}-task-file-complete-dlq-url-${props.envName}`,
+    });
+
+    // Output the TaskFile Complete DLQ ARN
+    new cdk.CfnOutput(this, 'TaskFileCompleteDLQArn', {
+      value: this.taskFileCompleteDLQ.queueArn,
+      description: 'ARN of the TaskFile Complete Dead Letter Queue',
+      exportName: `${props.appName}-task-file-complete-dlq-arn-${props.envName}`,
     });
 
     // Output the Task Topic ARN
