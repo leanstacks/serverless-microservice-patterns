@@ -1,9 +1,9 @@
 import { Context, SQSBatchItemFailure, SQSBatchResponse, SQSEvent, S3EventRecord } from 'aws-lambda';
 import { z } from 'zod';
 
-import { parseCsvAndCreateTasks } from '../services/task-file-service.js';
-import { logger, withRequestTracking } from '../utils/logger.js';
-import { getObjectContent } from '../utils/s3-client.js';
+import { parseCsvAndCreateTasks } from '../../services/task-file-service.js';
+import { logger, withRequestTracking } from '../../utils/logger.js';
+import { getObjectContent } from '../../utils/s3-client.js';
 
 /**
  * Schema for validating SQS event structure.

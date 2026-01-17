@@ -1,8 +1,8 @@
 import { APIGatewayProxyEvent, APIGatewayProxyResult, Context } from 'aws-lambda';
 
-import { deleteTask } from '../services/task-service.js';
-import { internalServerError, noContent, notFound } from '../utils/apigateway-response.js';
-import { logger, withRequestTracking } from '../utils/logger.js';
+import { deleteTask } from '../../services/task-service.js';
+import { internalServerError, noContent, notFound } from '../../utils/apigateway-response.js';
+import { logger, withRequestTracking } from '../../utils/logger.js';
 
 /**
  * Lambda handler for deleting a task by ID

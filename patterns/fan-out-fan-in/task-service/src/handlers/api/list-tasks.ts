@@ -1,8 +1,8 @@
 import { APIGatewayProxyEvent, APIGatewayProxyResult, Context } from 'aws-lambda';
 
-import { listTasks } from '../services/task-service.js';
-import { internalServerError, ok } from '../utils/apigateway-response.js';
-import { logger, withRequestTracking } from '../utils/logger.js';
+import { listTasks } from '../../services/task-service.js';
+import { internalServerError, ok } from '../../utils/apigateway-response.js';
+import { logger, withRequestTracking } from '../../utils/logger.js';
 
 /**
  * Lambda handler for listing all tasks

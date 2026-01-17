@@ -1,14 +1,14 @@
 import { Context, SQSEvent } from 'aws-lambda';
 
-jest.mock('../services/task-service', () => ({
+jest.mock('../../services/task-service', () => ({
   createTask: jest.fn(),
 }));
 
-jest.mock('../services/task-file-service', () => ({
+jest.mock('../../services/task-file-service', () => ({
   incrementTaskFileProcessedCount: jest.fn(),
 }));
 
-jest.mock('../utils/logger', () => ({
+jest.mock('../../utils/logger', () => ({
   logger: {
     debug: jest.fn(),
     info: jest.fn(),
@@ -19,9 +19,9 @@ jest.mock('../utils/logger', () => ({
 }));
 
 // Mock dependencies - reference after jest.mock calls for proper hoisting
-const mockCreateTask = jest.requireMock('../services/task-service').createTask;
+const mockCreateTask = jest.requireMock('../../services/task-service').createTask;
 const mockIncrementTaskFileProcessedCount = jest.requireMock(
-  '../services/task-file-service',
+  '../../services/task-file-service',
 ).incrementTaskFileProcessedCount;
 
 // Set up default implementation

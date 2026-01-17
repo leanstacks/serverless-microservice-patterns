@@ -1,12 +1,14 @@
 import { APIGatewayProxyEvent, Context } from 'aws-lambda';
 
+import { Task } from '../../models/task';
+
 // Mock dependencies BEFORE importing handler
-const mockDeleteTask = jest.fn();
+const mockGetTask = jest.fn();
 const mockLoggerInfo = jest.fn();
 const mockLoggerWarn = jest.fn();
 const mockLoggerError = jest.fn();
 
-jest.mock('../utils/config', () => ({
+jest.mock('../../utils/config', () => ({
   config: {
     TASKS_TABLE: 'test-tasks-table',
     AWS_REGION: 'us-east-1',
@@ -16,11 +18,11 @@ jest.mock('../utils/config', () => ({
   },
 }));
 
-jest.mock('../services/task-service', () => ({
-  deleteTask: mockDeleteTask,
+jest.mock('../../services/task-service', () => ({
+  getTask: mockGetTask,
 }));
 
-jest.mock('../utils/logger', () => ({
+jest.mock('../../utils/logger', () => ({
   logger: {
     info: mockLoggerInfo,
     warn: mockLoggerWarn,
@@ -30,14 +32,14 @@ jest.mock('../utils/logger', () => ({
   withRequestTracking: jest.fn(),
 }));
 
-describe('delete-task handler', () => {
-  let handler: typeof import('./delete-task').handler;
+describe('get-task handler', () => {
+  let handler: typeof import('./get-task').handler;
 
   beforeEach(() => {
     jest.clearAllMocks();
 
     // Import handler after mocks are set up
-    handler = require('./delete-task').handler;
+    handler = require('./get-task').handler;
   });
 
   const createMockEvent = (overrides?: Partial<APIGatewayProxyEvent>): APIGatewayProxyEvent => {
@@ -45,7 +47,7 @@ describe('delete-task handler', () => {
       body: null,
       headers: {},
       multiValueHeaders: {},
-      httpMethod: 'DELETE',
+      httpMethod: 'GET',
       isBase64Encoded: false,
       path: '/tasks/123e4567-e89b-12d3-a456-426614174000',
       pathParameters: {
@@ -59,7 +61,7 @@ describe('delete-task handler', () => {
         apiId: 'test-api-id',
         authorizer: null,
         protocol: 'HTTP/1.1',
-        httpMethod: 'DELETE',
+        httpMethod: 'GET',
         identity: {
           accessKey: null,
           accountId: null,
@@ -107,9 +109,18 @@ describe('delete-task handler', () => {
   };
 
   describe('handler', () => {
-    it('should return 204 when task is deleted successfully', async () => {
+    it('should return task when it exists', async () => {
       // Arrange
-      mockDeleteTask.mockResolvedValue(true);
+      const mockTask: Task = {
+        id: '123e4567-e89b-12d3-a456-426614174000',
+        title: 'Test Task',
+        detail: 'Test detail',
+        isComplete: false,
+        createdAt: '2025-11-01T10:00:00.000Z',
+        updatedAt: '2025-11-01T10:00:00.000Z',
+      };
+
+      mockGetTask.mockResolvedValue(mockTask);
       const event = createMockEvent();
       const context = createMockContext();
 
@@ -117,15 +128,15 @@ describe('delete-task handler', () => {
       const result = await handler(event, context);
 
       // Assert
-      expect(result.statusCode).toBe(204);
-      expect(JSON.parse(result.body)).toEqual({});
-      expect(mockDeleteTask).toHaveBeenCalledTimes(1);
-      expect(mockDeleteTask).toHaveBeenCalledWith('123e4567-e89b-12d3-a456-426614174000');
+      expect(result.statusCode).toBe(200);
+      expect(JSON.parse(result.body)).toEqual(mockTask);
+      expect(mockGetTask).toHaveBeenCalledTimes(1);
+      expect(mockGetTask).toHaveBeenCalledWith('123e4567-e89b-12d3-a456-426614174000');
     });
 
     it('should return 404 when task does not exist', async () => {
       // Arrange
-      mockDeleteTask.mockResolvedValue(false);
+      mockGetTask.mockResolvedValue(null);
       const event = createMockEvent();
       const context = createMockContext();
 
@@ -137,8 +148,8 @@ describe('delete-task handler', () => {
       expect(JSON.parse(result.body)).toEqual({
         message: 'Task not found',
       });
-      expect(mockDeleteTask).toHaveBeenCalledTimes(1);
-      expect(mockDeleteTask).toHaveBeenCalledWith('123e4567-e89b-12d3-a456-426614174000');
+      expect(mockGetTask).toHaveBeenCalledTimes(1);
+      expect(mockGetTask).toHaveBeenCalledWith('123e4567-e89b-12d3-a456-426614174000');
     });
 
     it('should return 404 when taskId path parameter is missing', async () => {
@@ -156,7 +167,7 @@ describe('delete-task handler', () => {
       expect(JSON.parse(result.body)).toEqual({
         message: 'Task not found',
       });
-      expect(mockDeleteTask).not.toHaveBeenCalled();
+      expect(mockGetTask).not.toHaveBeenCalled();
     });
 
     it('should return 404 when taskId is undefined', async () => {
@@ -174,13 +185,13 @@ describe('delete-task handler', () => {
       expect(JSON.parse(result.body)).toEqual({
         message: 'Task not found',
       });
-      expect(mockDeleteTask).not.toHaveBeenCalled();
+      expect(mockGetTask).not.toHaveBeenCalled();
     });
 
     it('should return 500 error when service throws an error', async () => {
       // Arrange
       const mockError = new Error('Service error');
-      mockDeleteTask.mockRejectedValue(mockError);
+      mockGetTask.mockRejectedValue(mockError);
       const event = createMockEvent();
       const context = createMockContext();
 
@@ -190,14 +201,22 @@ describe('delete-task handler', () => {
       // Assert
       expect(result.statusCode).toBe(500);
       expect(JSON.parse(result.body)).toEqual({
-        message: 'Failed to delete task',
+        message: 'Failed to retrieve task',
       });
-      expect(mockDeleteTask).toHaveBeenCalledTimes(1);
+      expect(mockGetTask).toHaveBeenCalledTimes(1);
     });
 
     it('should include CORS headers in response', async () => {
       // Arrange
-      mockDeleteTask.mockResolvedValue(true);
+      const mockTask: Task = {
+        id: '123e4567-e89b-12d3-a456-426614174000',
+        title: 'Test Task',
+        isComplete: false,
+        createdAt: '2025-11-01T10:00:00.000Z',
+        updatedAt: '2025-11-01T10:00:00.000Z',
+      };
+
+      mockGetTask.mockResolvedValue(mockTask);
       const event = createMockEvent();
       const context = createMockContext();
 
@@ -212,7 +231,15 @@ describe('delete-task handler', () => {
 
     it('should log request context information', async () => {
       // Arrange
-      mockDeleteTask.mockResolvedValue(true);
+      const mockTask: Task = {
+        id: '123e4567-e89b-12d3-a456-426614174000',
+        title: 'Test Task',
+        isComplete: false,
+        createdAt: '2025-11-01T10:00:00.000Z',
+        updatedAt: '2025-11-01T10:00:00.000Z',
+      };
+
+      mockGetTask.mockResolvedValue(mockTask);
       const event = createMockEvent();
       const context = createMockContext();
 
@@ -223,10 +250,43 @@ describe('delete-task handler', () => {
       // Handler execution is verified through successful test completion
     });
 
+    it('should return task with only required fields', async () => {
+      // Arrange
+      const mockTask: Task = {
+        id: '123e4567-e89b-12d3-a456-426614174000',
+        title: 'Test Task',
+        isComplete: false,
+        createdAt: '2025-11-01T10:00:00.000Z',
+        updatedAt: '2025-11-01T10:00:00.000Z',
+      };
+
+      mockGetTask.mockResolvedValue(mockTask);
+      const event = createMockEvent();
+      const context = createMockContext();
+
+      // Act
+      const result = await handler(event, context);
+
+      // Assert
+      expect(result.statusCode).toBe(200);
+      const body = JSON.parse(result.body);
+      expect(body).toEqual(mockTask);
+      expect(body).not.toHaveProperty('detail');
+      expect(body).not.toHaveProperty('dueAt');
+    });
+
     it('should handle different task IDs', async () => {
       // Arrange
-      const taskId = 'different-task-id-789';
-      mockDeleteTask.mockResolvedValue(true);
+      const taskId = 'different-task-id';
+      const mockTask: Task = {
+        id: taskId,
+        title: 'Different Task',
+        isComplete: true,
+        createdAt: '2025-11-01T10:00:00.000Z',
+        updatedAt: '2025-11-01T10:00:00.000Z',
+      };
+
+      mockGetTask.mockResolvedValue(mockTask);
       const event = createMockEvent({
         pathParameters: { taskId },
         path: `/tasks/${taskId}`,
@@ -237,48 +297,9 @@ describe('delete-task handler', () => {
       const result = await handler(event, context);
 
       // Assert
-      expect(result.statusCode).toBe(204);
-      expect(mockDeleteTask).toHaveBeenCalledWith(taskId);
-    });
-
-    it('should return 204 with empty body on successful deletion', async () => {
-      // Arrange
-      mockDeleteTask.mockResolvedValue(true);
-      const event = createMockEvent();
-      const context = createMockContext();
-
-      // Act
-      const result = await handler(event, context);
-
-      // Assert
-      expect(result.statusCode).toBe(204);
-      expect(result.body).toBe('{}');
-    });
-
-    it('should log the taskId when deletion succeeds', async () => {
-      // Arrange
-      mockDeleteTask.mockResolvedValue(true);
-      const event = createMockEvent();
-      const context = createMockContext();
-
-      // Act
-      await handler(event, context);
-
-      // Assert
-      // Handler execution is verified through successful test completion
-    });
-
-    it('should log the taskId when task not found', async () => {
-      // Arrange
-      mockDeleteTask.mockResolvedValue(false);
-      const event = createMockEvent();
-      const context = createMockContext();
-
-      // Act
-      await handler(event, context);
-
-      // Assert
-      // Handler execution is verified through successful test completion
+      expect(result.statusCode).toBe(200);
+      expect(mockGetTask).toHaveBeenCalledWith(taskId);
+      expect(JSON.parse(result.body)).toEqual(mockTask);
     });
   });
 });

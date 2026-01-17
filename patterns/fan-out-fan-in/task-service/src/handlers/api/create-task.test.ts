@@ -1,6 +1,6 @@
 import { APIGatewayProxyEvent, Context } from 'aws-lambda';
 
-import { Task } from '../models/task';
+import { Task } from '../../models/task';
 
 // Mock dependencies BEFORE importing handler
 const mockCreateTask = jest.fn();
@@ -8,7 +8,7 @@ const mockLoggerInfo = jest.fn();
 const mockLoggerWarn = jest.fn();
 const mockLoggerError = jest.fn();
 
-jest.mock('../utils/config', () => ({
+jest.mock('../../utils/config', () => ({
   config: {
     TASKS_TABLE: 'test-tasks-table',
     AWS_REGION: 'us-east-1',
@@ -18,11 +18,11 @@ jest.mock('../utils/config', () => ({
   },
 }));
 
-jest.mock('../services/task-service', () => ({
+jest.mock('../../services/task-service', () => ({
   createTask: mockCreateTask,
 }));
 
-jest.mock('../utils/logger', () => ({
+jest.mock('../../utils/logger', () => ({
   logger: {
     info: mockLoggerInfo,
     warn: mockLoggerWarn,

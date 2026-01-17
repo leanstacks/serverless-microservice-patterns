@@ -1,10 +1,10 @@
 import { Context, SQSBatchItemFailure, SQSBatchResponse, SQSEvent } from 'aws-lambda';
 import { z } from 'zod';
 
-import { CreateTaskMessage, CreateTaskMessageSchema } from '../models/create-task-message.js';
-import { createTask, deleteTask } from '../services/task-service.js';
-import { logger, withRequestTracking } from '../utils/logger.js';
-import { incrementTaskFileProcessedCount } from '../services/task-file-service.js';
+import { CreateTaskMessage, CreateTaskMessageSchema } from '../../models/create-task-message.js';
+import { createTask, deleteTask } from '../../services/task-service.js';
+import { logger, withRequestTracking } from '../../utils/logger.js';
+import { incrementTaskFileProcessedCount } from '../../services/task-file-service.js';
 
 /**
  * Schema for validating SQS event structure.

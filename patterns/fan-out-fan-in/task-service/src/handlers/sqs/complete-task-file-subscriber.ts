@@ -1,10 +1,10 @@
 import { Context, SQSBatchItemFailure, SQSBatchResponse, SQSEvent } from 'aws-lambda';
 import { z } from 'zod';
 
-import { logger, withRequestTracking } from '../utils/logger.js';
-import { updateTaskFileStatus } from '../services/task-file-service.js';
-import { ProcessingStatus } from '../models/task-file.js';
-import { CompleteTaskFileMessage, CompleteTaskFileMessageSchema } from '../models/complete-task-file-message.js';
+import { logger, withRequestTracking } from '../../utils/logger.js';
+import { updateTaskFileStatus } from '../../services/task-file-service.js';
+import { ProcessingStatus } from '../../models/task-file.js';
+import { CompleteTaskFileMessage, CompleteTaskFileMessageSchema } from '../../models/complete-task-file-message.js';
 
 /**
  * Schema for validating SQS event structure.

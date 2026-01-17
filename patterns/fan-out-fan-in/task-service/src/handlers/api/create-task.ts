@@ -1,10 +1,10 @@
 import { APIGatewayProxyEvent, APIGatewayProxyResult, Context } from 'aws-lambda';
 import { ZodError } from 'zod';
 
-import { CreateTaskDtoSchema } from '../models/create-task-dto.js';
-import { createTask } from '../services/task-service.js';
-import { badRequest, created, internalServerError } from '../utils/apigateway-response.js';
-import { logger, withRequestTracking } from '../utils/logger.js';
+import { CreateTaskDtoSchema } from '../../models/create-task-dto.js';
+import { createTask } from '../../services/task-service.js';
+import { badRequest, created, internalServerError } from '../../utils/apigateway-response.js';
+import { logger, withRequestTracking } from '../../utils/logger.js';
 
 /**
  * Lambda handler for creating a new task

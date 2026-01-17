@@ -7,7 +7,7 @@ const mockLoggerWarn = jest.fn();
 const mockLoggerError = jest.fn();
 const mockLoggerDebug = jest.fn();
 
-jest.mock('../utils/config', () => ({
+jest.mock('../../utils/config', () => ({
   config: {
     AWS_REGION: 'us-east-1',
     LOGGING_ENABLED: true,
@@ -15,11 +15,11 @@ jest.mock('../utils/config', () => ({
   },
 }));
 
-jest.mock('../services/task-file-service', () => ({
+jest.mock('../../services/task-file-service', () => ({
   updateTaskFileStatus: mockUpdateTaskFileStatus,
 }));
 
-jest.mock('../utils/logger', () => ({
+jest.mock('../../utils/logger', () => ({
   logger: {
     info: mockLoggerInfo,
     warn: mockLoggerWarn,
