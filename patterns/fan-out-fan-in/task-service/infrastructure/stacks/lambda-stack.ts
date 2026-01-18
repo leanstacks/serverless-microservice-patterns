@@ -445,7 +445,7 @@ export class LambdaStack extends cdk.Stack {
     apiGatewayS3Role.addToPrincipalPolicy(
       new iam.PolicyStatement({
         actions: ['s3:PutObject', 's3:PutObjectAcl'],
-        resources: [`${props.taskUploadsBucket.bucketArn}/new/*`],
+        resources: [`${props.taskUploadsBucket.bucketArn}/*`],
         effect: iam.Effect.ALLOW,
       }),
     );
@@ -454,7 +454,7 @@ export class LambdaStack extends cdk.Stack {
     const s3Integration = new apigateway.AwsIntegration({
       service: 's3',
       region: this.region,
-      path: `${props.taskUploadsBucket.bucketName}/new/{key}`,
+      path: `${props.taskUploadsBucket.bucketName}/{key}`,
       integrationHttpMethod: 'PUT',
       options: {
         credentialsRole: apiGatewayS3Role,
