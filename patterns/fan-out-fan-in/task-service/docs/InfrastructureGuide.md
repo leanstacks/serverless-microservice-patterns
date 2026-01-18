@@ -95,75 +95,6 @@ The infrastructure is organized into two main AWS CDK stacks:
 
 ---
 
-## Fan Out / Fan In Architecture
-
-The infrastructure implements the Fan Out / Fan In pattern through coordinated messaging:
-
-### Fan Out Phase
-
-1. **CSV Upload**: Files uploaded to S3 trigger `ObjectCreated` events
-2. **Event Routing**: S3 notifications automatically publish events to the Task Upload Queue
-3. **File Processing**: The Upload Task Subscriber Lambda reads the CSV file and:
-   - Creates a TaskFile record with `NEW` status
-   - Parses CSV rows and creates individual task creation messages
-   - Publishes each row as a message to the Create Task Queue
-   - Returns immediately (no waiting for task creation)
-
-### Parallel Processing Phase
-
-4. **Message Decomposition**: Each CSV row becomes an independent SQS message in the Create Task Queue
-5. **Worker Concurrency**: Multiple Create Task Subscriber Lambdas process messages in parallel:
-   - Batch size: 10 messages per invocation
-   - Max concurrency: 5 concurrent Lambdas
-   - Each processes one task creation message
-6. **Progress Tracking**: As tasks are created, the TaskFile record is updated with:
-   - `processedCount`: Number of successfully created tasks
-   - `unprocessedCount`: Number of remaining tasks
-   - Status remains `IN_PROGRESS`
-
-### Fan In Phase (Aggregation)
-
-7. **Completion Signaling**: When all tasks are processed, the Create Task Subscriber publishes a `taskfile_processing_complete` event to the Task SNS Topic
-8. **Event Filtering**: The TaskFile Complete Queue has a subscription filter that captures only `taskfile_processing_complete` events
-9. **Completion Handler**: The Complete TaskFile Subscriber Lambda:
-   - Processes the aggregated completion event
-   - Updates the TaskFile record status to `COMPLETED`
-   - Marks the batch processing as finished
-
-### Message Flow Diagram
-
-```
-S3 Upload → S3 Events → Task Upload Queue → Upload Task Subscriber
-                                                    ↓
-                                        Create TaskFile (NEW)
-                                        Parse CSV & Fan Out
-                                                    ↓
-                                        Create Task Queue
-                                                    ↓
-              ┌─────────────────┬──────────────┬──────────────┐
-              ↓                 ↓              ↓              ↓
-        Create Task          Create Task    Create Task    Create Task
-        Subscriber 1         Subscriber 2   Subscriber 3   Subscriber 4
-        (Create Task)        (Create Task)  (Create Task)  (Create Task)
-              │                 │              │              │
-              └─────────────────┴──────────────┴──────────────┘
-                                        ↓
-                        Update TaskFile (IN_PROGRESS)
-                        Publish Completion Event
-                                        ↓
-                            Task SNS Topic
-                                        ↓
-                    TaskFile Complete Queue
-                    (Event filtering applied)
-                                        ↓
-                    Complete TaskFile Subscriber
-                    (Aggregation)
-                                        ↓
-                    Update TaskFile (COMPLETED)
-```
-
----
-
 ## Resource Tagging
 
 All resources are tagged for cost allocation and management:
@@ -174,13 +105,6 @@ All resources are tagged for cost allocation and management:
 | `Env`   | `CDK_ENV`      | `dev`, `qat`, `prd`               |
 | `OU`    | `CDK_OU`       | `leanstacks`                      |
 | `Owner` | `CDK_OWNER`    | `platform-team`                   |
-
----
-
-## Configuration & DevOps
-
-- For environment variables, configuration, and validation, see the [Configuration Guide](./ConfigurationGuide.md).
-- For CI/CD, GitHub Actions, and DevOps automation, see the [DevOps Guide](./DevOpsGuide.md).
 
 ---
 
@@ -275,4 +199,3 @@ Or use a supported Node.js version (22.x or 20.x).
 
 - [AWS CDK Documentation](https://docs.aws.amazon.com/cdk/latest/guide/)
 - [Project Configuration Guide](./ConfigurationGuide.md)
-- [Project DevOps Guide](./DevOpsGuide.md)
