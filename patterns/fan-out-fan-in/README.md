@@ -4,44 +4,48 @@ This project provides a solid foundation for implementing Serverless Microservic
 
 ## Fan Out / Fan In Pattern
 
-There are many Serverless Microservice Patterns which may be implemented with AWS Lambda functions. This project illustrates the "Fan Out" pattern. The Fan Out pattern breaks a large job into a collection of smaller jobs. This is particularly useful for batch processing. Lambda functions are limited to 15 minutes of total execution time and the Fan Out pattern allows applications to overcome this limitation by decomposing work into smaller units.
+There are many Serverless Microservice Patterns which may be implemented with AWS Lambda functions. This project illustrates the **"Fan Out / Fan In"** pattern. The Fan Out / Fan In pattern combines decomposition and aggregation: it breaks a large job into multiple smaller, independent tasks (fan out), processes them in parallel, and then aggregates the results (fan in). This is particularly useful for batch processing with progress tracking. Lambda functions are limited to 15 minutes of total execution time, and the Fan Out / Fan In pattern allows applications to overcome this limitation by decomposing work into smaller units while tracking completion status.
 
 ![Design diagram](../../docs/img/diagram-fan-out-fan-in.png "Fan Out / Fan In")
 
 ### Key Characteristics
 
-The Fan Out pattern is characterized by:
+The Fan Out / Fan In pattern is characterized by:
 
-- **Task Decomposition**: Breaking a single large workload into multiple smaller, independent tasks
-- **Message Queue Decoupling**: Using a message queue (SQS) to decouple the producer (upload/orchestration function) from consumers (worker functions)
+- **Task Decomposition (Fan Out)**: Breaking a single large workload into multiple smaller, independent tasks
+- **Message Queue Decoupling**: Using message queues (SQS) to decouple producer functions from consumer functions
+- **Progress Tracking**: Maintaining a record of the batch job with metrics (total records, processed count, unprocessed count)
 - **Parallel Execution**: Multiple worker Lambda functions processing tasks concurrently from the message queue
 - **Asynchronous Processing**: The initial upload function returns quickly after queuing work, rather than waiting for completion
+- **Result Aggregation (Fan In)**: Collecting completion signals from worker functions and updating the overall job status
 
 ### When to Use
 
-The Fan Out pattern is ideal for scenarios such as:
+The Fan Out / Fan In pattern is ideal for scenarios such as:
 
-- **Batch Processing**: Processing large CSV or batch files without timeout concerns
-- **Data Transformation**: Converting, validating, or enriching data across multiple records
-- **Notification Delivery**: Sending notifications to thousands of users or devices
-- **Image Processing**: Resizing and optimizing images from a batch upload
-- **Report Generation**: Processing large datasets to generate reports or analytics
-- **ETL Operations**: Extract, transform, and load operations on large datasets
-- **Distributed Workloads**: Any workload that can be parallelized across independent units
+- **Batch Processing with Progress Tracking**: Processing large CSV or batch files while monitoring progress and completion
+- **Data Transformation**: Converting, validating, or enriching data across multiple records with completion reporting
+- **Notification Delivery**: Sending notifications to thousands of users or devices with delivery tracking
+- **Image Processing**: Resizing and optimizing images from a batch upload with progress monitoring
+- **Report Generation**: Processing large datasets to generate reports with status tracking
+- **ETL Operations**: Extract, transform, and load operations on large datasets with job completion notifications
+- **Distributed Workloads**: Any parallelizable workload that requires progress tracking and completion aggregation
 
 ### Key Benefits
 
 1. **Overcomes Time Limits**: Process jobs larger than the 15-minute Lambda execution limit
 2. **Horizontal Scalability**: Add more worker functions to process work faster without architectural changes
-3. **Resilience**: Message queue retries ensure failed tasks are automatically reprocessed
-4. **Cost Efficiency**: Pay only for execution time used; idle workers consume no resources
-5. **Decoupling**: Producer and consumer functions are independent, enabling flexible scaling and failure handling
-6. **Observable**: Monitor queue depth, worker performance, and failure rates independently
-7. **Flexible Rate Control**: SQS allows you to control the rate of task processing through concurrency settings
+3. **Progress Visibility**: Track the progress of batch jobs with processed and unprocessed record counts
+4. **Completion Notification**: Know when all tasks are complete and trigger downstream processes
+5. **Resilience**: Message queue retries ensure failed tasks are automatically reprocessed
+6. **Cost Efficiency**: Pay only for execution time used; idle workers consume no resources
+7. **Decoupling**: Producer and consumer functions are independent, enabling flexible scaling and failure handling
+8. **Observable**: Monitor queue depth, worker performance, completion events, and failure rates independently
+9. **Flexible Rate Control**: SQS allows you to control the rate of task processing through concurrency settings
 
 ## What's inside
 
-This example demonstrates the Fan Out pattern these microservices.
+This example demonstrates the Fan Out / Fan In pattern these microservices.
 
 ### Task Service
 
@@ -56,22 +60,30 @@ The **Task Service** is a complete microservice that provides task management fu
 
 The Task Service functions interact with a DynamoDB table to persist task data and uses an SQS queue to implement the fan-out pattern for batch task creation.
 
-### The Fan Out Pattern in Action
+### The Fan Out / Fan In Pattern in Action
 
-The fan-out pattern is demonstrated when uploading a CSV file containing multiple task records:
+The fan-out / fan-in pattern is demonstrated when uploading a CSV file containing multiple task records:
 
-1. **CSV Upload**: A user invokes the Upload CSV Lambda function with a file containing multiple task records.
+1. **CSV Upload**: A user invokes the Upload CSV endpoint with a file containing multiple task records. The file is uploaded to an S3 bucket.
 
-2. **Fan Out**: Instead of processing all records sequentially in a single Lambda function (which could exceed the 15-minute execution timeout), the Upload CSV function reads each record from the CSV file and publishes a message to an SQS queue for each task to be created.
+2. **Fan Out**: When a file is uploaded to S3, an S3 event notification triggers the Upload Task Subscriber Lambda via a message in the SQS Task Upload Queue. This subscriber reads the CSV file, creates a TaskFile record to track progress, and publishes a message to the SQS Create Task Queue for each row in the CSV file..
 
-3. **Parallel Processing**: The SQS queue decouples the upload process from task creation. The Create Task Subscriber Lambda function listens to the queue and processes messages in parallel, creating one task per message in the DynamoDB table.
+3. **Parallel Processing**: The Create Task Subscriber Lambda listens to the SQS Create Task Queue and processes messages in parallel, creating one task per message in the DynamoDB table. Each task subscriber also updates the TaskFile's progress metrics.
+
+4. **Progress Tracking**: As tasks are created, the TaskFile record maintains counts of total records, processed records, and unprocessed records, providing visibility into batch job progress.
+
+5. **Aggregation (Fan In)**: When all tasks are processed, the Create Task Subscriber publishes a `taskfile_processing_complete` event via SNS. The TaskFile Complete Queue, which is subscribed to this event, receives the completion notification.
+
+6. **Completion Handling**: The Complete Task File Subscriber processes the completion event and updates the TaskFile status to `COMPLETED`, marking the batch job as finished.
 
 This pattern allows the application to:
 
 - Process large batch files without hitting Lambda execution time limits
+- Track the progress of batch processing in real-time
 - Scale horizontally by processing multiple tasks concurrently
 - Handle failures gracefully through SQS message retention and retry mechanisms
-- Decouple the upload process from task creation for better system resilience
+- Notify downstream systems when batch processing is complete
+- Decouple file upload, task creation, and completion handling for better system resilience
 
 ## Getting started
 
@@ -88,7 +100,6 @@ To test the fan-out pattern implementation, follow these steps:
 1. **Deploy the Task Service** using the instructions above.
 
 2. **Prepare a CSV File**
-
    - Use the [sample.csv](./sample.csv) file included in this project as a template
    - Or create your own CSV file with the following columns:
      - `title` (required): Task title
@@ -97,7 +108,6 @@ To test the fan-out pattern implementation, follow these steps:
      - `isComplete` (optional): Boolean indicating if task is complete (default: `false`)
 
 3. **Invoke the Upload CSV API**
-
    - Using an API client like Postman or curl, upload your CSV file to the Upload CSV Lambda function endpoint
    - The function will parse the CSV, fan out each record as an SQS message, and return immediately
 
@@ -115,7 +125,17 @@ The Task Service provides the following REST API endpoints:
 - `GET /tasks/{id}` - Get a specific task
 - `PUT /tasks/{id}` - Update a task
 - `DELETE /tasks/{id}` - Delete a task
-- `POST /tasks/upload` - Upload and process a CSV file (demonstrates fan-out pattern)
+- `POST /tasks/upload` - Upload a CSV file to S3 (triggers fan-out / fan-in pattern)
+
+When you POST a CSV file to `/tasks/upload`, the system automatically:
+
+1. Stores the file in S3
+2. Creates a TaskFile record to track batch progress
+3. Parses the CSV and enqueues each row as a separate message
+4. Processes messages in parallel across multiple workers
+5. Updates progress metrics as tasks are created
+6. Publishes a completion event when all tasks are processed
+7. Updates the TaskFile status to mark the batch as complete
 
 ## Further Reading
 

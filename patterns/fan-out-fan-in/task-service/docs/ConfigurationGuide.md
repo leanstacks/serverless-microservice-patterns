@@ -13,7 +13,10 @@ The following environment variables are available for configuring the applicatio
 | Variable                | Type    | Description                                      | Default     | Required |
 | ----------------------- | ------- | ------------------------------------------------ | ----------- | -------- |
 | `TASKS_TABLE`           | string  | The name of the DynamoDB table for storing tasks | -           | Yes      |
+| `TASK_FILE_TABLE`       | string  | The name of the DynamoDB table for task files    | -           | Yes      |
 | `CREATE_TASK_QUEUE_URL` | string  | The URL of the SQS queue for creating tasks      | -           | Yes      |
+| `TASK_TOPIC_ARN`        | string  | The ARN of the SNS topic for task events         | -           | Yes      |
+| `TASK_UPLOADS_BUCKET`   | string  | The name of the S3 bucket for CSV uploads        | -           | Yes      |
 | `AWS_REGION`            | string  | The AWS region where resources are deployed      | `us-east-1` | No       |
 | `LOGGING_ENABLED`       | boolean | Enable or disable application logging            | `true`      | No       |
 | `LOGGING_LEVEL`         | enum    | Logging level: `debug`, `info`, `warn`, `error`  | `debug`     | No       |
@@ -150,15 +153,18 @@ The configuration flow from infrastructure to application is as follows:
 
 Infrastructure configuration variables are passed to Lambda functions with modified names:
 
-| Infrastructure Variable   | Lambda Environment Variable |
-| ------------------------- | --------------------------- |
-| `CDK_APP_LOGGING_ENABLED` | `LOGGING_ENABLED`           |
-| `CDK_APP_LOGGING_LEVEL`   | `LOGGING_LEVEL`             |
-| `CDK_APP_LOGGING_FORMAT`  | `LOGGING_FORMAT`            |
-| `CDK_CORS_ALLOW_ORIGIN`   | `CORS_ALLOW_ORIGIN`         |
-| (DynamoDB table name)     | `TASKS_TABLE`               |
-| (SQS queue URL)           | `CREATE_TASK_QUEUE_URL`     |
-| (AWS Region)              | `AWS_REGION`                |
+| Infrastructure Variable    | Lambda Environment Variable |
+| -------------------------- | --------------------------- |
+| `CDK_APP_LOGGING_ENABLED`  | `LOGGING_ENABLED`           |
+| `CDK_APP_LOGGING_LEVEL`    | `LOGGING_LEVEL`             |
+| `CDK_APP_LOGGING_FORMAT`   | `LOGGING_FORMAT`            |
+| `CDK_CORS_ALLOW_ORIGIN`    | `CORS_ALLOW_ORIGIN`         |
+| (DynamoDB task table)      | `TASKS_TABLE`               |
+| (DynamoDB task file table) | `TASK_FILE_TABLE`           |
+| (SQS create task queue)    | `CREATE_TASK_QUEUE_URL`     |
+| (SNS task topic)           | `TASK_TOPIC_ARN`            |
+| (S3 uploads bucket)        | `TASK_UPLOADS_BUCKET`       |
+| (AWS Region)               | `AWS_REGION`                |
 
 ---
 
