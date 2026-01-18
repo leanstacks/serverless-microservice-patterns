@@ -1,0 +1,1285 @@
+{
+  "info": {
+    "_postman_id": "4cae0f0f-fbc1-4886-b929-3a49e65c9277",
+    "name": "Serverless Microservice Patterns",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "217295"
+  },
+  "item": [
+    {
+      "name": "tasks",
+      "item": [
+        {
+          "name": "[taskId]",
+          "item": [
+            {
+              "name": "Get Task by ID",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test(\"Status code is 200\", function () {",
+                      "    pm.expect(pm.response.code).to.equal(200);",
+                      "});",
+                      ""
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/tasks/:taskId",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "tasks",
+                    ":taskId"
+                  ],
+                  "variable": [
+                    {
+                      "key": "taskId",
+                      "value": "{{taskId}}",
+                      "description": "A Task identifier."
+                    }
+                  ]
+                }
+              },
+              "response": [
+                {
+                  "name": "Successfully fetched Task",
+                  "originalRequest": {
+                    "method": "GET",
+                    "header": [],
+                    "url": {
+                      "raw": "{{baseUrl}}/tasks/:taskId",
+                      "host": [
+                        "{{baseUrl}}"
+                      ],
+                      "path": [
+                        "tasks",
+                        ":taskId"
+                      ],
+                      "variable": [
+                        {
+                          "key": "taskId",
+                          "value": "{{taskId}}",
+                          "description": "A Task identifier."
+                        }
+                      ]
+                    }
+                  },
+                  "status": "OK",
+                  "code": 200,
+                  "_postman_previewlanguage": null,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    },
+                    {
+                      "key": "Content-Length",
+                      "value": "405"
+                    },
+                    {
+                      "key": "Connection",
+                      "value": "keep-alive"
+                    },
+                    {
+                      "key": "Date",
+                      "value": "Tue, 02 Dec 2025 12:14:36 GMT"
+                    },
+                    {
+                      "key": "X-Amzn-Trace-Id",
+                      "value": "Root=1-692ed82c-3e1b89e7137ae3611aa9e922;Parent=0d6686599e722857;Sampled=0;Lineage=1:af350c8a:0"
+                    },
+                    {
+                      "key": "x-amzn-RequestId",
+                      "value": "6e9a1f87-5c3c-4a89-be5a-5b2323f860b0"
+                    },
+                    {
+                      "key": "Access-Control-Allow-Origin",
+                      "value": "*"
+                    },
+                    {
+                      "key": "x-amz-apigw-id",
+                      "value": "U9a3DG-7IAMEOiw="
+                    },
+                    {
+                      "key": "X-Cache",
+                      "value": "Miss from cloudfront"
+                    },
+                    {
+                      "key": "Via",
+                      "value": "1.1 153732004a8887453ca523567f55954a.cloudfront.net (CloudFront)"
+                    },
+                    {
+                      "key": "X-Amz-Cf-Pop",
+                      "value": "ATL58-P5"
+                    },
+                    {
+                      "key": "X-Amz-Cf-Id",
+                      "value": "ljrDg_MxG0H5MrGB3Lr6YTBwj7kz-YquZX9KPalmC3AEoqmzZ3ncAQ=="
+                    }
+                  ],
+                  "cookie": [],
+                  "body": "{\n    \"detail\": \"Dolorum aut doloribus amet ut illo nobis et et. Est numquam perspiciatis quasi. Corrupti rem delectus voluptatem ut sit est.\",\n    \"isComplete\": false,\n    \"updatedAt\": \"2025-12-01T20:26:18.133Z\",\n    \"createdAt\": \"2025-12-01T20:26:18.133Z\",\n    \"dueAt\": \"2025-12-31T00:00:00.000Z\",\n    \"id\": \"55d987fe-bade-4dd9-a875-1e5d838e60c0\",\n    \"title\": \"Use the multi-byte AGP capacitor, then you can synthesize the solid state driver!\"\n}"
+                },
+                {
+                  "name": "Task not found",
+                  "originalRequest": {
+                    "method": "GET",
+                    "header": [],
+                    "url": {
+                      "raw": "{{baseUrl}}/tasks/:taskId",
+                      "host": [
+                        "{{baseUrl}}"
+                      ],
+                      "path": [
+                        "tasks",
+                        ":taskId"
+                      ],
+                      "variable": [
+                        {
+                          "key": "taskId",
+                          "value": "1",
+                          "description": "A Task identifier."
+                        }
+                      ]
+                    }
+                  },
+                  "status": "Not Found",
+                  "code": 404,
+                  "_postman_previewlanguage": null,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    },
+                    {
+                      "key": "Content-Length",
+                      "value": "28"
+                    },
+                    {
+                      "key": "Connection",
+                      "value": "keep-alive"
+                    },
+                    {
+                      "key": "Date",
+                      "value": "Tue, 02 Dec 2025 12:15:16 GMT"
+                    },
+                    {
+                      "key": "X-Amzn-Trace-Id",
+                      "value": "Root=1-692ed854-69e66ebf268208e6727bce72;Parent=6c8d13f03545037a;Sampled=0;Lineage=1:af350c8a:0"
+                    },
+                    {
+                      "key": "x-amzn-RequestId",
+                      "value": "a514f33a-64b2-44ff-b5f3-4dc57de66587"
+                    },
+                    {
+                      "key": "Access-Control-Allow-Origin",
+                      "value": "*"
+                    },
+                    {
+                      "key": "x-amz-apigw-id",
+                      "value": "U9a9UEmloAMEMjw="
+                    },
+                    {
+                      "key": "X-Cache",
+                      "value": "Error from cloudfront"
+                    },
+                    {
+                      "key": "Via",
+                      "value": "1.1 153732004a8887453ca523567f55954a.cloudfront.net (CloudFront)"
+                    },
+                    {
+                      "key": "X-Amz-Cf-Pop",
+                      "value": "ATL58-P5"
+                    },
+                    {
+                      "key": "X-Amz-Cf-Id",
+                      "value": "TjFdVZTmfIRRxIgCWD6SzJbSpFe8yLI3imKjFhM1Y9uhRQptqPonzA=="
+                    }
+                  ],
+                  "cookie": [],
+                  "body": "{\n    \"message\": \"Task not found\"\n}"
+                }
+              ]
+            },
+            {
+              "name": "Update a Task",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test(\"Status code is 200\", function () {",
+                      "    pm.expect(pm.response.code).to.equal(200);",
+                      "});",
+                      ""
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
+                  }
+                }
+              ],
+              "request": {
+                "method": "PUT",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"title\": \"{{$randomPhrase}}\",\n    \"detail\": \"{{$randomLoremParagraph}}\",\n    \"dueAt\": \"2025-12-31T00:00:00.000Z\",\n    \"isComplete\": {{$randomBoolean}}\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/tasks/:taskId",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "tasks",
+                    ":taskId"
+                  ],
+                  "variable": [
+                    {
+                      "key": "taskId",
+                      "value": "{{taskId}}",
+                      "description": "A Task identifier."
+                    }
+                  ]
+                }
+              },
+              "response": [
+                {
+                  "name": "Successfully updated a task",
+                  "originalRequest": {
+                    "method": "PUT",
+                    "header": [],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n    \"title\": \"{{$randomPhrase}}\",\n    \"detail\": \"{{$randomLoremParagraph}}\",\n    \"dueAt\": \"2025-12-31T00:00:00.000Z\",\n    \"isComplete\": {{$randomBoolean}}\n}",
+                      "options": {
+                        "raw": {
+                          "language": "json"
+                        }
+                      }
+                    },
+                    "url": {
+                      "raw": "{{baseUrl}}/tasks/:taskId",
+                      "host": [
+                        "{{baseUrl}}"
+                      ],
+                      "path": [
+                        "tasks",
+                        ":taskId"
+                      ],
+                      "variable": [
+                        {
+                          "key": "taskId",
+                          "value": "{{taskId}}",
+                          "description": "A Task identifier."
+                        }
+                      ]
+                    }
+                  },
+                  "status": "OK",
+                  "code": 200,
+                  "_postman_previewlanguage": null,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    },
+                    {
+                      "key": "Content-Length",
+                      "value": "519"
+                    },
+                    {
+                      "key": "Connection",
+                      "value": "keep-alive"
+                    },
+                    {
+                      "key": "Date",
+                      "value": "Tue, 02 Dec 2025 14:33:08 GMT"
+                    },
+                    {
+                      "key": "X-Amzn-Trace-Id",
+                      "value": "Root=1-692ef8a4-4a0cf38b0834f85779684e10;Parent=57adde05643e271a;Sampled=0;Lineage=1:3f716988:0"
+                    },
+                    {
+                      "key": "x-amzn-RequestId",
+                      "value": "5d0cc938-c892-46e3-a7cf-c1e5797fd9a7"
+                    },
+                    {
+                      "key": "Access-Control-Allow-Origin",
+                      "value": "*"
+                    },
+                    {
+                      "key": "x-amz-apigw-id",
+                      "value": "U9vJzGnVIAMEpxA="
+                    },
+                    {
+                      "key": "X-Cache",
+                      "value": "Miss from cloudfront"
+                    },
+                    {
+                      "key": "Via",
+                      "value": "1.1 c89f66d6380a5bea82008998db0651e8.cloudfront.net (CloudFront)"
+                    },
+                    {
+                      "key": "X-Amz-Cf-Pop",
+                      "value": "ATL58-P5"
+                    },
+                    {
+                      "key": "X-Amz-Cf-Id",
+                      "value": "EhpRRQB1QjWqhCIK1afHoO5N_PsRhQl4NKTPM9XBtwMpiCRocjggzA=="
+                    }
+                  ],
+                  "cookie": [],
+                  "body": "{\n    \"detail\": \"Laudantium voluptatem consequuntur aut dolore temporibus quisquam fugit nam. Officiis iste eaque voluptatem. Culpa occaecati maxime eos quasi. Quo beatae nisi modi perspiciatis ab aut dignissimos non. Et iure perferendis natus quas.\",\n    \"isComplete\": true,\n    \"updatedAt\": \"2025-12-02T14:33:08.757Z\",\n    \"createdAt\": \"2025-12-02T14:28:57.185Z\",\n    \"dueAt\": \"2025-12-31T00:00:00.000Z\",\n    \"id\": \"2e42c9c1-9e5a-416c-a4d8-0c27b6bbe58e\",\n    \"title\": \"backing up the system won't do anything, we need to calculate the auxiliary FTP program!\"\n}"
+                },
+                {
+                  "name": "Validation error",
+                  "originalRequest": {
+                    "method": "PUT",
+                    "header": [],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n    \"title\": \"\",\n    \"detail\": \"{{$randomLoremParagraph}}\",\n    \"dueAt\": \"2025-12-31T00:00:00.000Z\",\n    \"isComplete\": {{$randomBoolean}}\n}",
+                      "options": {
+                        "raw": {
+                          "language": "json"
+                        }
+                      }
+                    },
+                    "url": {
+                      "raw": "{{baseUrl}}/tasks/:taskId",
+                      "host": [
+                        "{{baseUrl}}"
+                      ],
+                      "path": [
+                        "tasks",
+                        ":taskId"
+                      ],
+                      "variable": [
+                        {
+                          "key": "taskId",
+                          "value": "{{taskId}}",
+                          "description": "A Task identifier."
+                        }
+                      ]
+                    }
+                  },
+                  "status": "Bad Request",
+                  "code": 400,
+                  "_postman_previewlanguage": null,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    },
+                    {
+                      "key": "Content-Length",
+                      "value": "57"
+                    },
+                    {
+                      "key": "Connection",
+                      "value": "keep-alive"
+                    },
+                    {
+                      "key": "Date",
+                      "value": "Tue, 02 Dec 2025 14:34:25 GMT"
+                    },
+                    {
+                      "key": "X-Amzn-Trace-Id",
+                      "value": "Root=1-692ef8f1-0849a7d87a4537e11cfb0afd;Parent=2dd7cc143c2e7b13;Sampled=0;Lineage=1:3f716988:0"
+                    },
+                    {
+                      "key": "x-amzn-RequestId",
+                      "value": "abec392d-6df5-4472-b838-a3c3807f8013"
+                    },
+                    {
+                      "key": "Access-Control-Allow-Origin",
+                      "value": "*"
+                    },
+                    {
+                      "key": "x-amz-apigw-id",
+                      "value": "U9vVxHnDIAMEjPg="
+                    },
+                    {
+                      "key": "X-Cache",
+                      "value": "Error from cloudfront"
+                    },
+                    {
+                      "key": "Via",
+                      "value": "1.1 c89f66d6380a5bea82008998db0651e8.cloudfront.net (CloudFront)"
+                    },
+                    {
+                      "key": "X-Amz-Cf-Pop",
+                      "value": "ATL58-P5"
+                    },
+                    {
+                      "key": "X-Amz-Cf-Id",
+                      "value": "9L9x3L24r4gaHlC4O_okHpEtQOTaBV3x-rIESNlByBhJXUkSomg7XA=="
+                    }
+                  ],
+                  "cookie": [],
+                  "body": "{\n    \"message\": \"Validation failed: title: Title is required\"\n}"
+                },
+                {
+                  "name": "Task not found",
+                  "originalRequest": {
+                    "method": "PUT",
+                    "header": [],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n    \"title\": \"{{$randomPhrase}}\",\n    \"detail\": \"{{$randomLoremParagraph}}\",\n    \"dueAt\": \"2025-12-31T00:00:00.000Z\",\n    \"isComplete\": {{$randomBoolean}}\n}",
+                      "options": {
+                        "raw": {
+                          "language": "json"
+                        }
+                      }
+                    },
+                    "url": {
+                      "raw": "{{baseUrl}}/tasks/:taskId",
+                      "host": [
+                        "{{baseUrl}}"
+                      ],
+                      "path": [
+                        "tasks",
+                        ":taskId"
+                      ],
+                      "variable": [
+                        {
+                          "key": "taskId",
+                          "value": "1",
+                          "description": "A Task identifier."
+                        }
+                      ]
+                    }
+                  },
+                  "status": "Not Found",
+                  "code": 404,
+                  "_postman_previewlanguage": null,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    },
+                    {
+                      "key": "Content-Length",
+                      "value": "23"
+                    },
+                    {
+                      "key": "Connection",
+                      "value": "keep-alive"
+                    },
+                    {
+                      "key": "Date",
+                      "value": "Tue, 02 Dec 2025 14:37:38 GMT"
+                    },
+                    {
+                      "key": "X-Amzn-Trace-Id",
+                      "value": "Root=1-692ef9b2-6223cc641d061dfd7d56d7cf;Parent=11214bad73bff885;Sampled=0;Lineage=1:3f716988:0"
+                    },
+                    {
+                      "key": "x-amzn-RequestId",
+                      "value": "0dc5bb34-94a7-4fc6-b4bd-82fb162e441e"
+                    },
+                    {
+                      "key": "Access-Control-Allow-Origin",
+                      "value": "*"
+                    },
+                    {
+                      "key": "x-amz-apigw-id",
+                      "value": "U9v0BEyaIAMEANA="
+                    },
+                    {
+                      "key": "X-Cache",
+                      "value": "Error from cloudfront"
+                    },
+                    {
+                      "key": "Via",
+                      "value": "1.1 264b23e8da1e7581ae8f2f0c59c8ed52.cloudfront.net (CloudFront)"
+                    },
+                    {
+                      "key": "X-Amz-Cf-Pop",
+                      "value": "ATL58-P5"
+                    },
+                    {
+                      "key": "X-Amz-Cf-Id",
+                      "value": "MxiSGa7-1fbpqX2pP6uGDZT5iGWSlK3RInda4Z9bWmuMa3hpZMixdQ=="
+                    }
+                  ],
+                  "cookie": [],
+                  "body": "{\n    \"message\": \"Not Found\"\n}"
+                },
+                {
+                  "name": "Failed to update task",
+                  "originalRequest": {
+                    "method": "PUT",
+                    "header": [],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n    \"title\": \"{{$randomPhrase}}\",\n    \"dueAt\": \"2025-12-31T00:00:00.000Z\",\n    \"isComplete\": {{$randomBoolean}}\n}",
+                      "options": {
+                        "raw": {
+                          "language": "json"
+                        }
+                      }
+                    },
+                    "url": {
+                      "raw": "{{baseUrl}}/tasks/:taskId",
+                      "host": [
+                        "{{baseUrl}}"
+                      ],
+                      "path": [
+                        "tasks",
+                        ":taskId"
+                      ],
+                      "variable": [
+                        {
+                          "key": "taskId",
+                          "value": "{{taskId}}",
+                          "description": "A Task identifier."
+                        }
+                      ]
+                    }
+                  },
+                  "status": "Internal Server Error",
+                  "code": 500,
+                  "_postman_previewlanguage": null,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    },
+                    {
+                      "key": "Content-Length",
+                      "value": "35"
+                    },
+                    {
+                      "key": "Connection",
+                      "value": "keep-alive"
+                    },
+                    {
+                      "key": "Date",
+                      "value": "Tue, 02 Dec 2025 14:40:06 GMT"
+                    },
+                    {
+                      "key": "X-Amzn-Trace-Id",
+                      "value": "Root=1-692efa45-16863a1f065b8b7227312f4f;Parent=4c1a1ea1056b1261;Sampled=0;Lineage=1:3f716988:0"
+                    },
+                    {
+                      "key": "x-amzn-RequestId",
+                      "value": "5394d3e3-ca8a-42ee-a93f-201ff7fc6fcf"
+                    },
+                    {
+                      "key": "Access-Control-Allow-Origin",
+                      "value": "*"
+                    },
+                    {
+                      "key": "x-amz-apigw-id",
+                      "value": "U9wK-GgfoAMEocw="
+                    },
+                    {
+                      "key": "X-Cache",
+                      "value": "Error from cloudfront"
+                    },
+                    {
+                      "key": "Via",
+                      "value": "1.1 002f46e348ce9568cd7a478ff65daf30.cloudfront.net (CloudFront)"
+                    },
+                    {
+                      "key": "X-Amz-Cf-Pop",
+                      "value": "ATL58-P5"
+                    },
+                    {
+                      "key": "X-Amz-Cf-Id",
+                      "value": "Vbes4hIvi3s3_2m_27GXzRwoySrpxKyWtKL7IMkYCQO9_2DHob9CuQ=="
+                    }
+                  ],
+                  "cookie": [],
+                  "body": "{\n    \"message\": \"Failed to update task\"\n}"
+                }
+              ]
+            },
+            {
+              "name": "Delete a Task",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test(\"Status code is 204\", function () {",
+                      "    pm.expect(pm.response.code).to.equal(204);",
+                      "});",
+                      ""
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
+                  }
+                }
+              ],
+              "request": {
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/tasks/:taskId",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "tasks",
+                    ":taskId"
+                  ],
+                  "variable": [
+                    {
+                      "key": "taskId",
+                      "value": "{{taskId}}",
+                      "description": "A Task identifier."
+                    }
+                  ]
+                }
+              },
+              "response": [
+                {
+                  "name": "Successfully deleted a task",
+                  "originalRequest": {
+                    "method": "DELETE",
+                    "header": [],
+                    "url": {
+                      "raw": "{{baseUrl}}/tasks/:taskId",
+                      "host": [
+                        "{{baseUrl}}"
+                      ],
+                      "path": [
+                        "tasks",
+                        ":taskId"
+                      ],
+                      "variable": [
+                        {
+                          "key": "taskId",
+                          "value": "{{taskId}}",
+                          "description": "A Task identifier."
+                        }
+                      ]
+                    }
+                  },
+                  "status": "No Content",
+                  "code": 204,
+                  "_postman_previewlanguage": null,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    },
+                    {
+                      "key": "Content-Length",
+                      "value": "0"
+                    },
+                    {
+                      "key": "Connection",
+                      "value": "keep-alive"
+                    },
+                    {
+                      "key": "Date",
+                      "value": "Tue, 02 Dec 2025 15:57:19 GMT"
+                    },
+                    {
+                      "key": "X-Amzn-Trace-Id",
+                      "value": "Root=1-692f0c5e-31d15eb87053ccf238479dcf;Parent=56a3b6f46cb9a337;Sampled=0;Lineage=1:7c5b2b8b:0"
+                    },
+                    {
+                      "key": "x-amzn-RequestId",
+                      "value": "7c9cb8c7-449f-4afb-9973-afc409c4e3dd"
+                    },
+                    {
+                      "key": "Access-Control-Allow-Origin",
+                      "value": "*"
+                    },
+                    {
+                      "key": "x-amz-apigw-id",
+                      "value": "U97eyGzxIAMEnow="
+                    },
+                    {
+                      "key": "X-Cache",
+                      "value": "Miss from cloudfront"
+                    },
+                    {
+                      "key": "Via",
+                      "value": "1.1 cb5fa36b8c5e872295654406e78a7a98.cloudfront.net (CloudFront)"
+                    },
+                    {
+                      "key": "X-Amz-Cf-Pop",
+                      "value": "ATL58-P5"
+                    },
+                    {
+                      "key": "X-Amz-Cf-Id",
+                      "value": "y9f0kXFQGDwWJ1YnYNPnizLgMZIgHsrq_W_9aWj0ANxGCUHXERPKaw=="
+                    }
+                  ],
+                  "cookie": [],
+                  "body": null
+                },
+                {
+                  "name": "Task not found",
+                  "originalRequest": {
+                    "method": "DELETE",
+                    "header": [],
+                    "url": {
+                      "raw": "{{baseUrl}}/tasks/:taskId",
+                      "host": [
+                        "{{baseUrl}}"
+                      ],
+                      "path": [
+                        "tasks",
+                        ":taskId"
+                      ],
+                      "variable": [
+                        {
+                          "key": "taskId",
+                          "value": "{{taskId}}",
+                          "description": "A Task identifier."
+                        }
+                      ]
+                    }
+                  },
+                  "status": "Not Found",
+                  "code": 404,
+                  "_postman_previewlanguage": null,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    },
+                    {
+                      "key": "Content-Length",
+                      "value": "28"
+                    },
+                    {
+                      "key": "Connection",
+                      "value": "keep-alive"
+                    },
+                    {
+                      "key": "Date",
+                      "value": "Tue, 02 Dec 2025 15:59:28 GMT"
+                    },
+                    {
+                      "key": "X-Amzn-Trace-Id",
+                      "value": "Root=1-692f0ce0-3a434b7f207ec9130a019d99;Parent=429ec0c8f75471c9;Sampled=0;Lineage=1:7c5b2b8b:0"
+                    },
+                    {
+                      "key": "x-amzn-RequestId",
+                      "value": "feaed759-5ef2-46c3-8ccb-6d674bff3e4b"
+                    },
+                    {
+                      "key": "Access-Control-Allow-Origin",
+                      "value": "*"
+                    },
+                    {
+                      "key": "x-amz-apigw-id",
+                      "value": "U97zEE7GIAMEmog="
+                    },
+                    {
+                      "key": "X-Cache",
+                      "value": "Error from cloudfront"
+                    },
+                    {
+                      "key": "Via",
+                      "value": "1.1 68a40c405a2ba280d0b148d00472963e.cloudfront.net (CloudFront)"
+                    },
+                    {
+                      "key": "X-Amz-Cf-Pop",
+                      "value": "ATL58-P5"
+                    },
+                    {
+                      "key": "X-Amz-Cf-Id",
+                      "value": "l8dja-iOZTEP8DecXBy1gE_0ovAhud4lPC_jSR2axAqyv_AgfxjK0A=="
+                    }
+                  ],
+                  "cookie": [],
+                  "body": "{\n    \"message\": \"Task not found\"\n}"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "List Tasks",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.expect(pm.response.code).to.equal(200);",
+                  "});",
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/tasks",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "tasks"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "Successfully fetched task list",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/tasks",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "tasks"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": null,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                },
+                {
+                  "key": "Content-Length",
+                  "value": "444"
+                },
+                {
+                  "key": "Connection",
+                  "value": "keep-alive"
+                },
+                {
+                  "key": "Date",
+                  "value": "Mon, 01 Dec 2025 16:18:15 GMT"
+                },
+                {
+                  "key": "X-Amzn-Trace-Id",
+                  "value": "Root=1-692dbfc6-2d51c5f8595ad04c7a4cb1dc;Parent=461af3d99608a14b;Sampled=0;Lineage=1:bf36f69e:0"
+                },
+                {
+                  "key": "x-amzn-RequestId",
+                  "value": "45ad89cb-8454-4dea-98f1-1f1a9ce82e39"
+                },
+                {
+                  "key": "Access-Control-Allow-Origin",
+                  "value": "*"
+                },
+                {
+                  "key": "x-amz-apigw-id",
+                  "value": "U6rnDEw0oAMEuQw="
+                },
+                {
+                  "key": "X-Cache",
+                  "value": "Miss from cloudfront"
+                },
+                {
+                  "key": "Via",
+                  "value": "1.1 f75dabc45199100f3aa78c22168f247a.cloudfront.net (CloudFront)"
+                },
+                {
+                  "key": "X-Amz-Cf-Pop",
+                  "value": "ATL58-P5"
+                },
+                {
+                  "key": "X-Amz-Cf-Id",
+                  "value": "nZMs9kB_XiiHdP2d8Z1mcGndqZSq-EZ1gd1P8ui7gMOEOrFT26S8vw=="
+                }
+              ],
+              "cookie": [],
+              "body": "[\n    {\n        \"detail\": \"Enim dicta animi incidunt consequuntur sit laborum cum. Aliquid eaque qui nisi. Odio alias qui voluptas placeat tempora sunt et ratione possimus. Fugiat aliquam neque voluptas aliquid voluptas voluptatem. Libero officia et ut id non.\",\n        \"isComplete\": true,\n        \"updatedAt\": \"2025-12-01T16:16:59.772Z\",\n        \"createdAt\": \"2025-12-01T16:16:59.772Z\",\n        \"dueAt\": \"2025-12-31T00:00:00Z\",\n        \"id\": \"a0752007-d371-4dc4-bfca-30b47f79c3a2\",\n        \"title\": \"reintermediate\"\n    }\n]"
+            }
+          ]
+        },
+        {
+          "name": "Create a Task",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const response = pm.response.json();",
+                  "    pm.environment.set(\"taskId\", response.id);",
+                  "}",
+                  "",
+                  "pm.test(\"Status code is 201\", function () {",
+                  "    pm.expect(pm.response.code).to.equal(201);",
+                  "});",
+                  "",
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"title\": \"{{$randomPhrase}}\",\n    \"detail\": \"{{$randomLoremParagraph}}\",\n    \"dueAt\": \"2025-12-31T00:00:00.000Z\",\n    \"isComplete\": {{$randomBoolean}}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/tasks",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "tasks"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "Successfully created a task",
+              "originalRequest": {
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"title\": \"{{$randomPhrase}}\",\n    \"detail\": \"{{$randomLoremParagraph}}\",\n    \"dueAt\": \"2025-12-31T00:00:00.000Z\",\n    \"isComplete\": {{$randomBoolean}}\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/tasks",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "tasks"
+                  ]
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": null,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                },
+                {
+                  "key": "Content-Length",
+                  "value": "430"
+                },
+                {
+                  "key": "Connection",
+                  "value": "keep-alive"
+                },
+                {
+                  "key": "Date",
+                  "value": "Mon, 01 Dec 2025 16:19:32 GMT"
+                },
+                {
+                  "key": "X-Amzn-Trace-Id",
+                  "value": "Root=1-692dc014-1d91288d3f4488645a0e9749;Parent=6e7977c9423115ec;Sampled=0;Lineage=1:72ef823e:0"
+                },
+                {
+                  "key": "x-amzn-RequestId",
+                  "value": "a777c7fc-7668-4401-9db2-ac848a4b2193"
+                },
+                {
+                  "key": "Access-Control-Allow-Origin",
+                  "value": "*"
+                },
+                {
+                  "key": "x-amz-apigw-id",
+                  "value": "U6rzRHaqoAMEXiQ="
+                },
+                {
+                  "key": "X-Cache",
+                  "value": "Miss from cloudfront"
+                },
+                {
+                  "key": "Via",
+                  "value": "1.1 e19cba9b65094f91bf476a7e16075564.cloudfront.net (CloudFront)"
+                },
+                {
+                  "key": "X-Amz-Cf-Pop",
+                  "value": "ATL58-P5"
+                },
+                {
+                  "key": "X-Amz-Cf-Id",
+                  "value": "mObWtnUNxIYZ9cfqOO__y8szcas7qqUqjfkQ_sTV7KryFRD03AyTqA=="
+                }
+              ],
+              "cookie": [],
+              "body": "{\n    \"id\": \"0d0a72fd-d3d9-4800-b77f-2a2a8ec9ea18\",\n    \"title\": \"I'll parse the optical COM microchip, that should driver the IB circuit!\",\n    \"detail\": \"Quasi tenetur quod vero qui. Ipsam impedit ipsam similique placeat sed quia aliquam reiciendis. Placeat tempora vitae quam numquam est illum laboriosam ipsam.\",\n    \"dueAt\": \"2025-12-31T00:00:00.000Z\",\n    \"isComplete\": false,\n    \"createdAt\": \"2025-12-01T16:19:32.543Z\",\n    \"updatedAt\": \"2025-12-01T16:19:32.543Z\"\n}"
+            },
+            {
+              "name": "Validation error",
+              "originalRequest": {
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"title\": \"\",\n    \"detail\": \"{{$randomLoremParagraph}}\",\n    \"dueAt\": \"2025-12-31T00:00:00.000Z\",\n    \"isComplete\": {{$randomBoolean}}\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/tasks",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "tasks"
+                  ]
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "_postman_previewlanguage": null,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                },
+                {
+                  "key": "Content-Length",
+                  "value": "57"
+                },
+                {
+                  "key": "Connection",
+                  "value": "keep-alive"
+                },
+                {
+                  "key": "Date",
+                  "value": "Mon, 01 Dec 2025 20:14:11 GMT"
+                },
+                {
+                  "key": "X-Amzn-Trace-Id",
+                  "value": "Root=1-692df713-602bb89b01e6f33a01e3b8e3;Parent=7d27838125ca35c7;Sampled=0;Lineage=1:72ef823e:0"
+                },
+                {
+                  "key": "x-amzn-RequestId",
+                  "value": "039a570d-bd38-4c2c-bd2b-ec948d47af16"
+                },
+                {
+                  "key": "Access-Control-Allow-Origin",
+                  "value": "*"
+                },
+                {
+                  "key": "x-amz-apigw-id",
+                  "value": "U7OLLFCgoAMEOEg="
+                },
+                {
+                  "key": "X-Cache",
+                  "value": "Error from cloudfront"
+                },
+                {
+                  "key": "Via",
+                  "value": "1.1 cb8f9eeabb5079cbcdbabdbd476ce1a2.cloudfront.net (CloudFront)"
+                },
+                {
+                  "key": "X-Amz-Cf-Pop",
+                  "value": "ATL58-P5"
+                },
+                {
+                  "key": "X-Amz-Cf-Id",
+                  "value": "4AHRR4nJNggflDgCiJmNJN7AHGapLkP0oJQTc7ZpNHxyYSdiURkXUg=="
+                }
+              ],
+              "cookie": [],
+              "body": "{\n    \"message\": \"Validation failed: title: Title is required\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Upload Tasks CSV",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.expect(pm.response.code).to.equal(200);",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "protocolProfileBehavior": {
+            "disabledSystemHeaders": {}
+          },
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "title,detail,dueAt,isComplete\nFeed the fish,The fish is hungry so give him some food.,2026-01-01T00:00:00.000Z,false\nWash my clothes,,,\nBuy a gift,,2026-01-31T00:00:00.000Z,false\nTrim the tree,It is too big.,,\nBuy the groceries,Remember to take the list and check it twice.,,"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/tasks/upload",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "tasks",
+                "upload"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Upload Task File to S3",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.expect(pm.response.code).to.equal(200);",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "title,detail,dueAt,isComplete\nFeed the fish,The fish is hungry so give him some food.,2026-01-01T00:00:00.000Z,false\nWash my clothes,,,\nBuy a gift,,2026-01-31T00:00:00.000Z,false\nTrim the tree,It is too big.,,\nBuy the groceries,Remember to take the list and check it twice.,,"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/tasks/upload?key={{$randomUUID}}.csv",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "tasks",
+                "upload"
+              ],
+              "query": [
+                {
+                  "key": "key",
+                  "value": "{{$randomUUID}}.csv",
+                  "description": "The filename for the uploaded CSV data."
+                }
+              ]
+            },
+            "description": "Uploads a CSV file with task records to a S3 bucket."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "planner",
+      "item": [
+        {
+          "name": "Daily Planner",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.expect(pm.response.code).to.equal(200);",
+                  "});",
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/planner/daily",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "planner",
+                "daily"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "packages": {},
+        "requests": {},
+        "exec": [
+          ""
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "packages": {},
+        "requests": {},
+        "exec": [
+          ""
+        ]
+      }
+    }
+  ]
+}
