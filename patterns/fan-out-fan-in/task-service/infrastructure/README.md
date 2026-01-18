@@ -20,8 +20,6 @@ AWS CDK infrastructure for this project.
       data-stack.test.ts      # Unit tests for data stack
       lambda-stack.ts         # Lambda functions and resources
       lambda-stack.test.ts    # Unit tests for lambda stack
-      sqs-stack.ts            # SQS queues and resources
-      sqs-stack.test.ts       # Unit tests for SQS stack
    /utils
       config.ts               # Configuration management with Zod validation
       config.test.ts          # Unit tests for config
